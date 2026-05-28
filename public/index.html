@@ -163,18 +163,23 @@
     .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
 
     /* ===== HERO ===== */
-    .hero{background:#000;overflow:hidden;position:relative;padding-top:72px}
-    .hero::before{content:'';position:absolute;inset:0;background-image:url('/hero-main.png');background-size:cover;background-position:center;opacity:0.45;pointer-events:none;z-index:0}
-    .hero::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.35) 0%,rgba(0,0,0,0.55) 100%);pointer-events:none;z-index:0}
-    .hero-text-block{text-align:center;padding:52px 20px 36px;max-width:960px;margin:0 auto;position:relative;z-index:1}
-    .hero-sub{font-family:'Rajdhani',sans-serif;font-size:0.88rem;font-weight:600;letter-spacing:5px;color:rgba(255,255,255,0.55);text-transform:uppercase;margin-bottom:10px}
-    .hero-title{font-family:'Rajdhani',sans-serif;font-size:clamp(3rem,7.5vw,6.5rem);font-weight:700;color:#fff;letter-spacing:4px;line-height:1.0;text-transform:uppercase;margin-bottom:30px}
-    .hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-    .hero-btn-outline{display:inline-flex;align-items:center;padding:11px 34px;border:2px solid #fff;color:#fff;background:transparent;border-radius:3px;font-family:'Rajdhani',sans-serif;font-size:0.92rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;transition:all .2s;text-decoration:none}
-    .hero-btn-outline:hover{background:#fff;color:#000}
+    .hero{background:linear-gradient(135deg,#07091c 0%,#0d1535 55%,#0a1a45 100%);overflow:hidden;position:relative;padding:0}
+    .hero::before{content:'';position:absolute;top:0;right:0;bottom:0;width:60%;background:radial-gradient(ellipse at 80% 50%,rgba(26,110,232,0.2) 0%,transparent 65%);pointer-events:none;z-index:0}
+    .hero-inner{max-width:1240px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:1fr 420px;gap:56px;align-items:center;min-height:500px;position:relative;z-index:1}
+    .hero-text-block{padding:64px 0;text-align:left}
+    .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.18);border-radius:100px;padding:6px 16px;font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.85);margin-bottom:20px;letter-spacing:0.3px}
+    .hero-sub{font-family:'Rajdhani',sans-serif;font-size:0.88rem;font-weight:600;letter-spacing:5px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:10px}
+    .hero-title{font-family:'Rajdhani',sans-serif;font-size:clamp(2.8rem,6vw,5.8rem);font-weight:700;color:#fff;letter-spacing:3px;line-height:1.0;text-transform:uppercase;margin-bottom:32px}
+    .hero-btns{display:flex;gap:14px;flex-wrap:wrap}
+    .hero-btn-outline{display:inline-flex;align-items:center;padding:11px 34px;border:2px solid rgba(255,255,255,0.6);color:#fff;background:transparent;border-radius:3px;font-family:'Rajdhani',sans-serif;font-size:0.92rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;transition:all .2s;text-decoration:none}
+    .hero-btn-outline:hover{background:#fff;color:#000;border-color:#fff}
     .hero-btn-fill{display:inline-flex;align-items:center;padding:11px 34px;background:var(--blue);color:#fff;border:2px solid var(--blue);border-radius:3px;font-family:'Rajdhani',sans-serif;font-size:0.92rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;transition:all .2s;text-decoration:none}
     .hero-btn-fill:hover{background:var(--blue-dark);border-color:var(--blue-dark)}
-    @media(max-width:768px){.hero-text-block{padding:36px 20px 24px}.hero-title{letter-spacing:2px}}
+    .hero-img-wrap{position:relative}
+    .hero-img-frame{border-radius:20px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.55),0 0 0 1px rgba(255,255,255,0.07)}
+    .hero-img-frame img{width:100%;display:block;aspect-ratio:4/5;object-fit:cover;object-position:top}
+    @media(max-width:900px){.hero-inner{grid-template-columns:1fr}.hero-img-wrap{display:none}.hero-text-block{text-align:center;padding:48px 0 36px}.hero-btns{justify-content:center}}
+    @media(max-width:768px){.hero-title{letter-spacing:2px}}
 
     /* ===== TRUST STATS ===== */
     .trust-section{padding:44px 0;background:var(--grad);position:relative;overflow:hidden}
@@ -815,18 +820,33 @@
     </div>
   </div>
 
-  <!-- HERO CAROUSEL -->
+  <!-- HERO -->
   <section class="hero" id="hero">
-    <div class="hero-text-block">
-      <p class="hero-sub">Valenzuela's #1 PC Hub</p>
-      <h1 class="hero-title">Hanap. Usap. <span class="grad">Build.</span></h1>
-      <div class="hero-btns">
-        <a href="/shop" class="hero-btn-outline" onclick="event.preventDefault();navigateTo('/shop')">Browse the Store</a>
-        <a href="https://www.facebook.com/Hanap.Usap.Build" target="_blank" rel="noopener" class="hero-btn-fill">Message Us</a>
+    <div class="hero-inner">
+      <div class="hero-text-block">
+        <div class="hero-badge">⭐ 5.0 &nbsp;·&nbsp; 413+ Facebook Reviews</div>
+        <p class="hero-sub">Valenzuela's #1 PC Hub</p>
+        <h1 class="hero-title">Hanap. Usap. <span class="grad">Build.</span></h1>
+        <div class="hero-btns">
+          <a href="/shop" class="hero-btn-outline" onclick="event.preventDefault();navigateTo('/shop')">Browse the Store</a>
+          <a href="https://www.facebook.com/Hanap.Usap.Build" target="_blank" rel="noopener" class="hero-btn-fill">Message Us</a>
+        </div>
+      </div>
+      <div class="hero-img-wrap">
+        <div class="hero-img-frame">
+          <img src="/hub-couple.png" alt="H.U.B Store - Hanap Usap Build" loading="eager">
+        </div>
       </div>
     </div>
   </section>
 
+
+  <!-- BRAND TICKER -->
+  <div class="brand-ticker">
+    <div class="brand-track">
+      <span class="brand-item"><span class="dot"></span>AMD</span><span class="brand-item"><span class="dot"></span>Intel</span><span class="brand-item"><span class="dot"></span>NVIDIA</span><span class="brand-item"><span class="dot"></span>ASUS</span><span class="brand-item"><span class="dot"></span>Gigabyte</span><span class="brand-item"><span class="dot"></span>MSI</span><span class="brand-item"><span class="dot"></span>Kingston</span><span class="brand-item"><span class="dot"></span>Corsair</span><span class="brand-item"><span class="dot"></span>Seasonic</span><span class="brand-item"><span class="dot"></span>DeepCool</span><span class="brand-item"><span class="dot"></span>Biostar</span><span class="brand-item"><span class="dot"></span>Logitech</span><span class="brand-item"><span class="dot"></span>Acer</span><span class="brand-item"><span class="dot"></span>UGREEN</span><span class="brand-item"><span class="dot"></span>Seagate</span><span class="brand-item"><span class="dot"></span>Western Digital</span><span class="brand-item"><span class="dot"></span>Samsung</span><span class="brand-item"><span class="dot"></span>TEAMGROUP</span><span class="brand-item"><span class="dot"></span>G.Skill</span><span class="brand-item"><span class="dot"></span>Crucial</span><span class="brand-item"><span class="dot"></span>Thermaltake</span><span class="brand-item"><span class="dot"></span>NZXT</span><span class="brand-item"><span class="dot"></span>Cooler Master</span><span class="brand-item"><span class="dot"></span>SteelSeries</span><span class="brand-item"><span class="dot"></span>Razer</span><span class="brand-item"><span class="dot"></span>HyperX</span><span class="brand-item"><span class="dot"></span>Zotac</span><span class="brand-item"><span class="dot"></span>Sapphire</span><span class="brand-item"><span class="dot"></span>PowerColor</span><span class="brand-item"><span class="dot"></span>ASRock</span><span class="brand-item"><span class="dot"></span>Lian Li</span><span class="brand-item"><span class="dot"></span>AMD</span><span class="brand-item"><span class="dot"></span>Intel</span><span class="brand-item"><span class="dot"></span>NVIDIA</span><span class="brand-item"><span class="dot"></span>ASUS</span><span class="brand-item"><span class="dot"></span>Gigabyte</span><span class="brand-item"><span class="dot"></span>MSI</span><span class="brand-item"><span class="dot"></span>Kingston</span><span class="brand-item"><span class="dot"></span>Corsair</span><span class="brand-item"><span class="dot"></span>Seasonic</span><span class="brand-item"><span class="dot"></span>DeepCool</span><span class="brand-item"><span class="dot"></span>Biostar</span><span class="brand-item"><span class="dot"></span>Logitech</span><span class="brand-item"><span class="dot"></span>Acer</span><span class="brand-item"><span class="dot"></span>UGREEN</span><span class="brand-item"><span class="dot"></span>Seagate</span><span class="brand-item"><span class="dot"></span>Western Digital</span><span class="brand-item"><span class="dot"></span>Samsung</span><span class="brand-item"><span class="dot"></span>TEAMGROUP</span><span class="brand-item"><span class="dot"></span>G.Skill</span><span class="brand-item"><span class="dot"></span>Crucial</span><span class="brand-item"><span class="dot"></span>Thermaltake</span><span class="brand-item"><span class="dot"></span>NZXT</span><span class="brand-item"><span class="dot"></span>Cooler Master</span><span class="brand-item"><span class="dot"></span>SteelSeries</span><span class="brand-item"><span class="dot"></span>Razer</span><span class="brand-item"><span class="dot"></span>HyperX</span><span class="brand-item"><span class="dot"></span>Zotac</span><span class="brand-item"><span class="dot"></span>Sapphire</span><span class="brand-item"><span class="dot"></span>PowerColor</span><span class="brand-item"><span class="dot"></span>ASRock</span><span class="brand-item"><span class="dot"></span>Lian Li</span>
+    </div>
+  </div>
 
   <!-- CATEGORY TILES -->
   <section class="cat-tiles-section" id="categories">
@@ -841,13 +861,6 @@
       </div>
     </div>
   </section>
-
-  <!-- BRAND TICKER -->
-  <div class="brand-ticker">
-    <div class="brand-track">
-      <span class="brand-item"><span class="dot"></span>AMD</span><span class="brand-item"><span class="dot"></span>Intel</span><span class="brand-item"><span class="dot"></span>NVIDIA</span><span class="brand-item"><span class="dot"></span>ASUS</span><span class="brand-item"><span class="dot"></span>Gigabyte</span><span class="brand-item"><span class="dot"></span>MSI</span><span class="brand-item"><span class="dot"></span>Kingston</span><span class="brand-item"><span class="dot"></span>Corsair</span><span class="brand-item"><span class="dot"></span>Seasonic</span><span class="brand-item"><span class="dot"></span>DeepCool</span><span class="brand-item"><span class="dot"></span>Biostar</span><span class="brand-item"><span class="dot"></span>Logitech</span><span class="brand-item"><span class="dot"></span>Acer</span><span class="brand-item"><span class="dot"></span>UGREEN</span><span class="brand-item"><span class="dot"></span>Seagate</span><span class="brand-item"><span class="dot"></span>Western Digital</span><span class="brand-item"><span class="dot"></span>Samsung</span><span class="brand-item"><span class="dot"></span>TEAMGROUP</span><span class="brand-item"><span class="dot"></span>G.Skill</span><span class="brand-item"><span class="dot"></span>Crucial</span><span class="brand-item"><span class="dot"></span>Thermaltake</span><span class="brand-item"><span class="dot"></span>NZXT</span><span class="brand-item"><span class="dot"></span>Cooler Master</span><span class="brand-item"><span class="dot"></span>SteelSeries</span><span class="brand-item"><span class="dot"></span>Razer</span><span class="brand-item"><span class="dot"></span>HyperX</span><span class="brand-item"><span class="dot"></span>Zotac</span><span class="brand-item"><span class="dot"></span>Sapphire</span><span class="brand-item"><span class="dot"></span>PowerColor</span><span class="brand-item"><span class="dot"></span>ASRock</span><span class="brand-item"><span class="dot"></span>Lian Li</span><span class="brand-item"><span class="dot"></span>AMD</span><span class="brand-item"><span class="dot"></span>Intel</span><span class="brand-item"><span class="dot"></span>NVIDIA</span><span class="brand-item"><span class="dot"></span>ASUS</span><span class="brand-item"><span class="dot"></span>Gigabyte</span><span class="brand-item"><span class="dot"></span>MSI</span><span class="brand-item"><span class="dot"></span>Kingston</span><span class="brand-item"><span class="dot"></span>Corsair</span><span class="brand-item"><span class="dot"></span>Seasonic</span><span class="brand-item"><span class="dot"></span>DeepCool</span><span class="brand-item"><span class="dot"></span>Biostar</span><span class="brand-item"><span class="dot"></span>Logitech</span><span class="brand-item"><span class="dot"></span>Acer</span><span class="brand-item"><span class="dot"></span>UGREEN</span><span class="brand-item"><span class="dot"></span>Seagate</span><span class="brand-item"><span class="dot"></span>Western Digital</span><span class="brand-item"><span class="dot"></span>Samsung</span><span class="brand-item"><span class="dot"></span>TEAMGROUP</span><span class="brand-item"><span class="dot"></span>G.Skill</span><span class="brand-item"><span class="dot"></span>Crucial</span><span class="brand-item"><span class="dot"></span>Thermaltake</span><span class="brand-item"><span class="dot"></span>NZXT</span><span class="brand-item"><span class="dot"></span>Cooler Master</span><span class="brand-item"><span class="dot"></span>SteelSeries</span><span class="brand-item"><span class="dot"></span>Razer</span><span class="brand-item"><span class="dot"></span>HyperX</span><span class="brand-item"><span class="dot"></span>Zotac</span><span class="brand-item"><span class="dot"></span>Sapphire</span><span class="brand-item"><span class="dot"></span>PowerColor</span><span class="brand-item"><span class="dot"></span>ASRock</span><span class="brand-item"><span class="dot"></span>Lian Li</span>
-    </div>
-  </div>
 
   <!-- TRUST STATS -->
   <section class="trust-section">
@@ -985,6 +998,44 @@
     <div class="pd-content" id="pdContent"></div>
   </div>
 
+  <!-- ABOUT -->
+  <section class="section" id="about">
+    <div class="container">
+      <div class="about-wrap">
+        <div class="about-img-col">
+          <div class="about-img-main">
+            <img src="/hub-couple.png" alt="H.U.B Store - Hanap Usap Build" loading="lazy">
+          </div>
+          <div class="about-img-accent">
+            <img src="/hub-team.png" alt="H.U.B Team" loading="lazy">
+          </div>
+          <div class="about-stat-chip">
+            <div class="chip-num">24K+</div>
+            <div class="chip-lbl">Facebook Followers</div>
+          </div>
+        </div>
+        <div class="about-text-col">
+          <div class="section-eyebrow"><div class="section-line"></div><span class="section-tag">Who We Are</span></div>
+          <h2 class="section-title">Valenzuela's Go-To <span class="grad">PC Hub</span></h2>
+          <p>H.U.B (Hanap.Usap.Build) is your local PC builder and computer parts store right here in Valenzuela, Philippines. Our name says it all <strong>Hanap</strong> the parts, <strong>Usap</strong> with our expert team, and we <strong>Build</strong> your dream PC together.</p>
+          <p>Whether you're a student on a budget, a gamer chasing higher frames, or a professional needing a workstation H.U.B has the parts, expertise, and deals to get you there.</p>
+          <div class="about-feats">
+            <div class="about-feat"><span class="ck">&#10003;</span>Custom PC builds</div>
+            <div class="about-feat"><span class="ck">&#10003;</span>Quality PC parts</div>
+            <div class="about-feat"><span class="ck">&#10003;</span>Free consultation</div>
+            <div class="about-feat"><span class="ck">&#10003;</span>Trusted by thousands</div>
+            <div class="about-feat"><span class="ck">&#10003;</span>Delivery available</div>
+            <div class="about-feat"><span class="ck">&#10003;</span>Valenzuela-based</div>
+          </div>
+          <div class="about-ctas">
+            <a href="/shop" class="btn btn-primary" onclick="event.preventDefault();navigateTo('/shop')">Browse Products</a>
+            <a href="https://www.facebook.com/Hanap.Usap.Build" target="_blank" rel="noopener" class="btn btn-outline">Message Us</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- SERVICES -->
   <section class="section section-alt" id="services">
     <div class="container">
@@ -1065,44 +1116,6 @@
                 <div><strong>After-sales support included</strong><span>Got a question weeks later? We don't disappear after the sale.</span></div>
               </li>
             </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ABOUT -->
-  <section class="section" id="about">
-    <div class="container">
-      <div class="about-wrap">
-        <div class="about-img-col">
-          <div class="about-img-main">
-            <img src="/hub-couple.png" alt="H.U.B Store - Hanap Usap Build" loading="lazy">
-          </div>
-          <div class="about-img-accent">
-            <img src="/hub-team.png" alt="H.U.B Team" loading="lazy">
-          </div>
-          <div class="about-stat-chip">
-            <div class="chip-num">24K+</div>
-            <div class="chip-lbl">Facebook Followers</div>
-          </div>
-        </div>
-        <div class="about-text-col">
-          <div class="section-eyebrow"><div class="section-line"></div><span class="section-tag">Who We Are</span></div>
-          <h2 class="section-title">Valenzuela's Go-To <span class="grad">PC Hub</span></h2>
-          <p>H.U.B (Hanap.Usap.Build) is your local PC builder and computer parts store right here in Valenzuela, Philippines. Our name says it all <strong>Hanap</strong> the parts, <strong>Usap</strong> with our expert team, and we <strong>Build</strong> your dream PC together.</p>
-          <p>Whether you're a student on a budget, a gamer chasing higher frames, or a professional needing a workstation H.U.B has the parts, expertise, and deals to get you there.</p>
-          <div class="about-feats">
-            <div class="about-feat"><span class="ck">&#10003;</span>Custom PC builds</div>
-            <div class="about-feat"><span class="ck">&#10003;</span>Quality PC parts</div>
-            <div class="about-feat"><span class="ck">&#10003;</span>Free consultation</div>
-            <div class="about-feat"><span class="ck">&#10003;</span>Trusted by thousands</div>
-            <div class="about-feat"><span class="ck">&#10003;</span>Delivery available</div>
-            <div class="about-feat"><span class="ck">&#10003;</span>Valenzuela-based</div>
-          </div>
-          <div class="about-ctas">
-            <a href="/shop" class="btn btn-primary" onclick="event.preventDefault();navigateTo('/shop')">Browse Products</a>
-            <a href="https://www.facebook.com/Hanap.Usap.Build" target="_blank" rel="noopener" class="btn btn-outline">Message Us</a>
           </div>
         </div>
       </div>
