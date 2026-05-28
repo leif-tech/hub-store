@@ -27,7 +27,7 @@ const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_PATH || path.join(__dirname, 'data');
 const SEED_DIR = path.join(__dirname, 'data');
 const UPLOADS_DIR = process.env.UPLOADS_PATH || path.join(__dirname, 'public', 'uploads');
-const JWT_SECRET = process.env.JWT_SECRET || 'dcte-fallback-secret-change-me';
+const JWT_SECRET = process.env.JWT_SECRET || 'hub-fallback-secret-change-me';
 
 // Ensure directories exist
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -318,7 +318,7 @@ app.post('/api/order', (req, res) => {
   recentOrderHashes.set(orderHash, Date.now());
 
   // Generate unique order ID
-  const orderId = 'DCTE-' + Date.now() + '-' + crypto.randomBytes(3).toString('hex');
+  const orderId = 'HUB-' + Date.now() + '-' + crypto.randomBytes(3).toString('hex');
   const order = { id: orderId, customer, items, shipping, payment, total, customerUid: req.body.customerUid || null, status: 'Pending' };
   appendToFile('orders.json', order);
   console.log(`[ORDER] ${order.id} - ${firstName} ${lastName} - ${items.length} item(s) - Total: ${total}`);
@@ -556,7 +556,7 @@ app.post('/api/admin/analyze-image', authMiddleware, (req, res, next) => {
             },
             {
               type: 'text',
-              text: `You are analyzing a product promotional image for a PC parts store called DCTE (Davao Computer Trade-in Express).
+              text: `You are analyzing a product promotional image for a PC parts store called H.U.B (Hanap.Usap.Build) in Valenzuela, Philippines.
 
 1. First, extract any info visible in the image.
 2. Then, based on the product you identified, use your knowledge to provide additional technical specs that a buyer would want to know (e.g. resolution, response time, ports, TDP, core count, etc. depending on the product type). Do NOT repeat specs already found in the image.
@@ -564,8 +564,8 @@ app.post('/api/admin/analyze-image', authMiddleware, (req, res, next) => {
 Return this JSON structure:
 {
   "product_name": "Full product name (brand + model + key variant info)",
-  "category": "one of: gpu, cpu, mobo, ram, psu, monitor, case, cooler, bundle",
-  "label": "Human-readable category (e.g. Video Card, Processor, Monitor)",
+  "category": "one of: gpu, cpu, mobo, ram, psu, monitor, case, cooler, peripheral, storage, builds",
+  "label": "Human-readable category (e.g. Video Card, Processor, Monitor, Peripherals, Storage)",
   "price": null or number in PHP (no currency symbol),
   "image_specs": { "key": "value" pairs found IN the image },
   "researched_specs": { "key": "value" pairs from your knowledge about this product }
@@ -961,5 +961,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`DCTE server running on port ${PORT}`);
+  console.log(`H.U.B server running on port ${PORT}`);
 });

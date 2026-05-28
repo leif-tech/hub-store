@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DCTE Admin Panel</title>
+  <title>H.U.B Admin Panel</title>
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -263,7 +263,7 @@
 <!-- Login Screen -->
 <div class="login-screen" id="loginScreen">
   <div class="login-box">
-    <h1>DCTE Admin</h1>
+    <h1>H.U.B Admin</h1>
     <p>Sign in to manage your store</p>
     <form onsubmit="doLogin(event)">
       <input type="text" id="loginUser" placeholder="Username" autocomplete="username" required>
@@ -277,7 +277,7 @@
 <!-- Admin Panel -->
 <div class="admin-wrap" id="adminWrap">
   <div class="topbar">
-    <h1>DCTE Admin</h1>
+    <h1>H.U.B Admin</h1>
     <span class="user" id="adminUser"></span>
     <a href="/" class="btn btn-secondary btn-sm">View Store</a>
     <button class="btn btn-secondary btn-sm" onclick="doLogout()">Logout</button>
@@ -825,9 +825,9 @@
 
 <script>
   const API = '';
-  let token = sessionStorage.getItem('dcte_admin_token') || '';
-  let adminUsername = sessionStorage.getItem('dcte_admin_user') || '';
-  let adminRole = sessionStorage.getItem('dcte_admin_role') || '';
+  let token = sessionStorage.getItem('hub_admin_token') || '';
+  let adminUsername = sessionStorage.getItem('hub_admin_user') || '';
+  let adminRole = sessionStorage.getItem('hub_admin_role') || '';
   let allProducts = [], allOrders = [], allContacts = [], allCustomers = [];
   let selectedProducts = new Set();
   let revenueChart = null, statusChart = null;
@@ -912,9 +912,9 @@
       token = data.token;
       adminUsername = data.username;
       adminRole = data.role || 'employee';
-      sessionStorage.setItem('dcte_admin_token', token);
-      sessionStorage.setItem('dcte_admin_user', adminUsername);
-      sessionStorage.setItem('dcte_admin_role', adminRole);
+      sessionStorage.setItem('hub_admin_token', token);
+      sessionStorage.setItem('hub_admin_user', adminUsername);
+      sessionStorage.setItem('hub_admin_role', adminRole);
       showAdmin();
     } catch (err) {
       document.getElementById('loginError').textContent = err.message;
@@ -924,9 +924,9 @@
 
   function doLogout() {
     token = ''; adminUsername = ''; adminRole = '';
-    sessionStorage.removeItem('dcte_admin_token');
-    sessionStorage.removeItem('dcte_admin_user');
-    sessionStorage.removeItem('dcte_admin_role');
+    sessionStorage.removeItem('hub_admin_token');
+    sessionStorage.removeItem('hub_admin_user');
+    sessionStorage.removeItem('hub_admin_role');
     document.getElementById('loginScreen').style.display = '';
     document.getElementById('adminWrap').style.display = 'none';
   }
@@ -938,7 +938,7 @@
       if (!res.ok) return false;
       const data = await res.json();
       adminRole = data.role || 'employee';
-      sessionStorage.setItem('dcte_admin_role', adminRole);
+      sessionStorage.setItem('hub_admin_role', adminRole);
       return true;
     } catch { return false; }
   }
@@ -986,13 +986,13 @@
   }
 
   function showAdminGuideOnce(tab) {
-    const key = 'dcte_guide_admin_' + tab + '_seen';
+    const key = 'hub_guide_admin_' + tab + '_seen';
     if (localStorage.getItem(key)) return;
     const el = document.getElementById('guide' + tab.charAt(0).toUpperCase() + tab.slice(1));
     if (el) el.classList.add('show');
   }
   function dismissAdminGuide(tab) {
-    localStorage.setItem('dcte_guide_admin_' + tab + '_seen', '1');
+    localStorage.setItem('hub_guide_admin_' + tab + '_seen', '1');
     const el = document.getElementById('guide' + tab.charAt(0).toUpperCase() + tab.slice(1));
     if (el) el.classList.remove('show');
   }
@@ -1609,7 +1609,7 @@
     const c = o.customer || {};
     const itemTotal = (o.items || []).reduce((sum, i) => sum + (parseFloat(i.price || i.amount || 0) * (i.qty || i.quantity || 1)), 0);
     const statusClass = 'status-' + (o.status || 'pending').toLowerCase();
-    const shipLabels = { rider: 'Rider Dash', outside: 'Outside Davao', pickup: 'Store Pickup' };
+    const shipLabels = { local: 'Local Delivery', metro: 'Metro Manila', provincial: 'Provincial', pickup: 'Store Pickup' };
     return `
       <div class="order-detail">
         <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
@@ -1822,7 +1822,7 @@
     const blob = new Blob([csv], { type: 'text/csv' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'dcte-customers-' + new Date().toISOString().slice(0,10) + '.csv';
+    a.download = 'hub-customers-' + new Date().toISOString().slice(0,10) + '.csv';
     a.click();
     showAdminToast('Exported ' + withEmail.length + ' customer emails', 'success');
   }
@@ -2351,7 +2351,7 @@
       showAdmin();
     } else {
       token = '';
-      sessionStorage.removeItem('dcte_admin_token');
+      sessionStorage.removeItem('hub_admin_token');
     }
   })();
 </script>

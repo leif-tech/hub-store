@@ -1,14 +1,14 @@
 [
   {
-    "username": "kenny",
-    "password": "$2b$10$PCFywAN.7tJD6n9UCW2Iq.sSbSo0JZAoNzdcNOLPEaKEHS8bB8lkm",
+    "username": "hub_owner",
+    "password": "$2b$10$e05pFhizQrzHwK6gPBuh4.95nXX2G6jkfFlkoF2qjWmN4BjtpqskS",
     "role": "owner",
-    "createdAt": "2026-03-25T02:56:24.870Z"
+    "createdAt": "2026-05-28T00:00:00.000Z"
   },
   {
-    "username": "admin",
-    "password": "$2b$10$U4gwnJdqRXJB7JXVXZlqbOOib2v8AHCyjJd/yemPct.PwaUrsCSzS",
+    "username": "hub_staff",
+    "password": "$2b$10$VqMMUGqIZiujbiWG51M28OBTyWcHEcaNHMjHVtuxjNkLfUpw7L4hO",
     "role": "employee",
-    "createdAt": "2026-03-25T02:56:28.563Z"
+    "createdAt": "2026-05-28T00:00:00.000Z"
   }
 ]

@@ -3,116 +3,125 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checkout - DCTE</title>
-  <!-- Firebase Auth SDK (compat) -->
+  <title>Checkout - H.U.B</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <link rel="icon" type="image/png" href="/favicon.png">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Exo+2:wght@600;700;800;900&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Open Sans',sans-serif;background:#f7f8fc;color:#2d3748;min-height:100vh}
-    :root{--pink:#e91e8c;--purple:#8b2fc9;--cyan:#5cb8e6;--navy:#1a1a3e;--grad:linear-gradient(135deg,var(--pink),var(--purple),var(--cyan));--border:rgba(0,0,0,0.08)}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:#07091c;color:#94a3b8;min-height:100vh}
+    :root{
+      --blue:#1a6ee8;--blue-dark:#1255c0;--gold:#f5c518;
+      --dark:#07091c;--card:#0d1120;--card-alt:#111827;
+      --border:rgba(255,255,255,0.07);--border-blue:rgba(26,110,232,0.2);
+      --text:#94a3b8;--heading:#f1f5f9;
+      --grad:linear-gradient(135deg,#1255c0,#1a6ee8,#38bdf8);
+    }
 
-    .topbar{background:var(--navy);padding:14px 0}
+    .topbar{background:rgba(7,9,28,0.98);border-bottom:1px solid var(--border-blue);padding:14px 0}
     .topbar .inner{max-width:960px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between}
-    .topbar a{color:#fff;text-decoration:none;font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.85rem;display:flex;align-items:center;gap:6px;transition:.2s}
-    .topbar a:hover{color:var(--cyan)}
-    .topbar .logo img{height:32px;width:auto}
+    .topbar a{color:var(--text);text-decoration:none;font-weight:600;font-size:0.85rem;display:flex;align-items:center;gap:6px;transition:.2s}
+    .topbar a:hover{color:#fff}
+    .topbar .logo img{height:34px;width:auto}
+    .topbar .hub-text{font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.1rem;color:var(--heading);letter-spacing:0.5px}
 
     .container{max-width:960px;margin:0 auto;padding:32px 20px 60px}
-    h1{font-family:'Montserrat',sans-serif;font-size:1.4rem;font-weight:800;color:var(--navy);margin-bottom:24px}
+    h1{font-family:'Exo 2',sans-serif;font-size:1.8rem;font-weight:800;color:var(--heading);margin-bottom:24px;letter-spacing:0.5px}
 
     .checkout-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px}
     @media(max-width:768px){.checkout-grid{grid-template-columns:1fr}}
 
-    /* Cards */
-    .card{background:#fff;border-radius:16px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,0.05);border:1px solid var(--border);margin-bottom:20px}
-    .card-title{font-family:'Montserrat',sans-serif;font-size:0.95rem;font-weight:800;color:var(--navy);margin-bottom:18px}
+    .card{background:var(--card);border-radius:14px;padding:24px;border:1px solid var(--border);margin-bottom:20px}
+    .card-title{font-family:'Exo 2',sans-serif;font-size:1rem;font-weight:800;color:var(--heading);margin-bottom:16px;letter-spacing:0.5px;text-transform:uppercase}
 
-    /* Form */
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .form-group{margin-bottom:14px}
-    .form-group label{display:block;font-size:0.78rem;font-weight:700;color:#4a5568;margin-bottom:5px;font-family:'Montserrat',sans-serif}
-    .form-group label .req{color:var(--pink)}
-    .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;font-family:'Open Sans',sans-serif;outline:none;transition:.3s;color:var(--navy)}
-    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(139,47,201,0.08)}
+    .form-group{margin-bottom:13px}
+    .form-group label{display:block;font-size:0.75rem;font-weight:600;color:var(--text);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
+    .form-group label .req{color:#ef4444}
+    .form-group input,.form-group select,.form-group textarea{
+      width:100%;padding:10px 12px;background:var(--card-alt);border:1px solid var(--border);
+      border-radius:8px;font-size:0.87rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none;
+      transition:.3s;color:var(--heading)
+    }
+    .form-group input::placeholder{color:var(--text-dim, #64748b)}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{
+      border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,110,232,0.12)
+    }
+    .form-group select option{background:#111827;color:var(--heading)}
     .form-group textarea{resize:vertical;min-height:70px}
     @media(max-width:480px){.form-row{grid-template-columns:1fr}}
 
-    /* Shipping options */
-    .ship-option{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;margin-bottom:10px;cursor:pointer;transition:.2s}
-    .ship-option:hover{border-color:rgba(139,47,201,0.2)}
-    .ship-option.selected{border-color:var(--purple);background:rgba(139,47,201,0.03)}
-    .ship-option input[type="radio"]{accent-color:var(--purple);margin-top:3px;width:16px;height:16px;flex-shrink:0}
-    .ship-label{font-size:0.85rem;font-weight:600;color:var(--navy)}
-    .ship-desc{font-size:0.75rem;color:#718096;margin-top:2px}
-    .ship-price{font-family:'Montserrat',sans-serif;font-size:0.78rem;font-weight:700;color:var(--pink);margin-top:2px}
+    .ship-option{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;margin-bottom:10px;cursor:pointer;transition:.2s}
+    .ship-option:hover{border-color:var(--border-blue)}
+    .ship-option.selected{border-color:var(--blue);background:rgba(26,110,232,0.06)}
+    .ship-option input[type="radio"]{accent-color:var(--blue);margin-top:3px;width:16px;height:16px;flex-shrink:0}
+    .ship-label{font-size:0.85rem;font-weight:600;color:var(--heading)}
+    .ship-desc{font-size:0.75rem;color:var(--text);margin-top:2px}
+    .ship-price{font-size:0.78rem;font-weight:700;color:var(--gold);margin-top:3px}
 
-    /* Order summary */
-    .order-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:0.88rem;gap:16px}
+    .order-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:0.87rem;gap:16px}
     .order-row:last-child{border-bottom:none}
-    .order-row .label{color:#718096;white-space:nowrap}
-    .order-row .val{font-weight:700;color:var(--navy);text-align:right;white-space:nowrap;flex-shrink:0}
-    .order-row.total{padding-top:14px;margin-top:4px;border-top:2px solid var(--border);border-bottom:none}
-    .order-row.total .label{font-family:'Montserrat',sans-serif;font-weight:800;color:var(--navy);font-size:0.95rem}
-    .order-row.total .val{font-family:'Montserrat',sans-serif;font-size:1.2rem;color:var(--pink);font-weight:800}
+    .order-row .label{color:var(--text);white-space:nowrap}
+    .order-row .val{font-weight:700;color:var(--heading);text-align:right;white-space:nowrap;flex-shrink:0}
+    .order-row.total{padding-top:14px;margin-top:4px;border-top:1px solid var(--border-blue);border-bottom:none}
+    .order-row.total .label{font-family:'Exo 2',sans-serif;font-weight:800;color:var(--heading);font-size:1rem;text-transform:uppercase}
+    .order-row.total .val{font-family:'Exo 2',sans-serif;font-size:1.3rem;color:var(--gold);font-weight:800}
     .order-item{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);gap:16px}
     .order-item .item-info{flex:1;min-width:0}
-    .order-item .item-name{font-size:0.84rem;color:var(--navy);font-weight:600;line-height:1.4}
-    .order-item .item-qty{font-size:0.73rem;color:#a0aec0;margin-top:2px}
-    .order-item .item-price{font-weight:700;color:var(--navy);font-size:0.85rem;white-space:nowrap;flex-shrink:0;text-align:right}
+    .order-item .item-name{font-size:0.84rem;color:var(--heading);font-weight:600;line-height:1.4}
+    .order-item .item-qty{font-size:0.73rem;color:var(--text);margin-top:2px}
+    .order-item .item-price{font-weight:700;color:var(--gold);font-size:0.85rem;white-space:nowrap;flex-shrink:0;text-align:right}
 
-    /* Payment tabs */
     .payment-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-    .pay-tab{padding:9px 18px;border-radius:100px;font-family:'Montserrat',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;transition:all .3s;border:2px solid var(--border);background:#fff;color:#718096}
-    .pay-tab:hover{border-color:var(--purple);color:var(--purple)}
-    .pay-tab.active{background:var(--navy);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(26,26,62,0.25)}
+    .pay-tab{padding:8px 18px;border-radius:100px;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;transition:all .3s;border:1.5px solid var(--border);background:transparent;color:var(--text)}
+    .pay-tab:hover{border-color:var(--blue);color:var(--blue)}
+    .pay-tab.active{background:var(--blue);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(26,110,232,0.3)}
 
     .pay-content{display:none;text-align:center;padding-top:8px}
     .pay-content.active{display:block}
-    .pay-content h3{font-family:'Montserrat',sans-serif;font-size:0.85rem;font-weight:700;color:var(--navy);margin-bottom:2px}
-    .pay-content .acct-name{font-size:0.78rem;color:#718096;margin-bottom:12px}
-    .qr-img{max-width:220px;width:100%;border-radius:10px;margin:0 auto 12px;display:block;box-shadow:0 4px 12px rgba(0,0,0,0.06)}
-    .pay-note{font-size:0.75rem;color:#a0aec0;margin-top:8px}
+    .pay-content h3{font-family:'Exo 2',sans-serif;font-size:1rem;font-weight:800;color:var(--heading);margin-bottom:4px;letter-spacing:0.5px}
+    .pay-content .acct-name{font-size:0.78rem;color:var(--text);margin-bottom:12px}
+    .qr-img{max-width:200px;width:100%;border-radius:10px;margin:0 auto 12px;display:block;border:1px solid var(--border)}
+    .pay-note{font-size:0.75rem;color:var(--text);margin-top:8px}
 
-    /* Place order */
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 28px;border-radius:8px;font-weight:700;font-size:0.88rem;transition:all .3s;font-family:'Montserrat',sans-serif;text-transform:uppercase;letter-spacing:0.5px;text-decoration:none;color:#fff;border:none;cursor:pointer;width:100%}
-    .btn-primary{background:var(--grad);box-shadow:0 4px 16px rgba(139,47,201,0.25)}
-    .btn-primary:hover{box-shadow:0 6px 24px rgba(139,47,201,0.4);transform:translateY(-1px)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 28px;border-radius:8px;font-weight:700;font-size:0.88rem;transition:all .3s;font-family:'Plus Jakarta Sans',sans-serif;text-transform:uppercase;letter-spacing:0.5px;text-decoration:none;color:#fff;border:none;cursor:pointer;width:100%}
+    .btn-primary{background:var(--grad);box-shadow:0 4px 16px rgba(26,110,232,0.25)}
+    .btn-primary:hover{box-shadow:0 6px 24px rgba(26,110,232,0.4);transform:translateY(-1px)}
     .btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none;box-shadow:none}
-
     .btn-fb{background:#1877f2;box-shadow:0 4px 12px rgba(24,119,242,0.3);width:auto;display:inline-flex}
     .btn-fb:hover{box-shadow:0 6px 20px rgba(24,119,242,0.4);transform:translateY(-1px)}
 
     .success-msg{display:none;text-align:center;padding:20px 0}
     .success-msg.show{display:block}
     .success-msg .check{width:56px;height:56px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:1.5rem;color:#fff}
-    .success-msg h3{font-family:'Montserrat',sans-serif;font-size:1rem;font-weight:800;color:var(--navy);margin-bottom:8px}
-    .success-msg p{font-size:0.85rem;color:#718096;line-height:1.6;margin-bottom:16px}
+    .success-msg h3{font-family:'Exo 2',sans-serif;font-size:1.2rem;font-weight:800;color:var(--heading);margin-bottom:8px;letter-spacing:0.5px}
+    .success-msg p{font-size:0.85rem;color:var(--text);line-height:1.6;margin-bottom:16px}
 
-    .warning{font-size:0.75rem;color:#e53e3e;font-weight:600;margin-top:10px;text-align:center}
+    .warning{font-size:0.75rem;color:#f59e0b;font-weight:600;margin-top:10px;text-align:center;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);border-radius:6px;padding:8px 12px}
 
-    /* Guide popup */
-    .guide-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;padding:20px}
+    .guide-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:20px}
     .guide-overlay.show{display:flex}
-    .guide-box{background:#fff;border-radius:16px;max-width:440px;width:100%;padding:32px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.15)}
-    .guide-box h3{font-family:'Montserrat',sans-serif;font-size:1.1rem;font-weight:800;color:var(--navy);margin-bottom:12px}
-    .guide-box p{font-size:0.85rem;color:#4a5568;line-height:1.7;margin-bottom:6px}
-    .guide-box .steps{text-align:left;margin:16px 0;font-size:0.82rem;color:#4a5568;line-height:1.8}
-    .guide-box .steps b{color:var(--navy)}
-    .guide-box .got-it{margin-top:16px;padding:12px 36px;background:var(--grad);color:#fff;border:none;border-radius:8px;font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;transition:opacity .2s}
-    .guide-box .got-it:hover{opacity:0.9}
+    .guide-box{background:var(--card);border:1px solid var(--border-blue);border-radius:16px;max-width:440px;width:100%;padding:32px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.5)}
+    .guide-box h3{font-family:'Exo 2',sans-serif;font-size:1.3rem;font-weight:800;color:var(--heading);margin-bottom:12px;letter-spacing:0.5px}
+    .guide-box p{font-size:0.85rem;color:var(--text);line-height:1.7;margin-bottom:6px}
+    .guide-box .steps{text-align:left;margin:16px 0;font-size:0.82rem;color:var(--text);line-height:1.9}
+    .guide-box .steps b{color:var(--heading)}
+    .guide-box .got-it{margin-top:16px;padding:12px 36px;background:var(--grad);color:#fff;border:none;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;transition:opacity .2s}
+    .guide-box .got-it:hover{opacity:0.85}
 
-    .field-error{border-color:#e53e3e !important;box-shadow:0 0 0 3px rgba(229,62,62,0.1) !important}
-    .error-msg{font-size:0.72rem;color:#e53e3e;margin-top:3px;font-weight:600}
+    .field-error{border-color:#ef4444 !important;box-shadow:0 0 0 3px rgba(239,68,68,0.1) !important}
+    .error-msg{font-size:0.72rem;color:#ef4444;margin-top:3px;font-weight:600}
   </style>
 </head>
 <body>
   <div class="topbar">
     <div class="inner">
       <a href="/">&#10094; Back to Store</a>
-      <span class="logo"><img src="/favicon.png" alt="DCTE"></span>
+      <a href="/" class="logo">
+        <img src="/logo.png" alt="H.U.B" onerror="this.style.display='none'">
+        <span class="hub-text">H.U.B</span>
+      </a>
     </div>
   </div>
 
@@ -129,45 +138,55 @@
               <div class="form-group"><label>Last name <span class="req">*</span></label><input type="text" id="lname" required></div>
             </div>
             <div class="form-group"><label>Street address <span class="req">*</span></label><input type="text" id="street" placeholder="House number and street name" required></div>
-            <div class="form-group"><input type="text" id="street2" placeholder="Apartment, suite, unit etc. (optional)"></div>
+            <div class="form-group"><input type="text" id="street2" placeholder="Apartment, unit, subdivision etc. (optional)"></div>
             <div class="form-row">
               <div class="form-group"><label>Town / City <span class="req">*</span></label><input type="text" id="city" required></div>
-              <div class="form-group"><label>State / Province</label>
+              <div class="form-group"><label>Province / Region</label>
                 <select id="province">
                   <option value="">Select...</option>
-                  <option value="Davao del Sur" selected>Davao del Sur</option>
-                  <option value="Davao del Norte">Davao del Norte</option>
-                  <option value="Davao de Oro">Davao de Oro</option>
-                  <option value="Davao Oriental">Davao Oriental</option>
-                  <option value="Davao Occidental">Davao Occidental</option>
-                  <option value="Other">Other</option>
+                  <option value="Metro Manila (NCR)" selected>Metro Manila (NCR)</option>
+                  <option value="Bulacan">Bulacan</option>
+                  <option value="Cavite">Cavite</option>
+                  <option value="Laguna">Laguna</option>
+                  <option value="Rizal">Rizal</option>
+                  <option value="Pampanga">Pampanga</option>
+                  <option value="Batangas">Batangas</option>
+                  <option value="Other">Other Province</option>
                 </select>
               </div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>Postcode / ZIP</label><input type="text" id="zip" placeholder="8000"></div>
+              <div class="form-group"><label>Postcode / ZIP</label><input type="text" id="zip" placeholder="1441"></div>
               <div class="form-group"><label>Phone <span class="req">*</span></label><input type="tel" id="phone" placeholder="09XX XXX XXXX" required></div>
             </div>
             <div class="form-group"><label>Email address <span class="req">*</span></label><input type="email" id="email" placeholder="you@email.com" required></div>
-            <div class="form-group"><label>Order notes (optional)</label><textarea id="notes" placeholder="Notes about your order, e.g. special notes for delivery."></textarea></div>
-          </form><!-- form validation handled in JS -->
+            <div class="form-group"><label>Order notes (optional)</label><textarea id="notes" placeholder="Notes about your order, e.g. special delivery instructions."></textarea></div>
+          </form>
         </div>
 
         <div class="card">
           <div class="card-title">Shipping</div>
-          <label class="ship-option selected" onclick="selectShip(this,'rider')">
-            <input type="radio" name="shipping" value="rider" checked>
+          <label class="ship-option selected" onclick="selectShip(this,'local')">
+            <input type="radio" name="shipping" value="local" checked>
             <div>
-              <div class="ship-label">Rider Dash - Davao City</div>
-              <div class="ship-desc">First 4km at P79 then succeeding P15/km</div>
-              <div class="ship-price">Starting at P79</div>
+              <div class="ship-label">Local Delivery — Valenzuela City</div>
+              <div class="ship-desc">Grab / Lalamove / Angkas — within city limits</div>
+              <div class="ship-price">Starting at ₱79</div>
             </div>
           </label>
-          <label class="ship-option" onclick="selectShip(this,'outside')">
-            <input type="radio" name="shipping" value="outside">
+          <label class="ship-option" onclick="selectShip(this,'metro')">
+            <input type="radio" name="shipping" value="metro">
             <div>
-              <div class="ship-label">Outside Davao City</div>
-              <div class="ship-desc">Shipping rates depend on location + item weight & size</div>
+              <div class="ship-label">Metro Manila Delivery</div>
+              <div class="ship-desc">Same-day or next-day courier — rates vary by distance</div>
+              <div class="ship-price">Varies</div>
+            </div>
+          </label>
+          <label class="ship-option" onclick="selectShip(this,'provincial')">
+            <input type="radio" name="shipping" value="provincial">
+            <div>
+              <div class="ship-label">Provincial / Outside NCR</div>
+              <div class="ship-desc">Via JRS / J&T / LBC — based on item weight & location</div>
               <div class="ship-price">Varies</div>
             </div>
           </label>
@@ -175,7 +194,7 @@
             <input type="radio" name="shipping" value="pickup">
             <div>
               <div class="ship-label">Store Pickup</div>
-              <div class="ship-desc">Pick up at Agdao or Ecoland branch</div>
+              <div class="ship-desc">Pick up at H.U.B — 3/F Unit 306 Arbortowne Plaza II, Karuhatan, Valenzuela</div>
               <div class="ship-price">Free</div>
             </div>
           </label>
@@ -186,9 +205,9 @@
       <div>
         <div class="card">
           <div class="card-title">Your Order</div>
-          <div class="order-row" style="border-bottom:2px solid var(--border);padding-bottom:12px;margin-bottom:4px">
-            <span class="label" style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.72rem;text-transform:uppercase;letter-spacing:1px">Product</span>
-            <span class="label" style="font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.72rem;text-transform:uppercase;letter-spacing:1px">Subtotal</span>
+          <div class="order-row" style="border-bottom:1px solid var(--border-blue);padding-bottom:12px;margin-bottom:4px">
+            <span class="label" style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text)">Product</span>
+            <span class="label" style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text)">Subtotal</span>
           </div>
           <div id="orderItems"></div>
           <div class="order-row">
@@ -197,7 +216,7 @@
           </div>
           <div class="order-row">
             <span class="label">Shipping</span>
-            <span class="val" id="shippingLabel" style="font-size:0.82rem">Rider Dash (from P79)</span>
+            <span class="val" id="shippingLabel" style="font-size:0.82rem">Local Delivery (from ₱79)</span>
           </div>
           <div class="order-row total">
             <span class="label">Total</span>
@@ -209,40 +228,39 @@
           <div class="card-title">Payment Method</div>
           <div class="payment-tabs">
             <button class="pay-tab active" onclick="switchTab('gcash',this)">GCash</button>
-            <button class="pay-tab" onclick="switchTab('metrobank',this)">Metrobank</button>
-            <button class="pay-tab" onclick="switchTab('gotyme',this)">GoTyme</button>
+            <button class="pay-tab" onclick="switchTab('maya',this)">Maya</button>
+            <button class="pay-tab" onclick="switchTab('bank',this)">Bank Transfer</button>
           </div>
 
           <div class="pay-content active" id="tab-gcash">
             <h3>GCash</h3>
-            <p class="acct-name">Kenn Barry M. | 0995 653 ****</p>
-            <img src="/qr-gcash.jpg" alt="GCash QR Code" class="qr-img">
-            <p class="pay-note">Scan QR with GCash app and send exact total amount</p>
+            <p class="acct-name">H.U.B Store | 09XX XXX XXXX</p>
+            <img src="/qr-gcash.jpg" alt="GCash QR Code" class="qr-img" onerror="this.style.display='none'">
+            <p class="pay-note">Scan QR with GCash app and send the exact total amount</p>
           </div>
-          <div class="pay-content" id="tab-metrobank">
-            <h3>Metrobank (InstaPay)</h3>
-            <p class="acct-name">Kenny | Acct ending in 9436</p>
-            <img src="/qr-metrobank.jpg" alt="Metrobank QR Code" class="qr-img">
-            <p class="pay-note">Scan QR via InstaPay from any banking app</p>
+          <div class="pay-content" id="tab-maya">
+            <h3>Maya (PayMaya)</h3>
+            <p class="acct-name">H.U.B Store | 09XX XXX XXXX</p>
+            <img src="/qr-maya.jpg" alt="Maya QR Code" class="qr-img" onerror="this.style.display='none'">
+            <p class="pay-note">Scan QR with Maya app and send the exact total amount</p>
           </div>
-          <div class="pay-content" id="tab-gotyme">
-            <h3>GoTyme Bank (InstaPay)</h3>
-            <p class="acct-name">Kenn Barry Merquita | Acct ending in 3440</p>
-            <img src="/qr-gotyme.jpg" alt="GoTyme QR Code" class="qr-img">
-            <p class="pay-note">Scan QR via InstaPay from any banking app</p>
+          <div class="pay-content" id="tab-bank">
+            <h3>Bank Transfer (InstaPay)</h3>
+            <p class="acct-name">H.U.B | BDO / BPI — Account details via Messenger</p>
+            <p class="pay-note" style="font-size:0.8rem;color:var(--text)">Message us on Facebook for bank account details before transferring</p>
           </div>
 
-          <p class="warning">Please confirm stock availability first. Message us on Facebook before paying.</p>
+          <p class="warning">&#9888; Please confirm stock availability before paying. Message us on Facebook Messenger first.</p>
         </div>
 
         <button type="submit" class="btn btn-primary" id="placeBtn" onclick="placeOrder(event)">Place Order</button>
-        <a href="/" style="display:block;text-align:center;margin-top:12px;font-size:0.82rem;font-weight:600;color:#718096;font-family:'Montserrat',sans-serif">&#10094; Back to Store</a>
+        <a href="/" style="display:block;text-align:center;margin-top:12px;font-size:0.82rem;font-weight:600;color:var(--text)">&#10094; Back to Store</a>
 
         <div class="success-msg" id="successMsg">
           <div class="check">&#10003;</div>
           <h3>Order Placed!</h3>
-          <p>Send your <strong>payment screenshot</strong> to our Facebook Messenger so we can verify and process your order.</p>
-          <a href="https://www.facebook.com/messages/t/DCTE168" target="_blank" rel="noopener" class="btn btn-fb">
+          <p>Send your <strong style="color:var(--heading)">payment screenshot</strong> to our Facebook Messenger so we can verify and process your order.</p>
+          <a href="https://www.facebook.com/messages/t/HUBValenzuela" target="_blank" rel="noopener" class="btn btn-fb" style="width:auto;margin:0 auto">
             <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.908 1.434 5.503 3.678 7.2V22l3.455-1.896A10.7 10.7 0 0012 20.486c5.523 0 10-4.145 10-9.243S17.523 2 12 2zm1.077 12.456l-2.549-2.72-4.974 2.72 5.472-5.81 2.613 2.72 4.91-2.72-5.472 5.81z"/></svg>
             Send Proof via Messenger
           </a>
@@ -259,10 +277,10 @@
         <b>1.</b> Fill in your billing &amp; shipping details<br>
         <b>2.</b> Choose your shipping method<br>
         <b>3.</b> Select a payment method and scan the QR code<br>
-        <b>4.</b> Place your order, then send your payment screenshot via Messenger
+        <b>4.</b> Place your order, then send payment screenshot via Messenger
       </div>
-      <p style="font-size:0.78rem;color:#718096">We'll confirm your order once payment is verified.</p>
-      <button class="got-it" onclick="dismissGuide()">Got It</button>
+      <p style="font-size:0.78rem;color:var(--text)">We'll confirm your order once payment is verified.</p>
+      <button class="got-it" onclick="dismissGuide()">Got It!</button>
     </div>
   </div>
 
@@ -271,8 +289,8 @@
     const fmt = p => '\u20B1' + p.toLocaleString('en-PH');
     const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-    // Pre-fill from URL params (passed from storefront) or localStorage
-    const storedUser = JSON.parse(localStorage.getItem('dcte_user') || 'null');
+    // Pre-fill from URL params or localStorage
+    const storedUser = JSON.parse(localStorage.getItem('hub_user') || 'null');
     const uname = params.get('uname') || (storedUser && storedUser.name) || '';
     const uemail = params.get('uemail') || (storedUser && storedUser.email) || '';
     const customerUid = params.get('uid') || (storedUser && storedUser.uid) || '';
@@ -289,15 +307,15 @@
     }
 
     // One-time checkout guide
-    if (!localStorage.getItem('dcte_guide_checkout_seen')) {
+    if (!localStorage.getItem('hub_guide_checkout_seen')) {
       document.getElementById('checkoutGuide').classList.add('show');
     }
     function dismissGuide() {
-      localStorage.setItem('dcte_guide_checkout_seen', '1');
+      localStorage.setItem('hub_guide_checkout_seen', '1');
       document.getElementById('checkoutGuide').classList.remove('show');
     }
 
-    // Support multi-item cart checkout
+    // Build order items from URL params
     let cartItems = [];
     if (params.get('cart')) {
       cartItems = params.get('cart').split(';;').map(s => {
@@ -309,7 +327,7 @@
     }
 
     const subtotalPrice = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
-    let shippingCost = 79; // Default: Rider Dash starting at P79
+    let shippingCost = 79;
     const orderItemsEl = document.getElementById('orderItems');
     cartItems.forEach(item => {
       const row = document.createElement('div');
@@ -319,7 +337,7 @@
     });
     document.getElementById('subtotal').textContent = fmt(subtotalPrice);
     updateTotal();
-    document.title = 'Checkout - DCTE';
+    document.title = 'Checkout - H.U.B';
 
     function updateTotal() {
       document.getElementById('totalPrice').textContent = fmt(subtotalPrice + shippingCost);
@@ -329,10 +347,15 @@
       document.querySelectorAll('.ship-option').forEach(o => o.classList.remove('selected'));
       el.classList.add('selected');
       el.querySelector('input').checked = true;
-      const labels = { rider: 'Rider Dash (from \u20B179)', outside: 'Varies by location', pickup: 'Free - Store Pickup' };
-      const costs = { rider: 79, outside: 0, pickup: 0 };
+      const labels = {
+        local: 'Local Delivery (from \u20B179)',
+        metro: 'Metro Manila Delivery — Varies',
+        provincial: 'Provincial Shipping — Varies',
+        pickup: 'Free — Store Pickup'
+      };
+      const costs = { local: 79, metro: 0, provincial: 0, pickup: 0 };
       shippingCost = costs[type];
-      document.getElementById('shippingLabel').textContent = labels[type] + (costs[type] > 0 ? '' : '');
+      document.getElementById('shippingLabel').textContent = labels[type];
       updateTotal();
     }
 
@@ -364,14 +387,10 @@
 
     function placeOrder(e) {
       e.preventDefault();
-
-      // Prevent double submit
       if (isSubmitting) return;
-
       const btn = document.getElementById('placeBtn');
       if (btn.disabled) return;
 
-      // Clear previous errors
       document.querySelectorAll('.field-error').forEach(el => clearFieldError(el));
 
       const fname = document.getElementById('fname').value.trim();
@@ -386,14 +405,12 @@
         return;
       }
 
-      // Email validation
       const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRe.test(email)) {
         showFieldError(document.getElementById('email'), 'Please enter a valid email address');
         return;
       }
 
-      // Phone validation (Philippine format)
       const phoneClean = phone.replace(/[\s\-]/g, '');
       const phoneRe = /^(\+?63|0)9\d{9}$/;
       if (!phoneRe.test(phoneClean)) {
@@ -408,7 +425,12 @@
       const shipEl = document.querySelector('.ship-option.selected input');
       const orderTotal = subtotalPrice + shippingCost;
       const order = {
-        customer: { firstName: fname, lastName: lname, street, city: document.getElementById('city').value, province: document.getElementById('province').value, zip: document.getElementById('zip').value, phone, email, notes: document.getElementById('notes').value },
+        customer: {
+          firstName: fname, lastName: lname, street, city,
+          province: document.getElementById('province').value,
+          zip: document.getElementById('zip').value,
+          phone, email, notes: document.getElementById('notes').value
+        },
         items: cartItems,
         shipping: shipEl ? shipEl.value : 'pickup',
         payment: document.querySelector('.pay-tab.active')?.textContent || 'GCash',
@@ -419,11 +441,8 @@
       fetch('/api/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) })
         .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
         .then(({ ok, data }) => {
-          if (!ok || !data.success) {
-            throw new Error(data.error || 'Order could not be placed');
-          }
-          // Clear cart in localStorage
-          try { localStorage.removeItem('dcte_cart'); } catch(e) {}
+          if (!ok || !data.success) throw new Error(data.error || 'Order could not be placed');
+          try { localStorage.removeItem('hub_cart'); } catch(e) {}
           isSubmitting = false;
           btn.style.display = 'none';
           document.getElementById('successMsg').classList.add('show');
@@ -437,7 +456,6 @@
         });
     }
 
-    // Clear error on input
     document.querySelectorAll('#orderForm input, #orderForm select, #orderForm textarea').forEach(el => {
       el.addEventListener('input', () => clearFieldError(el));
     });

@@ -3,38 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Data Deletion - DCTE</title>
+  <title>Data Deletion - H.U.B</title>
   <link rel="icon" type="image/png" href="/favicon.png">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Exo+2:wght@600;700;800;900&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Open Sans',sans-serif;background:#0d0f1a;color:#c5c8d6;min-height:100vh}
-    :root{--pink:#e91e8c;--purple:#8b2fc9;--cyan:#5cb8e6;--navy:#1a1a3e;--grad:linear-gradient(135deg,var(--pink),var(--purple),var(--cyan))}
-    .topbar{background:var(--navy);padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:#07091c;color:#94a3b8;min-height:100vh}
+    :root{--blue:#1a6ee8;--dark:#07091c;--card:#0d1120;--border:rgba(255,255,255,0.07);--border-blue:rgba(26,110,232,0.2);--heading:#f1f5f9}
+    .topbar{background:rgba(7,9,28,0.98);padding:14px 0;border-bottom:1px solid var(--border-blue)}
     .topbar .inner{max-width:800px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between}
-    .topbar a{color:#fff;text-decoration:none;font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.85rem;display:flex;align-items:center;gap:6px;transition:.2s}
-    .topbar a:hover{color:var(--cyan)}
+    .topbar a{color:#94a3b8;text-decoration:none;font-weight:600;font-size:0.85rem;display:flex;align-items:center;gap:6px;transition:.2s}
+    .topbar a:hover{color:#fff}
+    .topbar .brand{font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.1rem;color:var(--heading);letter-spacing:0.5px}
     .container{max-width:800px;margin:0 auto;padding:40px 20px 80px}
-    h1{font-family:'Montserrat',sans-serif;font-size:1.8rem;font-weight:800;color:#fff;margin-bottom:8px}
-    .updated{font-size:0.82rem;color:#717590;margin-bottom:32px}
-    h2{font-family:'Montserrat',sans-serif;font-size:1.1rem;font-weight:700;color:#fff;margin:28px 0 10px}
-    p,li{font-size:0.92rem;line-height:1.75;color:#c5c8d6;margin-bottom:10px}
+    h1{font-family:'Exo 2',sans-serif;font-size:2rem;font-weight:800;color:var(--heading);margin-bottom:8px;letter-spacing:0.5px}
+    .updated{font-size:0.82rem;color:#64748b;margin-bottom:32px}
+    h2{font-family:'Exo 2',sans-serif;font-size:1.15rem;font-weight:800;color:var(--heading);margin:28px 0 10px;letter-spacing:0.3px}
+    p,li{font-size:0.92rem;line-height:1.75;color:#94a3b8;margin-bottom:10px}
     ul,ol{padding-left:20px;margin-bottom:14px}
-    a{color:var(--cyan)}
-    .card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:32px;margin-bottom:20px}
+    a{color:var(--blue)}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:20px}
+    strong{color:var(--heading)}
     .steps{counter-reset:steps}
     .steps li{counter-increment:steps;margin-bottom:14px}
-    .steps li::marker{font-family:'Montserrat',sans-serif;font-weight:700;color:var(--cyan)}
+    .steps li::marker{font-weight:700;color:var(--blue)}
   </style>
 </head>
 <body>
-  <div class="topbar"><div class="inner"><a href="/"><img src="/favicon.png" alt="DCTE" style="height:28px;width:auto"> DCTE</a><a href="/">Back to Store</a></div></div>
+  <div class="topbar">
+    <div class="inner">
+      <a href="/"><img src="/logo.png" alt="H.U.B" style="height:28px;width:auto" onerror="this.style.display='none'"> <span class="brand">H.U.B</span></a>
+      <a href="/">Back to Store</a>
+    </div>
+  </div>
   <div class="container">
     <h1>Data Deletion</h1>
-    <p class="updated">Last updated: April 4, 2026</p>
+    <p class="updated">Last updated: May 28, 2026</p>
 
     <div class="card">
-      <p>At Davao Computer Trade-in Express (DCTE), we respect your right to control your personal data. You can request the deletion of all data associated with your account at any time.</p>
+      <p>At H.U.B (Hanap.Usap.Build), we respect your right to control your personal data. You can request the deletion of all data associated with your account at any time.</p>
     </div>
 
     <h2>What Data We Store</h2>
@@ -49,9 +56,9 @@
     <h2>How to Request Data Deletion</h2>
     <p>To request deletion of your data, contact us through any of the following methods:</p>
     <ol class="steps">
-      <li>Send an email to <a href="mailto:joannamasarieta1@gmail.com">joannamasarieta1@gmail.com</a> with the subject line <strong>"Data Deletion Request"</strong> and include the email address associated with your account.</li>
-      <li>Message us on our <a href="https://www.facebook.com/DCTE168" target="_blank" rel="noopener">Facebook page</a> with your data deletion request.</li>
-      <li>Call us at <strong>0995 653 3350</strong> or <strong>0915 350 2729</strong> during business hours.</li>
+      <li>Send an email to <a href="mailto:hub@email.com">hub@email.com</a> with the subject line <strong>"Data Deletion Request"</strong> and include the email address associated with your account.</li>
+      <li>Message us on our <a href="https://www.facebook.com/HUBValenzuela" target="_blank" rel="noopener">Facebook page</a> with your data deletion request.</li>
+      <li>Visit us at <strong>3/F Unit 306 Arbortowne Plaza II, Karuhatan Road, Valenzuela</strong> during business hours.</li>
     </ol>
 
     <h2>What Happens After Your Request</h2>
@@ -63,10 +70,10 @@
     </ul>
 
     <h2>Facebook Data Deletion</h2>
-    <p>If you signed in using Facebook and wish to remove the connection between your Facebook account and DCTE:</p>
+    <p>If you signed in using Facebook and wish to remove the connection between your Facebook account and H.U.B:</p>
     <ol class="steps">
       <li>Go to your <a href="https://www.facebook.com/settings?tab=applications" target="_blank" rel="noopener">Facebook App Settings</a>.</li>
-      <li>Find <strong>DCTE Store</strong> in the list of apps.</li>
+      <li>Find <strong>H.U.B Store</strong> in the list of apps.</li>
       <li>Click <strong>Remove</strong> to revoke access.</li>
       <li>Contact us using the methods above to delete the data already stored on our servers.</li>
     </ol>
@@ -74,9 +81,9 @@
     <h2>Contact</h2>
     <p>For any questions about data deletion, reach out to us:</p>
     <ul>
-      <li>Email: <a href="mailto:joannamasarieta1@gmail.com">joannamasarieta1@gmail.com</a></li>
-      <li>Phone: 0995 653 3350 / 0915 350 2729</li>
-      <li>Facebook: <a href="https://www.facebook.com/DCTE168" target="_blank" rel="noopener">DCTE Facebook Page</a></li>
+      <li>Email: <a href="mailto:hub@email.com">hub@email.com</a></li>
+      <li>Address: 3/F Unit 306 Arbortowne Plaza II, Karuhatan Road, Valenzuela, Philippines 1442</li>
+      <li>Facebook: <a href="https://www.facebook.com/HUBValenzuela" target="_blank" rel="noopener">H.U.B Facebook Page</a></li>
     </ul>
   </div>
 </body>
