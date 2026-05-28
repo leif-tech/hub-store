@@ -163,10 +163,11 @@
     .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
 
     /* ===== HERO ===== */
-    .hero{background:linear-gradient(135deg,#07091c 0%,#0d1535 55%,#0a1a45 100%);overflow:hidden;position:relative;padding:0;min-height:500px}
-    .hero::before{content:'';position:absolute;top:0;right:0;bottom:0;width:60%;background:radial-gradient(ellipse at 80% 50%,rgba(26,110,232,0.2) 0%,transparent 65%);pointer-events:none;z-index:0}
-    .hero-inner{max-width:1240px;margin:0 auto;padding:0 24px;display:block;min-height:500px;position:relative;z-index:1}
-    .hero-text-block{padding:80px 0;text-align:left;max-width:580px;position:relative;z-index:2}
+    .hero{position:relative;overflow:hidden;min-height:520px}
+    .hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0}
+    .hero::after{content:'';position:absolute;inset:0;background:rgba(4,6,20,0.62);z-index:1}
+    .hero-inner{max-width:1240px;margin:0 auto;padding:0 24px;position:relative;z-index:2}
+    .hero-text-block{padding:90px 0;text-align:left;max-width:620px}
     .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.18);border-radius:100px;padding:6px 16px;font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.85);margin-bottom:20px;letter-spacing:0.3px}
     .hero-sub{font-family:'Rajdhani',sans-serif;font-size:0.88rem;font-weight:600;letter-spacing:5px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:10px}
     .hero-title{font-family:'Rajdhani',sans-serif;font-size:clamp(2.8rem,6vw,5.8rem);font-weight:700;color:#fff;letter-spacing:3px;line-height:1.0;text-transform:uppercase;margin-bottom:32px}
@@ -175,11 +176,7 @@
     .hero-btn-outline:hover{background:#fff;color:#000;border-color:#fff}
     .hero-btn-fill{display:inline-flex;align-items:center;padding:11px 34px;background:var(--blue);color:#fff;border:2px solid var(--blue);border-radius:3px;font-family:'Rajdhani',sans-serif;font-size:0.92rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;transition:all .2s;text-decoration:none}
     .hero-btn-fill:hover{background:var(--blue-dark);border-color:var(--blue-dark)}
-    .hero-img-wrap{position:absolute;top:0;right:0;width:45%;height:100%;z-index:0}
-    .hero-img-wrap::before{content:'';position:absolute;inset:0;background:linear-gradient(to right,#07091c 0%,transparent 40%);z-index:1}
-    .hero-img-frame{position:absolute;inset:0}
-    .hero-img-frame img{width:100%;height:100%;display:block;object-fit:cover;object-position:center}
-    @media(max-width:900px){.hero-inner{grid-template-columns:1fr}.hero-img-wrap{display:none}.hero-text-block{text-align:center;padding:48px 0 36px}.hero-btns{justify-content:center}}
+    @media(max-width:900px){.hero-text-block{text-align:center;padding:64px 0 48px}.hero-btns{justify-content:center}}
     @media(max-width:768px){.hero-title{letter-spacing:2px}}
 
     /* ===== TRUST STATS ===== */
@@ -823,11 +820,7 @@
 
   <!-- HERO -->
   <section class="hero" id="hero">
-    <div class="hero-img-wrap">
-      <div class="hero-img-frame">
-        <img src="/hero-bg.png" alt="H.U.B Store - Hanap Usap Build" loading="eager">
-      </div>
-    </div>
+    <img class="hero-bg" src="/hero-bg.png" alt="" loading="eager">
     <div class="hero-inner">
       <div class="hero-text-block">
         <div class="hero-badge">⭐ 5.0 &nbsp;·&nbsp; 413+ Facebook Reviews</div>
