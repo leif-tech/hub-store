@@ -12,12 +12,12 @@
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-    :root{--bg:#07091c;--card:#0d1120;--card-hover:#111827;--border:rgba(255,255,255,0.08);--text:#94a3b8;--text-dim:#4e6080;--navy:#f1f5f9;--purple:#1a6ee8;--pink:#3b9dfd;--cyan:#3b9dfd;--grad:linear-gradient(135deg,#1255c0,#1a6ee8,#3b9dfd);--success:#22c55e;--danger:#ef4444;--warning:#f59e0b;--shadow:0 1px 3px rgba(0,0,0,0.3),0 1px 2px rgba(0,0,0,0.2);--shadow-md:0 4px 12px rgba(0,0,0,0.3);--shadow-lg:0 10px 40px rgba(0,0,0,0.5)}
+    :root{--bg:#0d0d0d;--card:#141414;--card-hover:#1c1c1c;--border:#2a2a2a;--text:#aaaaaa;--text-dim:#555555;--navy:#ffffff;--purple:#1e9bff;--pink:#1e9bff;--cyan:#1e9bff;--grad:linear-gradient(135deg,#0066cc,#1e9bff);--success:#22c55e;--danger:#ef4444;--warning:#f59e0b;--shadow:0 2px 8px rgba(0,0,0,0.6);--shadow-md:0 4px 16px rgba(0,0,0,0.7);--shadow-lg:0 10px 40px rgba(0,0,0,0.85)}
     body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
     a{color:var(--cyan);text-decoration:none}
     button{cursor:pointer;border:none;font-family:inherit;background:none;color:inherit}
-    input,select,textarea{font-family:inherit;font-size:0.85rem;background:#080c1f;color:var(--navy);border:1px solid var(--border);border-radius:8px;padding:8px 12px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s}
-    input:focus,select:focus,textarea:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(26,110,232,0.15)}
+    input,select,textarea{font-family:inherit;font-size:0.85rem;background:#0a0a0a;color:var(--navy);border:1px solid var(--border);border-radius:4px;padding:8px 12px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s}
+    input:focus,select:focus,textarea:focus{border-color:var(--purple);box-shadow:0 0 0 2px rgba(30,155,255,0.2)}
     select{appearance:auto}
     table{width:100%;border-collapse:collapse}
     th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);font-size:0.82rem}
@@ -26,7 +26,7 @@
 
     /* Login Screen */
     .login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:var(--bg)}
-    .login-box{background:var(--card);border-radius:16px;padding:40px;max-width:380px;width:100%;text-align:center;box-shadow:var(--shadow-lg);border:1px solid var(--border)}
+    .login-box{background:#000;border-radius:4px;padding:40px;max-width:380px;width:100%;text-align:center;box-shadow:var(--shadow-lg);border:1px solid var(--border);border-top:2px solid var(--purple)}
     .login-box h1{font-family:'Exo 2',sans-serif;font-size:1.4rem;margin-bottom:6px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
     .login-box p{color:var(--text-dim);font-size:0.82rem;margin-bottom:24px}
     .login-box input{margin-bottom:12px}
@@ -35,7 +35,7 @@
 
     /* Layout */
     .admin-wrap{display:none}
-    .topbar{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow)}
+    .topbar{background:#000;border-bottom:1px solid var(--border);border-top:2px solid var(--purple);padding:12px 24px;display:flex;align-items:center;gap:16px}
     .topbar h1{font-family:'Exo 2',sans-serif;font-size:1rem;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex:1}
     .topbar .user{font-size:0.78rem;color:var(--text-dim);display:flex;align-items:center;gap:8px}
     .topbar .btn-sm{font-size:0.72rem;padding:6px 14px}
@@ -46,7 +46,7 @@
     .role-badge.employee{background:rgba(14,165,233,0.12);color:var(--cyan)}
 
     /* Tabs */
-    .tabs{display:flex;gap:0;background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;overflow-x:auto}
+    .tabs{display:flex;gap:0;background:#000;border-bottom:1px solid var(--border);padding:0 24px;overflow-x:auto}
     .tab-btn{font-family:'Exo 2',sans-serif;font-size:0.78rem;font-weight:600;padding:14px 20px;color:var(--text-dim);border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.2s}
     .tab-btn:hover{color:var(--text)}
     .tab-btn.active{color:var(--purple);border-bottom-color:var(--purple)}
@@ -58,7 +58,7 @@
 
     /* Cards */
     .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
-    .stat-card{background:var(--card);border-radius:12px;padding:20px;border:1px solid var(--border);box-shadow:var(--shadow);transition:transform 0.2s,box-shadow 0.2s}
+    .stat-card{background:var(--card);border-radius:3px;padding:20px;border:1px solid var(--border);box-shadow:var(--shadow);transition:transform 0.2s,box-shadow 0.2s;border-left:3px solid var(--purple)}
     .stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
     .stat-card .label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);font-family:'Exo 2',sans-serif;font-weight:600}
     .stat-card .value{font-family:'Exo 2',sans-serif;font-size:1.8rem;font-weight:700;margin-top:4px}
@@ -69,11 +69,13 @@
     .stat-card .value.warn{color:var(--warning)}
 
     /* Buttons */
-    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;font-family:'Exo 2',sans-serif;font-weight:600;font-size:0.78rem;transition:opacity 0.2s,transform 0.1s}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:3px;font-family:'Exo 2',sans-serif;font-weight:600;font-size:0.78rem;transition:opacity 0.2s,transform 0.1s,background 0.2s}
     .btn:hover{opacity:0.85}
     .btn:active{transform:scale(0.98)}
-    .btn-primary{background:var(--grad);color:#fff}
-    .btn-secondary{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+    .btn-primary{background:var(--purple);color:#fff}
+    .btn-primary:hover{background:#3daeff;opacity:1}
+    .btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .btn-secondary:hover{border-color:var(--purple);color:var(--navy);opacity:1}
     .btn-danger{background:var(--danger);color:#fff}
     .btn-icon{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:6px;font-size:0.85rem;opacity:0.6;transition:all .2s}
     .btn-icon:hover{opacity:1;background:rgba(0,0,0,0.05)}
@@ -86,12 +88,12 @@
     .toolbar .spacer{flex:1}
 
     /* Table wrapper */
-    .table-wrap{background:var(--card);border-radius:12px;border:1px solid var(--border);overflow:auto;max-height:calc(100vh - 280px);box-shadow:var(--shadow)}
+    .table-wrap{background:var(--card);border-radius:3px;border:1px solid var(--border);overflow:auto;max-height:calc(100vh - 280px);box-shadow:var(--shadow)}
 
     /* Modal */
     .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;padding:20px}
     .modal-overlay.open{display:flex}
-    .modal{background:var(--card);border-radius:16px;max-width:640px;width:100%;max-height:90vh;overflow-y:auto;border:1px solid var(--border);box-shadow:var(--shadow-lg)}
+    .modal{background:var(--card);border-radius:3px;max-width:640px;width:100%;max-height:90vh;overflow-y:auto;border:1px solid var(--border);box-shadow:var(--shadow-lg);border-top:2px solid var(--purple)}
     .modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border)}
     .modal-header h2{font-family:'Exo 2',sans-serif;font-size:1rem;color:var(--navy)}
     .modal-header .close{font-size:1.4rem;color:var(--text-dim);padding:4px}
@@ -873,16 +875,8 @@
     const roleBadge = `<span class="role-badge ${adminRole}">${roleLabel}</span>`;
     document.getElementById('adminUser').innerHTML = escapeHTML(adminUsername) + ' ' + roleBadge;
 
-    // Role-based tab visibility — only Dashboard is owner-only
-    const isOwner = adminRole === 'owner';
-    document.getElementById('tabBtn-dashboard').style.display = isOwner ? '' : 'none';
-
-    if (!isOwner) {
-      // Employees default to Products tab
-      switchTab('products', document.getElementById('tabBtn-products'));
-    } else {
-      switchTab('dashboard', document.getElementById('tabBtn-dashboard'));
-    }
+    // All roles see everything
+    switchTab('dashboard', document.getElementById('tabBtn-dashboard'));
   }
 
   // ── Tabs ───────────────────────────────────────────────────
