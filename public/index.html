@@ -1434,7 +1434,7 @@
     function registerCustomer(user) {
       const provider = user.providerData && user.providerData[0] ? user.providerData[0].providerId : 'unknown';
       fetch('/api/customers', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({
           uid: user.uid, name: user.displayName || 'User',
           email: user.email || (user.providerData && user.providerData[0] ? user.providerData[0].email : null),
@@ -2128,7 +2128,7 @@
       const f=e.target,b=f.querySelector('button[type="submit"]'),o=b.innerHTML;
       b.innerHTML='Sending...';b.disabled=true;
       const data={name:f.name.value,email:f.email.value,phone:f.phone?.value||'',message:f.message.value};
-      fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+      fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify(data)})
         .then(r=>r.json()).then(d=>{
           b.innerHTML='&#10003; Sent!';b.style.background='linear-gradient(135deg,#22c55e,#16a34a)';f.reset();
           setTimeout(()=>{b.innerHTML=o;b.style.background='';b.disabled=false},3000);

@@ -446,7 +446,7 @@
         customerUid: customerUid || null
       };
 
-      fetch('/api/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) })
+      fetch('/api/order', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: JSON.stringify(order) })
         .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
         .then(({ ok, data }) => {
           if (!ok || !data.success) throw new Error(data.error || 'Order could not be placed');

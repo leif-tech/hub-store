@@ -9,6 +9,7 @@ const multer = require('multer');
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const nodemailer = require('nodemailer');
 
 let Anthropic, anthropic;
 try {
@@ -144,6 +145,15 @@ function sanitizeInput(str, maxLen = 500) {
   return str.replace(/<[^>]*>/g, '').trim().slice(0, maxLen);
 }
 
+// H1: CSRF protection — require custom header on public state-changing endpoints
+// Browser fetch() can set this; plain HTML form submissions and cross-origin requests cannot
+function csrfCheck(req, res, next) {
+  if (req.get('X-Requested-With') !== 'XMLHttpRequest') {
+    return res.status(403).json({ error: 'Invalid request' });
+  }
+  next();
+}
+
 // ── Points System Helpers ────────────────────────────────────────
 
 function readPoints() {
@@ -236,6 +246,144 @@ function ownerOnly(req, res, next) {
   next();
 }
 
+// ── Email ─────────────────────────────────────────────────────────
+
+// H3: Email notifications — opt-in via SMTP env vars
+let emailTransporter = null;
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  emailTransporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT) || 587,
+    secure: parseInt(process.env.SMTP_PORT) === 465,
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+  });
+  console.log('[EMAIL] SMTP configured:', process.env.SMTP_HOST);
+} else {
+  console.log('[EMAIL] SMTP not configured — email notifications disabled. Set SMTP_HOST, SMTP_USER, SMTP_PASS to enable.');
+}
+
+const STORE_EMAIL = process.env.STORE_EMAIL || process.env.SMTP_USER || 'hub@email.com';
+const OWNER_EMAIL = process.env.OWNER_EMAIL;
+
+async function sendOrderEmails(order) {
+  if (!emailTransporter) return;
+
+  const shippingLabel = {
+    local: 'Local Delivery (Valenzuela City)',
+    metro: 'Metro Manila Delivery',
+    provincial: 'Provincial / Outside NCR',
+    pickup: 'Store Pickup'
+  }[order.shipping] || order.shipping;
+
+  const itemsHtml = order.items.map(i =>
+    `<tr><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0">${i.name} × ${i.qty}</td><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600">₱${(i.price * i.qty).toLocaleString('en-PH')}</td></tr>`
+  ).join('');
+
+  const itemsText = order.items.map(i =>
+    `  ${i.name} x${i.qty} — ₱${(i.price * i.qty).toLocaleString('en-PH')}`
+  ).join('\n');
+
+  const totalFormatted = `₱${Number(order.total).toLocaleString('en-PH')}`;
+
+  // Customer confirmation email
+  if (order.customer.email) {
+    try {
+      await emailTransporter.sendMail({
+        from: `"H.U.B Store" <${STORE_EMAIL}>`,
+        to: order.customer.email,
+        subject: `Order Received — ${order.id} | H.U.B Store`,
+        html: `
+<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif">
+<div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
+  <div style="background:linear-gradient(135deg,#1255c0,#1a6ee8);padding:28px 32px;text-align:center">
+    <h1 style="margin:0;color:#fff;font-size:22px;letter-spacing:0.5px">H.U.B Store</h1>
+    <p style="margin:6px 0 0;color:rgba(255,255,255,0.85);font-size:13px">Hanap.Usap.Build — Valenzuela City</p>
+  </div>
+  <div style="padding:28px 32px">
+    <h2 style="margin:0 0 6px;color:#1e293b;font-size:18px">Your order has been received!</h2>
+    <p style="color:#64748b;margin:0 0 20px;font-size:14px">Hi ${order.customer.firstName}, we've received your order and will process it once payment is verified.</p>
+    <div style="background:#f8fafc;border-radius:8px;padding:14px 16px;margin-bottom:20px">
+      <p style="margin:0 0 4px;font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Order ID</p>
+      <p style="margin:0;font-size:16px;font-weight:700;color:#1a6ee8">${order.id}</p>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:16px">
+      <thead><tr style="background:#f1f5f9"><th style="padding:8px;text-align:left;color:#64748b;font-weight:600">Item</th><th style="padding:8px;text-align:right;color:#64748b;font-weight:600">Subtotal</th></tr></thead>
+      <tbody>${itemsHtml}</tbody>
+    </table>
+    <div style="display:flex;justify-content:space-between;padding:12px 8px;border-top:2px solid #1a6ee8;margin-bottom:20px">
+      <span style="font-weight:700;color:#1e293b">Total</span>
+      <span style="font-weight:800;color:#1a6ee8;font-size:16px">${totalFormatted}</span>
+    </div>
+    <table style="width:100%;font-size:13px;color:#64748b;margin-bottom:20px">
+      <tr><td style="padding:3px 0;font-weight:600;color:#475569;width:110px">Shipping</td><td>${shippingLabel}</td></tr>
+      <tr><td style="padding:3px 0;font-weight:600;color:#475569">Payment</td><td>${order.payment}</td></tr>
+      ${order.paymentRef ? `<tr><td style="padding:3px 0;font-weight:600;color:#475569">Ref No.</td><td>${order.paymentRef}</td></tr>` : ''}
+    </table>
+    <div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:12px 14px;font-size:13px;color:#854d0e;margin-bottom:20px">
+      ⚠️ Please <strong>send your payment screenshot</strong> to our <a href="https://www.facebook.com/messages/t/HUBValenzuela" style="color:#1a6ee8">Facebook Messenger</a> to complete your order.
+    </div>
+    <p style="font-size:12px;color:#94a3b8;margin:0">Questions? Message us on <a href="https://www.facebook.com/HUBValenzuela" style="color:#1a6ee8">Facebook</a> or email <a href="mailto:${STORE_EMAIL}" style="color:#1a6ee8">${STORE_EMAIL}</a></p>
+  </div>
+  <div style="background:#f8fafc;padding:14px 32px;text-align:center;font-size:11px;color:#94a3b8">
+    H.U.B | 3/F Unit 306 Arbortowne Plaza II, Karuhatan Road, Valenzuela, Philippines 1442
+  </div>
+</div>
+</body></html>`,
+        text: `Hi ${order.customer.firstName},\n\nYour order has been received!\n\nOrder ID: ${order.id}\n\nItems:\n${itemsText}\n\nTotal: ${totalFormatted}\nShipping: ${shippingLabel}\nPayment: ${order.payment}${order.paymentRef ? '\nRef No.: ' + order.paymentRef : ''}\n\nIMPORTANT: Please send your payment screenshot to our Facebook Messenger to complete your order.\nhttps://www.facebook.com/messages/t/HUBValenzuela\n\n— H.U.B Store`
+      });
+      console.log(`[EMAIL] Confirmation sent to ${order.customer.email}`);
+    } catch (err) {
+      console.error('[EMAIL] Customer confirmation failed:', err.message);
+    }
+  }
+
+  // Owner new-order alert
+  if (OWNER_EMAIL) {
+    try {
+      await emailTransporter.sendMail({
+        from: `"H.U.B Store" <${STORE_EMAIL}>`,
+        to: OWNER_EMAIL,
+        subject: `🛒 New Order: ${order.id} — ${order.customer.firstName} ${order.customer.lastName}`,
+        html: `
+<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif">
+<div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
+  <div style="background:linear-gradient(135deg,#1255c0,#1a6ee8);padding:20px 28px">
+    <h2 style="margin:0;color:#fff;font-size:17px">New Order Received</h2>
+    <p style="margin:4px 0 0;color:rgba(255,255,255,0.8);font-size:13px">${order.id}</p>
+  </div>
+  <div style="padding:24px 28px">
+    <h3 style="margin:0 0 12px;color:#1e293b;font-size:15px">Customer</h3>
+    <table style="font-size:13px;color:#475569;margin-bottom:20px">
+      <tr><td style="padding:2px 12px 2px 0;font-weight:600">Name</td><td>${order.customer.firstName} ${order.customer.lastName}</td></tr>
+      <tr><td style="padding:2px 12px 2px 0;font-weight:600">Email</td><td><a href="mailto:${order.customer.email}" style="color:#1a6ee8">${order.customer.email}</a></td></tr>
+      <tr><td style="padding:2px 12px 2px 0;font-weight:600">Phone</td><td>${order.customer.phone}</td></tr>
+      <tr><td style="padding:2px 12px 2px 0;font-weight:600">Address</td><td>${order.customer.street}${order.customer.street2 ? ', ' + order.customer.street2 : ''}, ${order.customer.city}${order.customer.province ? ', ' + order.customer.province : ''}</td></tr>
+    </table>
+    <h3 style="margin:0 0 8px;color:#1e293b;font-size:15px">Items</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">
+      <thead><tr style="background:#f1f5f9"><th style="padding:6px 8px;text-align:left;color:#64748b">Item</th><th style="padding:6px 8px;text-align:right;color:#64748b">Subtotal</th></tr></thead>
+      <tbody>${itemsHtml}</tbody>
+    </table>
+    <table style="font-size:13px;color:#475569;margin-bottom:20px">
+      <tr><td style="padding:2px 12px 2px 0;font-weight:600">Total</td><td style="color:#1a6ee8;font-weight:700;font-size:15px">${totalFormatted}</td></tr>
+      <tr><td style="padding:2px 12px 2px 0;font-weight:600">Shipping</td><td>${shippingLabel}</td></tr>
+      <tr><td style="padding:2px 12px 2px 0;font-weight:600">Payment</td><td>${order.payment}</td></tr>
+      ${order.paymentRef ? `<tr><td style="padding:2px 12px 2px 0;font-weight:600">Ref No.</td><td><strong>${order.paymentRef}</strong></td></tr>` : '<tr><td style="padding:2px 12px 2px 0;font-weight:600">Ref No.</td><td style="color:#ef4444">Not provided — ask for screenshot</td></tr>'}
+      ${order.customer.notes ? `<tr><td style="padding:2px 12px 2px 0;font-weight:600">Notes</td><td>${order.customer.notes}</td></tr>` : ''}
+    </table>
+    <a href="https://hubstore.ph/admin" style="display:inline-block;background:linear-gradient(135deg,#1255c0,#1a6ee8);color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600">View in Admin Panel →</a>
+  </div>
+</div>
+</body></html>`,
+        text: `New Order: ${order.id}\n\nCustomer: ${order.customer.firstName} ${order.customer.lastName}\nEmail: ${order.customer.email}\nPhone: ${order.customer.phone}\nAddress: ${order.customer.street}, ${order.customer.city}\n\nItems:\n${itemsText}\n\nTotal: ${totalFormatted}\nShipping: ${shippingLabel}\nPayment: ${order.payment}${order.paymentRef ? '\nRef No.: ' + order.paymentRef : '\nRef No.: NOT PROVIDED'}\n\nView in admin: https://hubstore.ph/admin`
+      });
+      console.log(`[EMAIL] Owner notification sent to ${OWNER_EMAIL}`);
+    } catch (err) {
+      console.error('[EMAIL] Owner notification failed:', err.message);
+    }
+  }
+}
+
 // ── Public API ───────────────────────────────────────────────────
 
 // GET /api/products — public storefront
@@ -249,7 +397,7 @@ app.get('/api/products', (req, res) => {
 });
 
 // M1: Contact form submission with server-side email validation + H5: sanitize inputs
-app.post('/api/contact', contactLimiter, (req, res) => {
+app.post('/api/contact', contactLimiter, csrfCheck, (req, res) => {
   const { name, email, phone, message } = req.body;
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Name, email, and message are required' });
@@ -270,7 +418,7 @@ app.post('/api/contact', contactLimiter, (req, res) => {
 });
 
 // Customer registration (from Firebase Auth logins)
-app.post('/api/customers', (req, res) => {
+app.post('/api/customers', csrfCheck, (req, res) => {
   const { uid, name, email, provider, photoURL } = req.body;
   if (!uid || !name) {
     return res.status(400).json({ error: 'uid and name are required' });
@@ -312,7 +460,7 @@ setInterval(() => {
 }, 30000);
 
 // B1+H4+B5: Order submission with server-side price verification and stock management
-app.post('/api/order', orderLimiter, (req, res) => {
+app.post('/api/order', orderLimiter, csrfCheck, (req, res) => {
   const { customer, items, shipping, payment, paymentRef, total } = req.body;
 
   // Validate customer fields
@@ -454,6 +602,9 @@ app.post('/api/order', orderLimiter, (req, res) => {
     writeJSON('products.json', productsCopy);
     console.log(`[ORDER] Stock decremented for order ${orderId}`);
   }
+
+  // H3: Send emails non-blocking (don't delay response)
+  sendOrderEmails(order).catch(err => console.error('[EMAIL] Unexpected error:', err.message));
 
   res.json({ success: true, orderId: order.id });
 });
