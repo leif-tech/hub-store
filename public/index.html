@@ -1601,7 +1601,7 @@
       grid.innerHTML=config.map(c=>{
         let imgHtml;
         if(catIcons[c.key]){imgHtml=`<img src="${catIcons[c.key]}" alt="${c.label}" loading="lazy">`}
-        else{const prod=products.find(p=>p.cat===c.key&&p.img);imgHtml=prod?`<img src="${prod.img}" alt="${c.label}" loading="lazy">`:`<span style="font-size:1.6rem;opacity:0.35">📦</span>`}
+        else{const prod=products.find(p=>p.cat===c.key&&p.img);imgHtml=prod?`<img src="${prod.img}" alt="${c.label}" loading="lazy">`:`<span style="font-size:1.6rem;color:rgba(255,255,255,0.4)">📦</span>`}
         return `<button class="cat-tile" onclick="navigateTo('/shop?cat=${c.key}')"><div class="cat-tile-img">${imgHtml}</div><span class="cat-tile-label">${c.label}</span></button>`;
       }).join('')||'<p style="text-align:center;color:var(--text-dim);padding:40px">No categories found.</p>';
     }
@@ -1883,7 +1883,7 @@
         if(key==='all')return `<span style="font-size:1.2rem">🛒</span>`;
         if(catIcons[key])return `<img src="${catIcons[key]}" alt="${key}" loading="lazy">`;
         const p=products.find(p=>p.cat===key&&p.img);
-        return p?`<img src="${p.img}" alt="${key}" loading="lazy">`:`<span style="font-size:1rem;opacity:0.35">📦</span>`;
+        return p?`<img src="${p.img}" alt="${key}" loading="lazy">`:`<span style="font-size:1rem;color:rgba(255,255,255,0.4)">📦</span>`;
       }
       const dealsBtn=`<button class="shop-cat-btn" data-cat="deals" onclick="selectCat('deals')"><div class="cat-icon"><span style="font-size:1.2rem">🔥</span></div>Deals</button>`;
       const catBtns=categories.map(c=>`<button class="shop-cat-btn${c.key==='all'?' active':''}" data-cat="${c.key}" onclick="selectCat('${c.key}')"><div class="cat-icon">${catImg(c.key)}</div>${c.label}</button>`).join('');

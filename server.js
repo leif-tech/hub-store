@@ -105,11 +105,20 @@ const contactLimiter = rateLimit({
   message: { error: 'Too many messages sent. Try again in an hour.' }
 });
 
-// Static files with long cache (images, fonts, etc.)
-const staticCacheOptions = { maxAge: '7d', etag: true, lastModified: true };
-app.use(express.static(path.join(__dirname, 'public'), staticCacheOptions));
+// Static files: long cache for assets, no-cache for HTML so updates show immediately
+const assetCacheOptions = { maxAge: '7d', etag: true, lastModified: true };
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: true, lastModified: true,
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=604800');
+    }
+  }
+}));
 // M9: Always serve /uploads from UPLOADS_DIR (not just when UPLOADS_PATH is set)
-app.use('/uploads', express.static(UPLOADS_DIR, staticCacheOptions));
+app.use('/uploads', express.static(UPLOADS_DIR, assetCacheOptions));
 
 // ── Helpers ──────────────────────────────────────────────────────
 
