@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const helmet = require('helmet');
 const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 
 let Anthropic, anthropic;
 try {
@@ -27,7 +28,12 @@ const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_PATH || path.join(__dirname, 'data');
 const SEED_DIR = path.join(__dirname, 'data');
 const UPLOADS_DIR = process.env.UPLOADS_PATH || (process.env.RAILWAY_VOLUME_MOUNT_PATH ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'uploads') : path.join(__dirname, 'public', 'uploads'));
-const JWT_SECRET = process.env.JWT_SECRET || 'hub-fallback-secret-change-me';
+
+// B4: JWT_SECRET — use random fallback so sessions expire on restart (forces admin to set env var)
+if (!process.env.JWT_SECRET) {
+  console.warn('[SECURITY] JWT_SECRET env var not set! Using a random secret — all admin sessions will be invalidated on every server restart. Add JWT_SECRET to Railway Variables immediately.');
+}
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 
 // Ensure directories exist
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -75,13 +81,34 @@ app.use(helmet({
 }));
 app.use(express.json({ limit: '10mb' }));
 
+// H2: Rate limiters
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts. Try again in 15 minutes.' }
+});
+const orderLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many orders submitted. Try again later.' }
+});
+const contactLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many messages sent. Try again in an hour.' }
+});
+
 // Static files with long cache (images, fonts, etc.)
 const staticCacheOptions = { maxAge: '7d', etag: true, lastModified: true };
 app.use(express.static(path.join(__dirname, 'public'), staticCacheOptions));
-// Serve uploads from persistent volume if configured
-if (process.env.UPLOADS_PATH) {
-  app.use('/uploads', express.static(UPLOADS_DIR, staticCacheOptions));
-}
+// M9: Always serve /uploads from UPLOADS_DIR (not just when UPLOADS_PATH is set)
+app.use('/uploads', express.static(UPLOADS_DIR, staticCacheOptions));
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -109,6 +136,12 @@ function appendToFile(filename, entry) {
   arr.push({ ...entry, timestamp: new Date().toISOString() });
   writeJSON(filename, arr);
   return arr[arr.length - 1];
+}
+
+// H5: Strip HTML tags and trim/limit string length to prevent XSS in stored data
+function sanitizeInput(str, maxLen = 500) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/<[^>]*>/g, '').trim().slice(0, maxLen);
 }
 
 // ── Points System Helpers ────────────────────────────────────────
@@ -215,14 +248,24 @@ app.get('/api/products', (req, res) => {
   res.json(products);
 });
 
-// Contact form submission
-app.post('/api/contact', (req, res) => {
+// M1: Contact form submission with server-side email validation + H5: sanitize inputs
+app.post('/api/contact', contactLimiter, (req, res) => {
   const { name, email, phone, message } = req.body;
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Name, email, and message are required' });
   }
-  appendToFile('contacts.json', { name, email, phone, message });
-  console.log(`[CONTACT] ${name} <${email}>: ${message.substring(0, 80)}`);
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRe.test(email)) {
+    return res.status(400).json({ error: 'Valid email address is required' });
+  }
+  const entry = {
+    name: sanitizeInput(name),
+    email: sanitizeInput(email),
+    phone: sanitizeInput(phone || ''),
+    message: sanitizeInput(message, 2000)
+  };
+  appendToFile('contacts.json', entry);
+  console.log(`[CONTACT] ${entry.name} <${entry.email}>: ${entry.message.substring(0, 80)}`);
   res.json({ success: true });
 });
 
@@ -235,23 +278,27 @@ app.post('/api/customers', (req, res) => {
   const customers = readJSON('customers.json');
   const existing = customers.find(c => c.uid === uid);
   if (existing) {
-    // Update last login and any new info
     existing.lastLogin = new Date().toISOString();
-    if (email && !existing.email) existing.email = email;
-    if (name) existing.name = name;
+    if (email && !existing.email) existing.email = sanitizeInput(email);
+    if (name) existing.name = sanitizeInput(name);
     if (photoURL) existing.photoURL = photoURL;
     existing.loginCount = (existing.loginCount || 1) + 1;
     writeJSON('customers.json', customers);
     return res.json({ success: true, updated: true });
   }
   const customer = {
-    uid, name, email: email || null, provider: provider || 'unknown',
-    photoURL: photoURL || null, loginCount: 1,
-    firstLogin: new Date().toISOString(), lastLogin: new Date().toISOString()
+    uid,
+    name: sanitizeInput(name),
+    email: email ? sanitizeInput(email) : null,
+    provider: provider || 'unknown',
+    photoURL: photoURL || null,
+    loginCount: 1,
+    firstLogin: new Date().toISOString(),
+    lastLogin: new Date().toISOString()
   };
   customers.push(customer);
   writeJSON('customers.json', customers);
-  console.log(`[CUSTOMER] New: ${name} (${email || 'no email'}) via ${provider}`);
+  console.log(`[CUSTOMER] New: ${customer.name} (${customer.email || 'no email'}) via ${provider}`);
   res.json({ success: true, new: true });
 });
 
@@ -264,9 +311,9 @@ setInterval(() => {
   }
 }, 30000);
 
-// Order submission
-app.post('/api/order', (req, res) => {
-  const { customer, items, shipping, payment, total } = req.body;
+// B1+H4+B5: Order submission with server-side price verification and stock management
+app.post('/api/order', orderLimiter, (req, res) => {
+  const { customer, items, shipping, payment, paymentRef, total } = req.body;
 
   // Validate customer fields
   if (!customer || typeof customer !== 'object') {
@@ -295,12 +342,12 @@ app.post('/api/order', (req, res) => {
     }
   }
 
-  // Validate shipping & payment
-  const validShipping = ['rider', 'outside', 'pickup'];
+  // Validate shipping & payment (must match checkout.html values)
+  const validShipping = ['local', 'metro', 'provincial', 'pickup'];
   if (!shipping || !validShipping.includes(shipping)) {
     return res.status(400).json({ error: 'Invalid shipping method' });
   }
-  const validPayment = ['GCash', 'Metrobank', 'GoTyme'];
+  const validPayment = ['GCash', 'Maya', 'Bank Transfer'];
   if (!payment || !validPayment.includes(payment)) {
     return res.status(400).json({ error: 'Invalid payment method' });
   }
@@ -310,8 +357,65 @@ app.post('/api/order', (req, res) => {
     return res.status(400).json({ error: 'Total must be greater than 0' });
   }
 
+  // H4: Server-side price verification — override client prices with catalog prices
+  const products = readJSON('products.json');
+  const verifiedItems = items.map(item => {
+    const product = products.find(p =>
+      p.name && p.name.toLowerCase() === (item.name || '').toLowerCase()
+    );
+    if (product) {
+      if (Number(product.price) !== Number(item.price)) {
+        console.warn(`[ORDER] Price mismatch for "${item.name}": client=${item.price}, catalog=${product.price}`);
+      }
+      return { ...item, price: product.price, productId: product.id };
+    }
+    // Item not in catalog (custom build, service) — accept client price but log it
+    console.log(`[ORDER] Item "${item.name}" not found in catalog — using client price ₱${item.price}`);
+    return { ...item };
+  });
+
+  // B5: Stock availability check before accepting order
+  for (const item of verifiedItems) {
+    if (!item.productId) continue;
+    const product = products.find(p => p.id === item.productId);
+    if (!product) continue;
+    const stockNum = Number(product.stock);
+    if (!isNaN(stockNum) && stockNum < (item.qty || 1)) {
+      return res.status(400).json({ error: `"${item.name}" has insufficient stock (${stockNum} available)` });
+    }
+    if (deriveStockStatus(product.stock) === 'out') {
+      return res.status(400).json({ error: `"${item.name}" is currently out of stock` });
+    }
+  }
+
+  // B1: Recalculate server-side total (ignore client-submitted total)
+  const shippingFees = { local: 79, metro: 0, provincial: 0, pickup: 0 };
+  const itemsTotal = verifiedItems.reduce((sum, item) => sum + (Number(item.price) * (item.qty || 1)), 0);
+  const shippingFee = shippingFees[shipping] || 0;
+  const serverTotal = itemsTotal + shippingFee;
+
+  // H5: Sanitize all customer fields before storage
+  const sanitizedCustomer = {
+    firstName: sanitizeInput(firstName),
+    lastName: sanitizeInput(lastName),
+    email: sanitizeInput(email),
+    phone: sanitizeInput(phone),
+    street: sanitizeInput(street),
+    street2: sanitizeInput(customer.street2 || ''),
+    city: sanitizeInput(city),
+    province: sanitizeInput(customer.province || ''),
+    zip: sanitizeInput(customer.zip || ''),
+    notes: sanitizeInput(customer.notes || '', 1000)
+  };
+
   // Duplicate order prevention (same content within 60s)
-  const orderHash = crypto.createHash('md5').update(JSON.stringify({ customer: { firstName, lastName, email }, items, total })).digest('hex');
+  const orderHash = crypto.createHash('md5')
+    .update(JSON.stringify({
+      customer: { firstName: sanitizedCustomer.firstName, lastName: sanitizedCustomer.lastName, email: sanitizedCustomer.email },
+      items: verifiedItems,
+      serverTotal
+    }))
+    .digest('hex');
   if (recentOrderHashes.has(orderHash)) {
     return res.status(409).json({ error: 'Duplicate order detected. Please wait before resubmitting.' });
   }
@@ -319,15 +423,44 @@ app.post('/api/order', (req, res) => {
 
   // Generate unique order ID
   const orderId = 'HUB-' + Date.now() + '-' + crypto.randomBytes(3).toString('hex');
-  const order = { id: orderId, customer, items, shipping, payment, total, customerUid: req.body.customerUid || null, status: 'Pending' };
+  const order = {
+    id: orderId,
+    customer: sanitizedCustomer,
+    items: verifiedItems,
+    shipping,
+    payment,
+    paymentRef: sanitizeInput(paymentRef || ''),
+    total: serverTotal,
+    customerUid: req.body.customerUid || null,
+    status: 'Pending'
+  };
   appendToFile('orders.json', order);
-  console.log(`[ORDER] ${order.id} - ${firstName} ${lastName} - ${items.length} item(s) - Total: ${total}`);
+  console.log(`[ORDER] ${order.id} - ${sanitizedCustomer.firstName} ${sanitizedCustomer.lastName} - ${verifiedItems.length} item(s) - Total: ₱${serverTotal}`);
+
+  // B5: Decrement stock after order is saved
+  let productsUpdated = false;
+  const productsCopy = readJSON('products.json');
+  for (const item of verifiedItems) {
+    if (!item.productId) continue;
+    const pidx = productsCopy.findIndex(p => p.id === item.productId);
+    if (pidx === -1) continue;
+    const stockNum = Number(productsCopy[pidx].stock);
+    if (!isNaN(stockNum) && stockNum > 0) {
+      productsCopy[pidx].stock = Math.max(0, stockNum - (item.qty || 1));
+      productsUpdated = true;
+    }
+  }
+  if (productsUpdated) {
+    writeJSON('products.json', productsCopy);
+    console.log(`[ORDER] Stock decremented for order ${orderId}`);
+  }
+
   res.json({ success: true, orderId: order.id });
 });
 
 // ── Admin Auth ───────────────────────────────────────────────────
 
-app.post('/api/admin/login', (req, res) => {
+app.post('/api/admin/login', loginLimiter, (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password required' });
@@ -695,19 +828,19 @@ app.post('/api/admin/customers', authMiddleware, (req, res) => {
   const customers = readJSON('customers.json');
   const customer = {
     uid: 'manual-' + Date.now(),
-    name,
-    email: email || null,
-    phone: phone || null,
+    name: sanitizeInput(name),
+    email: email ? sanitizeInput(email) : null,
+    phone: phone ? sanitizeInput(phone) : null,
     provider: provider || 'Manual',
     photoURL: null,
-    notes: notes || null,
+    notes: notes ? sanitizeInput(notes, 1000) : null,
     loginCount: 0,
     firstLogin: new Date().toISOString(),
     lastLogin: new Date().toISOString()
   };
   customers.push(customer);
   writeJSON('customers.json', customers);
-  console.log(`[CUSTOMER] Manual add: ${name} (${email || 'no email'})`);
+  console.log(`[CUSTOMER] Manual add: ${customer.name} (${customer.email || 'no email'})`);
   res.json({ success: true, customer });
 });
 
@@ -716,10 +849,10 @@ app.put('/api/admin/customers/:uid', authMiddleware, (req, res) => {
   const idx = customers.findIndex(c => c.uid === req.params.uid);
   if (idx === -1) return res.status(404).json({ error: 'Customer not found' });
   const { name, email, phone, notes } = req.body;
-  if (name) customers[idx].name = name;
-  if (email !== undefined) customers[idx].email = email || null;
-  if (phone !== undefined) customers[idx].phone = phone || null;
-  if (notes !== undefined) customers[idx].notes = notes || null;
+  if (name) customers[idx].name = sanitizeInput(name);
+  if (email !== undefined) customers[idx].email = email ? sanitizeInput(email) : null;
+  if (phone !== undefined) customers[idx].phone = phone ? sanitizeInput(phone) : null;
+  if (notes !== undefined) customers[idx].notes = notes ? sanitizeInput(notes, 1000) : null;
   writeJSON('customers.json', customers);
   res.json({ success: true });
 });
@@ -766,7 +899,6 @@ app.put('/api/admin/tradein', authMiddleware, (req, res) => {
   if (!types || typeof types !== 'object') {
     return res.status(400).json({ error: 'Types object is required' });
   }
-  // Validate structure
   for (const [key, cond] of Object.entries(conditions)) {
     if (typeof cond.multiplier !== 'number' || cond.multiplier < 0 || cond.multiplier > 1) {
       return res.status(400).json({ error: `Invalid multiplier for condition "${key}"` });

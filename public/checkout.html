@@ -227,9 +227,9 @@
         <div class="card">
           <div class="card-title">Payment Method</div>
           <div class="payment-tabs">
-            <button class="pay-tab active" onclick="switchTab('gcash',this)">GCash</button>
-            <button class="pay-tab" onclick="switchTab('maya',this)">Maya</button>
-            <button class="pay-tab" onclick="switchTab('bank',this)">Bank Transfer</button>
+            <button class="pay-tab active" data-pay="GCash" onclick="switchTab('gcash',this)">GCash</button>
+            <button class="pay-tab" data-pay="Maya" onclick="switchTab('maya',this)">Maya</button>
+            <button class="pay-tab" data-pay="Bank Transfer" onclick="switchTab('bank',this)">Bank Transfer</button>
           </div>
 
           <div class="pay-content active" id="tab-gcash">
@@ -251,6 +251,12 @@
           </div>
 
           <p class="warning">&#9888; Please confirm stock availability before paying. Message us on Facebook Messenger first.</p>
+
+          <div class="form-group" style="margin-top:14px">
+            <label>Payment Reference No. <span style="color:#64748b;font-weight:400;font-size:0.7rem;text-transform:none">(optional but recommended)</span></label>
+            <input type="text" id="paymentRef" placeholder="e.g. 1234567890 — enter GCash/Maya ref after paying">
+            <div style="font-size:0.72rem;color:#64748b;margin-top:4px">Your order will be processed faster if you include this</div>
+          </div>
         </div>
 
         <button type="submit" class="btn btn-primary" id="placeBtn" onclick="placeOrder(event)">Place Order</button>
@@ -424,6 +430,7 @@
 
       const shipEl = document.querySelector('.ship-option.selected input');
       const orderTotal = subtotalPrice + shippingCost;
+      const activePayTab = document.querySelector('.pay-tab.active');
       const order = {
         customer: {
           firstName: fname, lastName: lname, street, city,
@@ -433,7 +440,8 @@
         },
         items: cartItems,
         shipping: shipEl ? shipEl.value : 'pickup',
-        payment: document.querySelector('.pay-tab.active')?.textContent || 'GCash',
+        payment: activePayTab ? (activePayTab.dataset.pay || activePayTab.textContent.trim()) : 'GCash',
+        paymentRef: document.getElementById('paymentRef').value.trim(),
         total: orderTotal,
         customerUid: customerUid || null
       };
