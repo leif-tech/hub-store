@@ -24,9 +24,9 @@ try {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_DIR = process.env.DATA_PATH || path.join(__dirname, 'data');
+const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_PATH || path.join(__dirname, 'data');
 const SEED_DIR = path.join(__dirname, 'data');
-const UPLOADS_DIR = process.env.UPLOADS_PATH || path.join(__dirname, 'public', 'uploads');
+const UPLOADS_DIR = process.env.UPLOADS_PATH || (process.env.RAILWAY_VOLUME_MOUNT_PATH ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'uploads') : path.join(__dirname, 'public', 'uploads'));
 const JWT_SECRET = process.env.JWT_SECRET || 'hub-fallback-secret-change-me';
 
 // Ensure directories exist
