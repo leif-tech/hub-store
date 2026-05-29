@@ -1592,13 +1592,16 @@
       });
       return tiles;
     }
+    // Static category images (same map used for both homepage tiles and shop strip)
+    const catIcons={cpu:'/cat-cpu.png'};
     function renderCategoryTiles(){
       const grid=document.getElementById('catTilesGrid');
       if(!grid)return;
       const config=buildCatTileConfig();
       grid.innerHTML=config.map(c=>{
-        const prod=products.find(p=>p.cat===c.key&&p.img);
-        const imgHtml=prod?`<img src="${prod.img}" alt="${c.label}" loading="lazy">`:`<span style="font-size:1.6rem;opacity:0.35">📦</span>`;
+        let imgHtml;
+        if(catIcons[c.key]){imgHtml=`<img src="${catIcons[c.key]}" alt="${c.label}" loading="lazy">`}
+        else{const prod=products.find(p=>p.cat===c.key&&p.img);imgHtml=prod?`<img src="${prod.img}" alt="${c.label}" loading="lazy">`:`<span style="font-size:1.6rem;opacity:0.35">📦</span>`}
         return `<button class="cat-tile" onclick="navigateTo('/shop?cat=${c.key}')"><div class="cat-tile-img">${imgHtml}</div><span class="cat-tile-label">${c.label}</span></button>`;
       }).join('')||'<p style="text-align:center;color:var(--text-dim);padding:40px">No categories found.</p>';
     }
@@ -1875,9 +1878,10 @@
       if(filtersBuilt)return;filtersBuilt=true;
       const strip=document.getElementById('catStrip');
       const categories=buildCategories();
-      // Helper: get first product image for a category
+      // Use shared catIcons map (defined above renderCategoryTiles)
       function catImg(key){
         if(key==='all')return `<span style="font-size:1.2rem">🛒</span>`;
+        if(catIcons[key])return `<img src="${catIcons[key]}" alt="${key}" loading="lazy">`;
         const p=products.find(p=>p.cat===key&&p.img);
         return p?`<img src="${p.img}" alt="${key}" loading="lazy">`:`<span style="font-size:1rem;opacity:0.35">📦</span>`;
       }
