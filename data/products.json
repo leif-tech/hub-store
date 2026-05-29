@@ -1,238 +1,43 @@
 [
   {
-    "id": "prod-1",
-    "cat": "builds",
-    "label": "Complete PC Build",
-    "name": "Starter Rig — Budget Gaming / Office Build",
-    "price": 15000,
-    "img": "",
-    "stock": 50,
-    "condition": "new",
-    "badge": null,
-    "specs": {
-      "Processor": "Intel Core i3-12100F / AMD Ryzen 3 4100",
-      "RAM": "8GB DDR4 3200MHz",
-      "Storage": "256GB NVMe SSD",
-      "Graphics": "Integrated / GT 1030",
-      "Motherboard": "B660M / A320M",
-      "Power Supply": "450W 80+ Bronze",
-      "Case": "ATX Mid Tower",
-      "OS": "Windows 11 Home"
-    }
-  },
-  {
-    "id": "prod-2",
-    "cat": "builds",
-    "label": "Complete PC Build",
-    "name": "Performance Rig — Mid-Range Gaming Build",
-    "price": 30000,
-    "img": "",
+    "id": "prod-13",
+    "cat": "gpu",
+    "label": "Video Card",
+    "name": "Redragon King 4k Pro Wireless Mouse (White)",
+    "price": 245125,
+    "priceTiers": {
+      "installment": 225,
+      "creditCard": 5124556,
+      "homeCredit": 25251
+    },
+    "img": "/uploads/prod-1780080677801.png",
     "stock": 50,
     "condition": "new",
     "badge": "hot",
     "specs": {
-      "Processor": "Intel Core i5-12400F / AMD Ryzen 5 5600",
-      "RAM": "16GB DDR4 3200MHz",
-      "Storage": "512GB NVMe SSD",
-      "Graphics": "GTX 1660 Super / RX 6600",
-      "Motherboard": "B660M / B550M",
-      "Power Supply": "550W 80+ Bronze",
-      "Case": "ATX Mid Tower (RGB)",
-      "OS": "Windows 11 Home"
-    }
+      "5125": "25125",
+      "5125125": "215125",
+      "56125125": "256125",
+      "fawfawf": "245125"
+    },
+    "shopee": false
   },
   {
-    "id": "prod-3",
-    "cat": "builds",
-    "label": "Complete PC Build",
-    "name": "Beast Rig — High-End Gaming / Workstation Build",
-    "price": 55000,
-    "img": "",
+    "id": "prod-14",
+    "cat": "gpu",
+    "label": "Video Card",
+    "name": "Gamdias Apollo 35\" Flat VA WQ35VF 180Hz",
+    "price": 25125,
+    "priceTiers": {
+      "installment": 25125,
+      "creditCard": 25125,
+      "homeCredit": 25125
+    },
+    "img": "/uploads/prod-1780081520006.png",
     "stock": 50,
     "condition": "new",
-    "badge": "new",
-    "specs": {
-      "Processor": "Intel Core i7-13700F / AMD Ryzen 7 7700X",
-      "RAM": "32GB DDR5 5600MHz",
-      "Storage": "1TB Gen4 NVMe SSD",
-      "Graphics": "RTX 4070 / RX 7800 XT",
-      "Motherboard": "Z790 / X670",
-      "Power Supply": "750W 80+ Gold",
-      "Case": "ATX Full Tower (Tempered Glass)",
-      "OS": "Windows 11 Pro"
-    }
-  },
-  {
-    "id": "prod-4",
-    "cat": "cpu",
-    "label": "Processor",
-    "name": "Intel Core i5-12400F",
-    "price": 6500,
-    "img": "",
-    "stock": 20,
-    "condition": "new",
     "badge": null,
-    "specs": {
-      "Cores / Threads": "6C / 12T",
-      "Base Clock": "2.5 GHz",
-      "Boost Clock": "4.4 GHz",
-      "TDP": "65W",
-      "Socket": "LGA 1700",
-      "Cache": "18MB Intel Smart Cache"
-    }
-  },
-  {
-    "id": "prod-5",
-    "cat": "cpu",
-    "label": "Processor",
-    "name": "AMD Ryzen 5 5600",
-    "price": 5800,
-    "img": "",
-    "stock": 15,
-    "condition": "new",
-    "badge": null,
-    "specs": {
-      "Cores / Threads": "6C / 12T",
-      "Base Clock": "3.5 GHz",
-      "Boost Clock": "4.4 GHz",
-      "TDP": "65W",
-      "Socket": "AM4",
-      "Cache": "35MB Total"
-    }
-  },
-  {
-    "id": "prod-6",
-    "cat": "gpu",
-    "label": "Video Card",
-    "name": "MSI GeForce GTX 1660 Super Ventus XS 6G OC",
-    "price": 10500,
-    "img": "",
-    "stock": 8,
-    "condition": "new",
-    "badge": null,
-    "specs": {
-      "GPU Chip": "NVIDIA GTX 1660 Super",
-      "Memory": "6GB GDDR6",
-      "Memory Bus": "192-bit",
-      "Boost Clock": "1815 MHz",
-      "Fans": "2",
-      "Interface": "PCIe 3.0 x16",
-      "Rec. PSU": "450W"
-    }
-  },
-  {
-    "id": "prod-7",
-    "cat": "gpu",
-    "label": "Video Card",
-    "name": "ASUS Dual GeForce RTX 4060 OC 8GB",
-    "price": 22000,
-    "img": "",
-    "stock": 5,
-    "condition": "new",
-    "badge": "hot",
-    "specs": {
-      "GPU Chip": "NVIDIA RTX 4060 (AD107)",
-      "Memory": "8GB GDDR6",
-      "Memory Bus": "128-bit",
-      "Boost Clock": "2535 MHz",
-      "Fans": "2 (Axial-tech)",
-      "Interface": "PCIe 4.0 x8",
-      "Rec. PSU": "550W"
-    }
-  },
-  {
-    "id": "prod-8",
-    "cat": "ram",
-    "label": "Memory",
-    "name": "Kingston Fury Beast 16GB (2x8) DDR4 3200MHz",
-    "price": 1800,
-    "img": "",
-    "stock": 30,
-    "condition": "new",
-    "badge": null,
-    "specs": {
-      "Capacity": "16GB (2x8GB)",
-      "Type": "DDR4",
-      "Speed": "3200MHz",
-      "Timing": "CL16",
-      "Voltage": "1.35V",
-      "Form Factor": "DIMM"
-    }
-  },
-  {
-    "id": "prod-9",
-    "cat": "storage",
-    "label": "Storage",
-    "name": "Kingston NV2 500GB NVMe SSD M.2",
-    "price": 1400,
-    "img": "",
-    "stock": 25,
-    "condition": "new",
-    "badge": null,
-    "specs": {
-      "Capacity": "500GB",
-      "Interface": "PCIe 4.0 NVMe M.2",
-      "Read Speed": "3500 MB/s",
-      "Write Speed": "2100 MB/s",
-      "Form Factor": "M.2 2280",
-      "NAND": "3D TLC"
-    }
-  },
-  {
-    "id": "prod-10",
-    "cat": "monitor",
-    "label": "Monitor",
-    "name": "ASUS VZ249HE 23.8\" IPS FHD Monitor",
-    "price": 6500,
-    "img": "",
-    "stock": 10,
-    "condition": "new",
-    "badge": null,
-    "specs": {
-      "Size": "23.8 inch",
-      "Panel": "IPS",
-      "Resolution": "1920x1080 (FHD)",
-      "Refresh Rate": "75Hz",
-      "Response Time": "5ms",
-      "Ports": "VGA, HDMI",
-      "Features": "Ultra-slim bezel, Flicker-free"
-    }
-  },
-  {
-    "id": "prod-11",
-    "cat": "peripheral",
-    "label": "Peripherals",
-    "name": "Logitech MK235 Wireless Keyboard and Mouse Combo",
-    "price": 1200,
-    "img": "",
-    "stock": 20,
-    "condition": "new",
-    "badge": null,
-    "specs": {
-      "Type": "Wireless Keyboard + Mouse",
-      "Connectivity": "2.4 GHz USB Nano receiver",
-      "Battery Life": "24 months (keyboard), 12 months (mouse)",
-      "Layout": "Full-size",
-      "Mouse DPI": "1000 DPI"
-    }
-  },
-  {
-    "id": "prod-12",
-    "cat": "psu",
-    "label": "Power Supply",
-    "name": "Seasonic Focus GX 650W 80+ Gold Fully Modular",
-    "price": 4800,
-    "img": "",
-    "stock": 12,
-    "condition": "new",
-    "badge": null,
-    "specs": {
-      "Wattage": "650W",
-      "Efficiency": "80+ Gold",
-      "Modular": "Fully Modular",
-      "Fan": "120mm",
-      "Protections": "OVP, UVP, OCP, SCP, OTP",
-      "Warranty": "10 years"
-    }
+    "specs": {},
+    "shopee": false
   }
 ]
