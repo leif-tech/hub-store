@@ -343,14 +343,21 @@
     .topbar-cart-count{font-size:0.7rem;background:rgba(255,255,255,0.2);padding:1px 6px;border-radius:100px}
     .topbar-cart-total{font-size:0.8rem}
     .shop-cat-strip{position:sticky;top:56px;z-index:8;background:rgba(255,255,255,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
-    .shop-cat-scroll{display:flex;overflow-x:auto;scrollbar-width:none;padding:0 20px}
+    .shop-cat-scroll{display:flex;overflow-x:auto;scrollbar-width:none;padding:12px 20px;gap:12px}
     .shop-cat-scroll::-webkit-scrollbar{display:none}
-    .shop-cat-btn{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:14px 16px;font-size:0.74rem;font-weight:700;color:var(--text-dim);cursor:pointer;border:none;border-bottom:3px solid transparent;background:none;transition:all .2s;white-space:nowrap;text-transform:uppercase;letter-spacing:0.8px}
-    .shop-cat-btn:hover{color:var(--heading);border-bottom-color:rgba(26,110,232,0.25)}
-    .shop-cat-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+    .shop-cat-btn{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 10px;font-size:0.68rem;font-weight:700;color:var(--text-dim);cursor:pointer;border:none;background:none;transition:all .25s;white-space:nowrap;text-transform:uppercase;letter-spacing:0.5px;border-radius:10px}
+    .shop-cat-btn:hover{color:var(--heading);transform:translateY(-2px)}
+    .shop-cat-btn.active{color:var(--blue)}
+    .shop-cat-btn .cat-icon{width:60px;height:60px;border-radius:10px;background:#0d1120;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:all .25s;border:1.5px solid transparent}
+    .shop-cat-btn .cat-icon img{max-width:70%;max-height:70%;object-fit:contain;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.3))}
+    .shop-cat-btn:hover .cat-icon{border-color:rgba(26,110,232,0.4);box-shadow:0 4px 16px rgba(26,110,232,0.15)}
+    .shop-cat-btn.active .cat-icon{border-color:var(--blue);box-shadow:0 4px 16px rgba(26,110,232,0.25)}
     .shop-cat-btn[data-cat="deals"]{color:#e11d48}
-    .shop-cat-btn[data-cat="deals"]:hover{border-bottom-color:#e11d48}
-    .shop-cat-btn[data-cat="deals"].active{color:#e11d48;border-bottom-color:#e11d48}
+    .shop-cat-btn[data-cat="deals"].active{color:#e11d48}
+    .shop-cat-btn[data-cat="deals"] .cat-icon{background:linear-gradient(135deg,#1a0508,#2d0a10);border-color:rgba(225,29,72,0.15)}
+    .shop-cat-btn[data-cat="deals"].active .cat-icon{border-color:#e11d48;box-shadow:0 4px 16px rgba(225,29,72,0.25)}
+    .shop-cat-btn[data-cat="all"] .cat-icon{background:linear-gradient(135deg,#0d1120,#1a2340)}
+    @media(max-width:640px){.shop-cat-scroll{gap:8px;padding:10px 14px}.shop-cat-btn .cat-icon{width:50px;height:50px;border-radius:8px}.shop-cat-btn{font-size:0.62rem;padding:6px 6px}}
     .shop-controls{padding:10px 0;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.7);backdrop-filter:blur(8px)}
     .shop-controls-inner{display:flex;align-items:center;gap:14px}
     .shop-search-wrap{flex:1}
@@ -1868,9 +1875,14 @@
       if(filtersBuilt)return;filtersBuilt=true;
       const strip=document.getElementById('catStrip');
       const categories=buildCategories();
-      const dealsBtn=`<button class="shop-cat-btn" data-cat="deals" onclick="selectCat('deals')">🔥 Deals</button>`;
-      const catBtns=categories.map(c=>`<button class="shop-cat-btn${c.key==='all'?' active':''}" data-cat="${c.key}" onclick="selectCat('${c.key}')">${c.label}</button>`).join('');
-      // Insert Deals right after the "All" button
+      // Helper: get first product image for a category
+      function catImg(key){
+        if(key==='all')return `<span style="font-size:1.2rem">🛒</span>`;
+        const p=products.find(p=>p.cat===key&&p.img);
+        return p?`<img src="${p.img}" alt="${key}" loading="lazy">`:`<span style="font-size:1rem;opacity:0.35">📦</span>`;
+      }
+      const dealsBtn=`<button class="shop-cat-btn" data-cat="deals" onclick="selectCat('deals')"><div class="cat-icon"><span style="font-size:1.2rem">🔥</span></div>Deals</button>`;
+      const catBtns=categories.map(c=>`<button class="shop-cat-btn${c.key==='all'?' active':''}" data-cat="${c.key}" onclick="selectCat('${c.key}')"><div class="cat-icon">${catImg(c.key)}</div>${c.label}</button>`).join('');
       strip.innerHTML=catBtns.replace('</button>',`</button>${dealsBtn}`);
     }
 
