@@ -52,8 +52,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Exo+2:wght@800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-    html{scroll-behavior:smooth;scroll-padding-top:116px;-webkit-text-size-adjust:100%}
-    body{font-family:'Plus Jakarta Sans',sans-serif;background:#fff;color:#374151;line-height:1.65;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+    html{scroll-behavior:smooth;scroll-padding-top:116px;-webkit-text-size-adjust:100%;overflow-x:hidden}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:#fff;color:#374151;line-height:1.65;overflow-x:hidden;max-width:100vw;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
     a{color:inherit;text-decoration:none}
     img{max-width:100%;display:block}
     ul{list-style:none}
@@ -528,6 +528,7 @@
     .lightbox-close:hover{color:#fff}
 
     /* ===== SERVICES ===== */
+    .services-why-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
     .services-list{display:flex;flex-direction:column;gap:1px;background:var(--border);border-radius:var(--r-xl);overflow:hidden;border:1px solid var(--border)}
     .service-row{display:grid;grid-template-columns:64px 1fr auto;gap:24px;align-items:center;padding:28px 32px;background:#fff;transition:all .22s;cursor:default}
     .service-row:hover{background:var(--bg-soft)}
@@ -790,8 +791,12 @@
       .pd-grid{grid-template-columns:1fr}
       .pd-images{position:static}
       .why-grid{grid-template-columns:1fr}
+      .services-why-grid{grid-template-columns:1fr;gap:48px}
       .service-row{grid-template-columns:48px 1fr;gap:16px}
       .svc-tag{display:none}
+      .topbar-announce{font-size:0.68rem;padding:8px 12px;white-space:normal;line-height:1.5}
+      .topbar-announce .sep{display:none}
+      .container{padding:0 16px}
     }
     @media(max-width:480px){
       .featured-grid{grid-template-columns:1fr 1fr;gap:14px}
@@ -1190,7 +1195,7 @@
   <!-- SERVICES -->
   <section class="section section-alt" id="services">
     <div class="container">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start">
+      <div class="services-why-grid">
         <div>
           <div class="section-eyebrow"><div class="section-line"></div><span class="section-tag">What We Offer</span></div>
           <h2 class="section-title">Services at H.U.B</h2>
