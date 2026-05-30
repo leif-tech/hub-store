@@ -4,46 +4,117 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy - H.U.B</title>
-  <link rel="icon" type="image/png" href="/favicon.png">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Exo+2:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/favicon.png?v=2">
+  <link rel="shortcut icon" type="image/png" href="/favicon.png?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Exo+2:wght@600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
   <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Plus Jakarta Sans',sans-serif;background:#07091c;color:#94a3b8;min-height:100vh}
-    :root{--blue:#1a6ee8;--dark:#07091c;--card:#0d1120;--border:rgba(255,255,255,0.07);--border-blue:rgba(26,110,232,0.2);--heading:#f1f5f9}
-    .topbar{background:rgba(7,9,28,0.98);padding:14px 0;border-bottom:1px solid var(--border-blue)}
-    .topbar .inner{max-width:800px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between}
-    .topbar a{color:#94a3b8;text-decoration:none;font-weight:600;font-size:0.85rem;display:flex;align-items:center;gap:6px;transition:.2s}
-    .topbar a:hover{color:#fff}
-    .topbar .brand{font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.1rem;color:var(--heading);letter-spacing:0.5px}
-    .container{max-width:800px;margin:0 auto;padding:40px 20px 80px}
-    h1{font-family:'Exo 2',sans-serif;font-size:2rem;font-weight:800;color:var(--heading);margin-bottom:8px;letter-spacing:0.5px}
-    .updated{font-size:0.82rem;color:#64748b;margin-bottom:32px}
-    h2{font-family:'Exo 2',sans-serif;font-size:1.15rem;font-weight:800;color:var(--heading);margin:28px 0 10px;letter-spacing:0.3px}
-    p,li{font-size:0.92rem;line-height:1.75;color:#94a3b8;margin-bottom:10px}
-    ul{padding-left:20px;margin-bottom:14px}
-    a{color:var(--blue)}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:20px}
-    strong{color:var(--heading)}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:#fff;color:#374151;line-height:1.65;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+    ul{list-style:none}
+
+    :root{
+      --blue:#1a6ee8;--blue-dark:#1255c0;--blue-light:#eff6ff;--blue-mid:#dbeafe;
+      --bg:#ffffff;--bg-soft:#f4f7ff;--card:#ffffff;
+      --border:#e5eaf3;--border-blue:#c7d9f8;
+      --text:#374151;--text-dim:#9ca3af;--heading:#0f172a;
+      --grad:linear-gradient(135deg,#1255c0 0%,#1a6ee8 55%,#3b9dfd 100%);
+      --shadow-sm:0 2px 8px rgba(15,23,42,0.08);--shadow:0 4px 20px rgba(15,23,42,0.1);
+      --r:10px;--r-lg:16px
+    }
+
+    .container{max-width:1240px;margin:0 auto;padding:0 24px}
+
+    /* NAVBAR */
+    .navbar{position:sticky;top:0;z-index:800;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-bottom:2px solid var(--border-blue);box-shadow:var(--shadow-sm)}
+    .navbar .container{display:flex;align-items:center;justify-content:center;height:68px;gap:20px}
+    .nav-logo{flex:none;display:flex;align-items:center;margin-right:8px}
+    .nav-logo img{height:38px;width:auto}
+    .nav-links{display:flex;align-items:center;gap:20px}
+    .nav-links a{padding:8px 0;font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:500;color:var(--text);letter-spacing:0.2px;transition:color .2s;position:relative;white-space:nowrap}
+    .nav-links a:hover{color:var(--blue)}
+    .nav-links a::after{content:'';position:absolute;bottom:0;left:14px;right:14px;height:2px;background:var(--grad);transform:scaleX(0);transition:transform .25s}
+    .nav-links a:hover::after{transform:scaleX(1)}
+    .nav-links .shop-link{color:#f97316;font-weight:600}
+    .nav-links .deals-link{color:#e11d48;font-weight:600}
+    .nav-links .deals-link::after{background:#e11d48}
+    .nav-links .nav-cta{padding:8px 16px;border-radius:6px;background:var(--grad);color:#fff !important;box-shadow:0 6px 24px rgba(26,110,232,0.22);font-family:'Rajdhani',sans-serif;font-size:0.9rem;font-weight:700;letter-spacing:0.3px}
+    .nav-links .nav-cta::after{display:none}
+    .nav-links .nav-cta:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(26,110,232,0.4)}
+
+    /* PAGE CONTENT */
+    .page-content{max-width:800px;margin:0 auto;padding:48px 24px 80px}
+    .page-header{margin-bottom:32px}
+    .page-header h1{font-family:'Exo 2',sans-serif;font-size:2.2rem;font-weight:800;color:var(--heading);letter-spacing:0.5px;margin-bottom:6px}
+    .page-header .updated{font-size:0.82rem;color:var(--text-dim)}
+    .intro-card{background:var(--bg-soft);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;margin-bottom:28px}
+    .intro-card p{font-size:0.92rem;line-height:1.75;color:var(--text);margin:0}
+    h2{font-family:'Exo 2',sans-serif;font-size:1.15rem;font-weight:800;color:var(--heading);margin:32px 0 12px;letter-spacing:0.3px}
+    p,li{font-size:0.92rem;line-height:1.75;color:#64748b;margin-bottom:10px}
+    ul.content-list{padding-left:20px;margin-bottom:16px;list-style:disc}
+    ul.content-list li{list-style:disc;margin-bottom:8px}
+    ul.content-list li strong{color:var(--heading)}
+    a.link{color:var(--blue);text-decoration:underline;text-underline-offset:2px}
+    a.link:hover{color:var(--blue-dark)}
+
+    /* FOOTER */
+    .footer{background:var(--heading);color:rgba(255,255,255,0.5);padding:64px 0 0}
+    .footer-top{display:grid;grid-template-columns:2.2fr 1fr 1fr 1fr;gap:48px;padding-bottom:48px}
+    .footer-brand .logo{font-family:'Exo 2',sans-serif;font-size:1.8rem;font-weight:900;color:#fff;letter-spacing:1px;margin-bottom:10px}
+    .footer-brand p{font-size:0.83rem;line-height:1.75;margin-bottom:6px}
+    .footer-col h4{font-size:0.68rem;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;color:rgba(255,255,255,0.8);margin-bottom:16px}
+    .footer-col ul li{margin-bottom:9px}
+    .footer-col ul li a{font-size:0.83rem;color:rgba(255,255,255,0.38);transition:color .2s}
+    .footer-col ul li a:hover{color:#fff}
+    .footer-bottom{border-top:1px solid rgba(255,255,255,0.07);padding:20px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+    .footer-bottom p{font-size:0.77rem}
+    .footer-legal{display:flex;gap:20px}
+    .footer-legal a{font-size:0.77rem;color:rgba(255,255,255,0.35);transition:color .2s}
+    .footer-legal a:hover{color:rgba(255,255,255,0.7)}
+    .footer-social{display:flex;gap:10px;margin-top:16px}
+    .footer-social a{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;transition:all .2s}
+    .footer-social a:hover{background:var(--blue);color:#fff}
+
+    @media(max-width:768px){
+      .nav-links{display:none}
+      .footer-top{grid-template-columns:1fr}
+      .page-header h1{font-size:1.7rem}
+    }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="inner">
-      <a href="/"><img src="/logo.png" alt="H.U.B" style="height:28px;width:auto" onerror="this.style.display='none'"> <span class="brand">H.U.B</span></a>
-      <a href="/">Back to Store</a>
-    </div>
-  </div>
-  <div class="container">
-    <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: May 28, 2026</p>
 
-    <div class="card">
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="nav-logo"><img src="/logo.png" alt="H.U.B"></a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/shop" class="shop-link">Store</a>
+        <a href="/shop?cat=deals" class="deals-link">Deals</a>
+        <a href="/services">Services</a>
+        <a href="/about">About</a>
+        <a href="/contact" class="nav-cta">Contact Us</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-content">
+    <div class="page-header">
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated: May 28, 2026</p>
+    </div>
+
+    <div class="intro-card">
       <p>H.U.B (Hanap.Usap.Build) ("H.U.B", "we", "us", or "our") operates the website <strong>hubstore.ph</strong>. This Privacy Policy explains how we collect, use, and protect your personal information when you use our website and services. We are located at 3/F Unit 306 Arbortowne Plaza II, Karuhatan Road, Gen. T. de Leon, Valenzuela, Philippines 1442.</p>
     </div>
 
     <h2>1. Information We Collect</h2>
     <p>We collect the following types of information:</p>
-    <ul>
+    <ul class="content-list">
       <li><strong>Account Information:</strong> When you sign in via Google or Facebook, we receive your name, email address, and profile picture from the respective provider.</li>
       <li><strong>Order Information:</strong> When you place an order, we collect your name, email, phone number, shipping address, and payment method selection.</li>
       <li><strong>Contact Information:</strong> When you use our contact form, we collect your name, email, phone number, and message content.</li>
@@ -52,7 +123,7 @@
 
     <h2>2. How We Use Your Information</h2>
     <p>We use the information we collect to:</p>
-    <ul>
+    <ul class="content-list">
       <li>Process and fulfill your orders</li>
       <li>Communicate with you about your orders, inquiries, and customer support</li>
       <li>Personalize your shopping experience</li>
@@ -62,9 +133,9 @@
 
     <h2>3. Third-Party Services</h2>
     <p>We use the following third-party services:</p>
-    <ul>
-      <li><strong>Firebase Authentication (Google):</strong> For secure sign-in via Google and Facebook accounts. Governed by <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.</li>
-      <li><strong>Facebook Login (Meta):</strong> For sign-in via Facebook. Governed by <a href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener">Meta's Privacy Policy</a>.</li>
+    <ul class="content-list">
+      <li><strong>Firebase Authentication (Google):</strong> For secure sign-in via Google and Facebook accounts. Governed by <a class="link" href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.</li>
+      <li><strong>Facebook Login (Meta):</strong> For sign-in via Facebook. Governed by <a class="link" href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noopener">Meta's Privacy Policy</a>.</li>
     </ul>
     <p>We do not sell, rent, or share your personal information with third parties for their marketing purposes.</p>
 
@@ -76,10 +147,10 @@
 
     <h2>6. Your Rights</h2>
     <p>You have the right to:</p>
-    <ul>
+    <ul class="content-list">
       <li>Access the personal data we hold about you</li>
       <li>Request correction of inaccurate data</li>
-      <li>Request deletion of your data (see our <a href="/data-deletion">Data Deletion page</a>)</li>
+      <li>Request deletion of your data (see our <a class="link" href="/data-deletion">Data Deletion page</a>)</li>
       <li>Withdraw consent for data processing</li>
       <li>Object to processing of your personal data</li>
     </ul>
@@ -95,11 +166,39 @@
 
     <h2>10. Contact Us</h2>
     <p>If you have questions about this Privacy Policy or your personal data, contact us:</p>
-    <ul>
-      <li>Email: <a href="mailto:hanap.usap.build@gmail.com">hanap.usap.build@gmail.com</a></li>
+    <ul class="content-list">
+      <li>Email: <a class="link" href="mailto:hanap.usap.build@gmail.com">hanap.usap.build@gmail.com</a></li>
       <li>Address: 3/F Unit 306 Arbortowne Plaza II, Karuhatan Road, Valenzuela, Philippines 1442</li>
-      <li>Facebook: <a href="https://www.facebook.com/HUBValenzuela" target="_blank" rel="noopener">H.U.B Facebook Page</a></li>
+      <li>Facebook: <a class="link" href="https://www.facebook.com/HUBValenzuela" target="_blank" rel="noopener">H.U.B Facebook Page</a></li>
     </ul>
   </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo">H.U.B</div>
+          <p>Hanap.Usap.Build Your local PC builder and computer parts store in Valenzuela, Philippines.</p>
+          <p style="margin-top:6px;font-size:0.78rem;color:rgba(255,255,255,0.3)">&#128205; 3/F Unit 306 Arbortowne Plaza II, Valenzuela</p>
+          <div class="footer-social">
+            <a href="https://www.facebook.com/Hanap.Usap.Build" target="_blank" rel="noopener" title="Facebook"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+            <a href="https://www.instagram.com/hanap.usap.build" target="_blank" rel="noopener" title="Instagram"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>
+            <a href="https://www.tiktok.com/@hanap.usap.build" target="_blank" rel="noopener" title="TikTok"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.27 8.27 0 004.84 1.55V6.79a4.85 4.85 0 01-1.07-.1z"/></svg></a>
+          </div>
+        </div>
+        <div class="footer-col"><h4>Quick Links</h4><ul><li><a href="/">Home</a></li><li><a href="/shop">Shop</a></li><li><a href="/services">Services</a></li><li><a href="/about">About</a></li><li><a href="/contact">Contact</a></li></ul></div>
+        <div class="footer-col"><h4>Categories</h4><ul><li><a href="/shop?cat=builds">PC Builds</a></li><li><a href="/shop?cat=gpu">Video Cards</a></li><li><a href="/shop?cat=cpu">Processors</a></li><li><a href="/shop?cat=ram">Memory</a></li><li><a href="/shop?cat=storage">Storage</a></li></ul></div>
+        <div class="footer-col"><h4>Contact</h4><ul><li><a href="tel:09760021202">0976 002 1202</a></li><li><a href="mailto:hanap.usap.build@gmail.com">Email Us</a></li><li><a href="https://www.facebook.com/Hanap.Usap.Build" target="_blank" rel="noopener">Facebook</a></li><li><a href="https://www.instagram.com/hanap.usap.build" target="_blank" rel="noopener">Instagram</a></li><li><a href="https://www.tiktok.com/@hanap.usap.build" target="_blank" rel="noopener">TikTok</a></li></ul></div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Hanap.Usap.Build (H.U.B). All rights reserved.</p>
+        <div class="footer-legal">
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/data-deletion">Data Deletion</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>
