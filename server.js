@@ -41,10 +41,12 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 // Seed persistent volume from git data on first deploy (if volume is empty)
+// admins.json is ALWAYS re-seeded to pick up password/role changes from git
 if (DATA_DIR !== SEED_DIR && fs.existsSync(SEED_DIR)) {
+  const alwaysReseed = ['admins.json'];
   for (const file of fs.readdirSync(SEED_DIR)) {
     const dest = path.join(DATA_DIR, file);
-    if (!fs.existsSync(dest)) {
+    if (!fs.existsSync(dest) || alwaysReseed.includes(file)) {
       fs.copyFileSync(path.join(SEED_DIR, file), dest);
       console.log(`[INIT] Seeded ${file} to persistent storage`);
     }
