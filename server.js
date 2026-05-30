@@ -70,6 +70,17 @@ const upload = multer({
   }
 });
 
+// Startup: reset admin password if ADMIN_RESET_PASS env var is set
+if (process.env.ADMIN_RESET_PASS) {
+  const admins = readJSON('admins.json');
+  const admin = admins.find(a => a.username === 'admin');
+  if (admin) {
+    admin.password = bcrypt.hashSync(process.env.ADMIN_RESET_PASS, 10);
+    writeJSON('admins.json', admins);
+    console.log('[STARTUP] Admin password reset via ADMIN_RESET_PASS env var');
+  }
+}
+
 app.use(compression());
 // IMPORTANT: Do NOT change these Helmet settings without testing Google & Facebook login.
 // crossOriginOpenerPolicy MUST be false — setting it to 'same-origin' will break
