@@ -265,6 +265,7 @@
         <div class="success-msg" id="successMsg">
           <div class="check">&#10003;</div>
           <h3>Order Placed!</h3>
+          <p id="orderConfirmDetails"></p>
           <p>Send your <strong style="color:var(--heading)">payment screenshot</strong> to our Facebook Messenger so we can verify and process your order.</p>
           <a href="https://www.facebook.com/messages/t/HUBValenzuela" target="_blank" rel="noopener" class="btn btn-fb" style="width:auto;margin:0 auto">
             <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.908 1.434 5.503 3.678 7.2V22l3.455-1.896A10.7 10.7 0 0012 20.486c5.523 0 10-4.145 10-9.243S17.523 2 12 2zm1.077 12.456l-2.549-2.72-4.974 2.72 5.472-5.81 2.613 2.72 4.91-2.72-5.472 5.81z"/></svg>
@@ -453,6 +454,10 @@
           try { localStorage.removeItem('hub_cart'); } catch(e) {}
           isSubmitting = false;
           btn.style.display = 'none';
+          const confirmedTotal = data.total != null ? fmt(data.total) : fmt(orderTotal);
+          document.getElementById('orderConfirmDetails').innerHTML =
+            '<strong>Order ID:</strong> ' + esc(data.orderId) + '<br>' +
+            '<strong>Total:</strong> ' + confirmedTotal;
           document.getElementById('successMsg').classList.add('show');
           document.getElementById('successMsg').scrollIntoView({ behavior: 'smooth', block: 'center' });
         })

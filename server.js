@@ -76,7 +76,21 @@ app.use(compression());
 // Firebase signInWithPopup for both Google and Facebook by killing window.opener
 // in the OAuth popup, causing silent auth failures.
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.gstatic.com", "https://cdn.jsdelivr.net", "https://apis.google.com", "https://connect.facebook.net"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      connectSrc: ["'self'", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com", "https://www.googleapis.com", "https://firebase.googleapis.com", "https://firebaseinstallations.googleapis.com", "https://whitelabel-ai-production.up.railway.app"],
+      frameSrc: ["https://accounts.google.com", "https://www.facebook.com", "https://web.facebook.com", "https://maps.google.com"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      upgradeInsecureRequests: []
+    }
+  },
   crossOriginEmbedderPolicy: false,
   crossOriginOpenerPolicy: false
 }));
@@ -148,10 +162,18 @@ function appendToFile(filename, entry) {
   return arr[arr.length - 1];
 }
 
-// H5: Strip HTML tags and trim/limit string length to prevent XSS in stored data
+// H5: Strip HTML tags, encode dangerous chars, and trim/limit string length to prevent XSS in stored data
 function sanitizeInput(str, maxLen = 500) {
   if (typeof str !== 'string') return str;
-  return str.replace(/<[^>]*>/g, '').trim().slice(0, maxLen);
+  return str
+    .replace(/<[^>]*>?/g, '')       // strip HTML tags (including unclosed)
+    .replace(/&/g, '&amp;')         // encode ampersand first
+    .replace(/</g, '&lt;')          // encode any remaining angle brackets
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .trim()
+    .slice(0, maxLen);
 }
 
 // H1: CSRF protection — require custom header on public state-changing endpoints
@@ -232,6 +254,31 @@ function deriveStockStatus(stock) {
   return 'in';
 }
 
+// ── Inventory & Audit Log Helpers ─────────────────────────────────
+
+function logInventory(productId, productName, type, qty, prevStock, newStock, note, by) {
+  const entry = {
+    id: 'inv-' + Date.now(),
+    productId, productName, type, qty, prevStock, newStock,
+    note: note || '', by: by || 'system',
+    timestamp: new Date().toISOString()
+  };
+  const log = readJSON('inventory-log.json');
+  log.push(entry);
+  writeJSON('inventory-log.json', log);
+}
+
+function logAudit(action, target, details, by) {
+  const entry = {
+    action, target: target || '',
+    details: details || '', by: by || 'system',
+    timestamp: new Date().toISOString()
+  };
+  const log = readJSON('audit.json');
+  log.push(entry);
+  writeJSON('audit.json', log);
+}
+
 // ── Auth Middleware ───────────────────────────────────────────────
 
 function authMiddleware(req, res, next) {
@@ -249,8 +296,8 @@ function authMiddleware(req, res, next) {
 }
 
 function ownerOnly(req, res, next) {
-  if (req.admin.role !== 'owner') {
-    return res.status(403).json({ error: 'Owner access required' });
+  if (req.admin.role !== 'owner' && req.admin.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
   }
   next();
 }
@@ -399,7 +446,12 @@ async function sendOrderEmails(order) {
 app.get('/api/products', (req, res) => {
   const products = readJSON('products.json')
     .map(p => ({
-      ...p,
+      id: p.id, cat: p.cat, label: p.label, name: p.name, price: p.price,
+      priceTiers: p.priceTiers || null, img: p.img, brand: p.brand || null,
+      description: p.description || null, weight: p.weight || null,
+      warranty: p.warranty || null, originalPrice: p.originalPrice || p.comparePrice || null,
+      salePrice: p.salePrice || null, stock: p.stock, specs: p.specs || null,
+      condition: p.condition || 'new', badge: p.badge || null,
       stockStatus: deriveStockStatus(p.stock)
     }));
   res.json(products);
@@ -422,7 +474,7 @@ app.post('/api/contact', contactLimiter, csrfCheck, (req, res) => {
     message: sanitizeInput(message, 2000)
   };
   appendToFile('contacts.json', entry);
-  console.log(`[CONTACT] ${entry.name} <${entry.email}>: ${entry.message.substring(0, 80)}`);
+  console.log(`[CONTACT] New contact form submission received`);
   res.json({ success: true });
 });
 
@@ -455,7 +507,7 @@ app.post('/api/customers', csrfCheck, (req, res) => {
   };
   customers.push(customer);
   writeJSON('customers.json', customers);
-  console.log(`[CUSTOMER] New: ${customer.name} (${customer.email || 'no email'}) via ${provider}`);
+  console.log(`[CUSTOMER] New customer registered via ${provider}`);
   res.json({ success: true, new: true });
 });
 
@@ -509,27 +561,21 @@ app.post('/api/order', orderLimiter, csrfCheck, (req, res) => {
     return res.status(400).json({ error: 'Invalid payment method' });
   }
 
-  // Validate total
-  if (!total || parseFloat(total) <= 0) {
-    return res.status(400).json({ error: 'Total must be greater than 0' });
-  }
-
   // H4: Server-side price verification — override client prices with catalog prices
   const products = readJSON('products.json');
-  const verifiedItems = items.map(item => {
+  const verifiedItems = [];
+  for (const item of items) {
     const product = products.find(p =>
       p.name && p.name.toLowerCase() === (item.name || '').toLowerCase()
     );
-    if (product) {
-      if (Number(product.price) !== Number(item.price)) {
-        console.warn(`[ORDER] Price mismatch for "${item.name}": client=${item.price}, catalog=${product.price}`);
-      }
-      return { ...item, price: product.price, productId: product.id };
+    if (!product) {
+      return res.status(400).json({ error: `"${item.name}" is not available in our catalog` });
     }
-    // Item not in catalog (custom build, service) — accept client price but log it
-    console.log(`[ORDER] Item "${item.name}" not found in catalog — using client price ₱${item.price}`);
-    return { ...item };
-  });
+    if (Number(product.price) !== Number(item.price)) {
+      console.warn(`[ORDER] Price mismatch for "${item.name}": client=${item.price}, catalog=${product.price}`);
+    }
+    verifiedItems.push({ ...item, price: product.price, productId: product.id });
+  }
 
   // B5: Stock availability check before accepting order
   for (const item of verifiedItems) {
@@ -550,6 +596,11 @@ app.post('/api/order', orderLimiter, csrfCheck, (req, res) => {
   const itemsTotal = verifiedItems.reduce((sum, item) => sum + (Number(item.price) * (item.qty || 1)), 0);
   const shippingFee = shippingFees[shipping] || 0;
   const serverTotal = itemsTotal + shippingFee;
+
+  // Validate server-calculated total (not client-submitted)
+  if (serverTotal <= 0) {
+    return res.status(400).json({ error: 'Order total must be greater than 0' });
+  }
 
   // H5: Sanitize all customer fields before storage
   const sanitizedCustomer = {
@@ -592,7 +643,7 @@ app.post('/api/order', orderLimiter, csrfCheck, (req, res) => {
     status: 'Pending'
   };
   appendToFile('orders.json', order);
-  console.log(`[ORDER] ${order.id} - ${sanitizedCustomer.firstName} ${sanitizedCustomer.lastName} - ${verifiedItems.length} item(s) - Total: ₱${serverTotal}`);
+  console.log(`[ORDER] ${order.id} - ${verifiedItems.length} item(s) - Total: ₱${serverTotal}`);
 
   // B5: Decrement stock after order is saved
   let productsUpdated = false;
@@ -603,7 +654,10 @@ app.post('/api/order', orderLimiter, csrfCheck, (req, res) => {
     if (pidx === -1) continue;
     const stockNum = Number(productsCopy[pidx].stock);
     if (!isNaN(stockNum) && stockNum > 0) {
-      productsCopy[pidx].stock = Math.max(0, stockNum - (item.qty || 1));
+      const qty = item.qty || 1;
+      const newStock = Math.max(0, stockNum - qty);
+      logInventory(item.productId, productsCopy[pidx].name, 'online-order', -qty, stockNum, newStock, `Order ${orderId}`, 'system');
+      productsCopy[pidx].stock = newStock;
       productsUpdated = true;
     }
   }
@@ -615,7 +669,7 @@ app.post('/api/order', orderLimiter, csrfCheck, (req, res) => {
   // H3: Send emails non-blocking (don't delay response)
   sendOrderEmails(order).catch(err => console.error('[EMAIL] Unexpected error:', err.message));
 
-  res.json({ success: true, orderId: order.id });
+  res.json({ success: true, orderId: order.id, total: serverTotal });
 });
 
 // ── Admin Auth ───────────────────────────────────────────────────
@@ -688,6 +742,42 @@ app.get('/api/admin/stats', authMiddleware, ownerOnly, (req, res) => {
     .slice(0, 5)
     .map(([name, qty]) => ({ name, qty }));
 
+  // Enhanced stats: today's revenue, sales count, monthly profit
+  const sales = readJSON('sales.json');
+  const expenses = readJSON('expenses.json');
+  const todayStr = now.toISOString().slice(0, 10);
+  const monthStr = now.toISOString().slice(0, 7);
+
+  const todayOnlineRev = orders
+    .filter(o => o.timestamp && o.timestamp.slice(0, 10) === todayStr && o.status === 'Completed')
+    .reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+  const todayWalkinRev = sales
+    .filter(s => !s.voided && s.timestamp && s.timestamp.slice(0, 10) === todayStr)
+    .reduce((sum, s) => sum + (s.total || 0), 0);
+  const todayRevenue = todayOnlineRev + todayWalkinRev;
+  const todaySalesCount = sales.filter(s => !s.voided && s.timestamp && s.timestamp.slice(0, 10) === todayStr).length
+    + orders.filter(o => o.timestamp && o.timestamp.slice(0, 10) === todayStr).length;
+
+  // Yesterday comparison
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+  const yesterdayRev = orders.filter(o => o.timestamp && o.timestamp.slice(0, 10) === yesterdayStr && o.status === 'Completed').reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0)
+    + sales.filter(s => !s.voided && s.timestamp && s.timestamp.slice(0, 10) === yesterdayStr).reduce((sum, s) => sum + (s.total || 0), 0);
+  const revenueChange = yesterdayRev > 0 ? Number((((todayRevenue - yesterdayRev) / yesterdayRev) * 100).toFixed(1)) : 0;
+
+  // Monthly expense total
+  const monthExpenses = expenses.filter(e => e.date && e.date.startsWith(monthStr)).reduce((sum, e) => sum + (e.amount || 0), 0);
+
+  // Monthly revenue
+  const monthOnlineRev = orders.filter(o => o.timestamp && o.timestamp.slice(0, 7) === monthStr && o.status === 'Completed').reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+  const monthWalkinRev = sales.filter(s => !s.voided && s.timestamp && s.timestamp.slice(0, 7) === monthStr).reduce((sum, s) => sum + (s.total || 0), 0);
+  const monthRevenue = monthOnlineRev + monthWalkinRev;
+  const monthProfit = monthRevenue - monthExpenses;
+
+  // Recent walk-in sales
+  const recentSales = sales.filter(s => !s.voided).slice(-5).reverse();
+
   res.json({
     totalProducts: products.length,
     totalOrders: orders.length,
@@ -699,7 +789,14 @@ app.get('/api/admin/stats', authMiddleware, ownerOnly, (req, res) => {
     recentOrders,
     revenueByDay,
     ordersByStatus,
-    topProducts
+    topProducts,
+    todayRevenue,
+    todaySalesCount,
+    revenueChange,
+    monthProfit,
+    monthExpenses,
+    monthRevenue,
+    recentSales
   });
 });
 
@@ -727,7 +824,7 @@ app.get('/api/admin/products', authMiddleware, (req, res) => {
 
 app.post('/api/admin/products', authMiddleware, (req, res) => {
   const products = readJSON('products.json');
-  const { cat, label, name, price, priceTiers, img, brand, description, weight, warranty, stock, condition, badge, specs, shopee } = req.body;
+  const { cat, label, name, price, costPrice, priceTiers, img, brand, description, weight, warranty, stock, condition, badge, specs, shopee } = req.body;
   if (!cat || !name || !price || isNaN(Number(price)) || Number(price) <= 0) {
     return res.status(400).json({ error: 'Category, name, and valid price are required' });
   }
@@ -739,6 +836,7 @@ app.post('/api/admin/products', authMiddleware, (req, res) => {
   const product = {
     id: 'prod-' + (maxNum + 1),
     cat, label: label || cat, name, price: Number(price),
+    costPrice: Number(costPrice) || 0,
     priceTiers: priceTiers || null,
     img: img || '', brand: brand || null, description: description || null,
     weight: weight ? Number(weight) : null, warranty: warranty || null,
@@ -747,6 +845,7 @@ app.post('/api/admin/products', authMiddleware, (req, res) => {
   };
   products.push(product);
   writeJSON('products.json', products);
+  logAudit('product_create', product.id, `Created product: ${name}`, req.admin.username);
   console.log(`[ADMIN] Product added: ${name}`);
   res.json({ success: true, product });
 });
@@ -756,35 +855,46 @@ app.put('/api/admin/products/:id', authMiddleware, (req, res) => {
   const idx = products.findIndex(p => p.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Product not found' });
 
-  const { cat, label, name, price, priceTiers, img, brand, description, weight, warranty, stock, condition, badge, specs, shopee } = req.body;
+  const { cat, label, name, price, costPrice, priceTiers, img, brand, description, weight, warranty, stock, condition, badge, specs, shopee } = req.body;
+  const changes = [];
   if (cat !== undefined) products[idx].cat = cat;
   if (label !== undefined) products[idx].label = label;
   if (name !== undefined) products[idx].name = name;
-  if (price !== undefined) products[idx].price = Number(price);
+  if (price !== undefined) { if (products[idx].price !== Number(price)) changes.push(`price ${products[idx].price}→${Number(price)}`); products[idx].price = Number(price); }
+  if (costPrice !== undefined) { products[idx].costPrice = Number(costPrice) || 0; }
   if (priceTiers !== undefined) products[idx].priceTiers = priceTiers;
   if (img !== undefined) products[idx].img = img;
   if (brand !== undefined) products[idx].brand = brand || null;
   if (description !== undefined) products[idx].description = description || null;
   if (weight !== undefined) products[idx].weight = weight ? Number(weight) : null;
   if (warranty !== undefined) products[idx].warranty = warranty || null;
-  if (stock !== undefined) products[idx].stock = Number(stock);
+  if (stock !== undefined) {
+    const prevStock = products[idx].stock;
+    products[idx].stock = Number(stock);
+    if (prevStock !== Number(stock)) {
+      logInventory(products[idx].id, products[idx].name, 'adjustment', Number(stock) - prevStock, prevStock, Number(stock), 'Manual stock edit', req.admin.username);
+      changes.push(`stock ${prevStock}→${Number(stock)}`);
+    }
+  }
   if (condition !== undefined) products[idx].condition = condition;
   if (badge !== undefined) products[idx].badge = badge || null;
   if (specs !== undefined) products[idx].specs = specs;
   if (shopee !== undefined) products[idx].shopee = !!shopee;
 
   writeJSON('products.json', products);
+  logAudit('product_update', products[idx].id, `Updated ${products[idx].name}${changes.length ? ': ' + changes.join(', ') : ''}`, req.admin.username);
   console.log(`[ADMIN] Product updated: ${products[idx].name}`);
   res.json({ success: true, product: products[idx] });
 });
 
-app.delete('/api/admin/products/:id', authMiddleware, (req, res) => {
+app.delete('/api/admin/products/:id', authMiddleware, ownerOnly, (req, res) => {
   let products = readJSON('products.json');
   const idx = products.findIndex(p => p.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Product not found' });
 
   const removed = products.splice(idx, 1)[0];
   writeJSON('products.json', products);
+  logAudit('product_delete', removed.id, `Deleted product: ${removed.name}`, req.admin.username);
   console.log(`[ADMIN] Product deleted: ${removed.name}`);
   res.json({ success: true });
 });
@@ -945,15 +1055,43 @@ app.put('/api/admin/orders/:id/status', authMiddleware, (req, res) => {
   const order = orders.find(o => o.id === req.params.id);
   if (!order) return res.status(404).json({ error: 'Order not found' });
 
-  const validStatuses = ['Pending', 'Confirmed', 'Shipped', 'Completed'];
+  const validStatuses = ['Pending', 'Confirmed', 'Shipped', 'Completed', 'Cancelled'];
   if (!req.body.status || !validStatuses.includes(req.body.status)) {
     return res.status(400).json({ error: 'Invalid status. Must be: ' + validStatuses.join(', ') });
   }
 
+  if (req.body.status === 'Cancelled' && !req.body.reason) {
+    return res.status(400).json({ error: 'Cancellation reason is required' });
+  }
+
   const prevStatus = order.status;
   order.status = req.body.status;
+  if (req.body.reason) order.cancelReason = sanitizeInput(req.body.reason, 500);
   writeJSON('orders.json', orders);
   console.log(`[ADMIN] Order ${order.id} status → ${order.status}`);
+
+  // Restore stock when order is cancelled
+  if (req.body.status === 'Cancelled' && prevStatus !== 'Cancelled') {
+    const products = readJSON('products.json');
+    let restored = false;
+    for (const item of (order.items || [])) {
+      const pid = item.productId;
+      if (!pid) continue;
+      const pidx = products.findIndex(p => p.id === pid);
+      if (pidx === -1) continue;
+      const prevStock = Number(products[pidx].stock) || 0;
+      const qty = item.qty || item.quantity || 1;
+      products[pidx].stock = prevStock + qty;
+      logInventory(pid, products[pidx].name, 'return', qty, prevStock, products[pidx].stock, `Order ${order.id} cancelled`, req.admin.username);
+      restored = true;
+    }
+    if (restored) {
+      writeJSON('products.json', products);
+      console.log(`[ADMIN] Stock restored for cancelled order ${order.id}`);
+    }
+  }
+
+  logAudit('order_status', order.id, `Status ${prevStatus}→${order.status}${order.cancelReason ? ' (reason: ' + order.cancelReason + ')' : ''}`, req.admin.username);
 
   // Auto-credit points when order is completed
   let pointsCredited = 0;
@@ -1226,12 +1364,333 @@ function broadcastSettings(settings) {
 }
 
 // PUT /api/admin/settings — admin only
-app.put('/api/admin/settings', authMiddleware, (req, res) => {
+app.put('/api/admin/settings', authMiddleware, ownerOnly, (req, res) => {
+  const allowedKeys = ['showUrgencyCTA'];
   const current = readSettings();
-  const updated = { ...current, ...req.body };
+  const filtered = {};
+  for (const key of allowedKeys) {
+    if (req.body[key] !== undefined) filtered[key] = req.body[key];
+  }
+  if (!Object.keys(filtered).length) {
+    return res.status(400).json({ error: 'No valid settings provided' });
+  }
+  const updated = { ...current, ...filtered };
   writeJSON('settings.json', updated);
   broadcastSettings(updated);
+  logAudit('settings_update', 'settings', `Updated: ${Object.keys(req.body).join(', ')}`, req.admin.username);
   res.json({ success: true, settings: updated });
+});
+
+// ── Admin: Expenses CRUD ──────────────────────────────────────────
+
+app.get('/api/admin/expenses', authMiddleware, (req, res) => {
+  let expenses = readJSON('expenses.json');
+  const { from, to } = req.query;
+  if (from) expenses = expenses.filter(e => e.date >= from);
+  if (to) expenses = expenses.filter(e => e.date <= to);
+  res.json(expenses.reverse().slice(0, 500));
+});
+
+app.post('/api/admin/expenses', authMiddleware, ownerOnly, (req, res) => {
+  const { date, category, description, amount, paymentMethod } = req.body;
+  if (!category || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+    return res.status(400).json({ error: 'Category and valid amount are required' });
+  }
+  const expenses = readJSON('expenses.json');
+  const expense = {
+    id: 'exp-' + Date.now(),
+    date: date || new Date().toISOString().slice(0, 10),
+    category: sanitizeInput(category),
+    description: sanitizeInput(description || ''),
+    amount: Number(amount),
+    paymentMethod: sanitizeInput(paymentMethod || 'Cash'),
+    timestamp: new Date().toISOString()
+  };
+  expenses.push(expense);
+  writeJSON('expenses.json', expenses);
+  logAudit('expense_create', expense.id, `${category}: ₱${Number(amount).toLocaleString()}`, req.admin.username);
+  console.log(`[ADMIN] Expense added: ${category} ₱${amount}`);
+  res.json({ success: true, expense });
+});
+
+app.put('/api/admin/expenses/:id', authMiddleware, ownerOnly, (req, res) => {
+  const expenses = readJSON('expenses.json');
+  const idx = expenses.findIndex(e => e.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Expense not found' });
+  const { date, category, description, amount, paymentMethod } = req.body;
+  if (date !== undefined) expenses[idx].date = date;
+  if (category !== undefined) expenses[idx].category = sanitizeInput(category);
+  if (description !== undefined) expenses[idx].description = sanitizeInput(description);
+  if (amount !== undefined) {
+    if (isNaN(Number(amount)) || Number(amount) <= 0) {
+      return res.status(400).json({ error: 'Amount must be greater than 0' });
+    }
+    expenses[idx].amount = Number(amount);
+  }
+  if (paymentMethod !== undefined) expenses[idx].paymentMethod = sanitizeInput(paymentMethod);
+  writeJSON('expenses.json', expenses);
+  logAudit('expense_update', expenses[idx].id, `Updated: ${expenses[idx].category} ₱${expenses[idx].amount}`, req.admin.username);
+  res.json({ success: true, expense: expenses[idx] });
+});
+
+app.delete('/api/admin/expenses/:id', authMiddleware, ownerOnly, (req, res) => {
+  let expenses = readJSON('expenses.json');
+  const idx = expenses.findIndex(e => e.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Expense not found' });
+  const removed = expenses.splice(idx, 1)[0];
+  writeJSON('expenses.json', expenses);
+  logAudit('expense_delete', removed.id, `Deleted: ${removed.category} ₱${removed.amount}`, req.admin.username);
+  res.json({ success: true });
+});
+
+// ── Admin: Walk-in Sales / POS ────────────────────────────────────
+
+app.get('/api/admin/sales', authMiddleware, (req, res) => {
+  let sales = readJSON('sales.json');
+  const { from, to } = req.query;
+  if (from) sales = sales.filter(s => s.timestamp && s.timestamp.slice(0, 10) >= from);
+  if (to) sales = sales.filter(s => s.timestamp && s.timestamp.slice(0, 10) <= to);
+  res.json(sales.reverse().slice(0, 500));
+});
+
+app.post('/api/admin/sales', authMiddleware, (req, res) => {
+  const { items, discount, paymentMethod, customerName, notes } = req.body;
+  if (!Array.isArray(items) || !items.length) {
+    return res.status(400).json({ error: 'At least one item is required' });
+  }
+
+  const products = readJSON('products.json');
+  const saleItems = [];
+
+  for (const item of items) {
+    if (!item.productId || !item.qty || item.qty < 1) {
+      return res.status(400).json({ error: 'Each item needs productId and qty' });
+    }
+    const product = products.find(p => p.id === item.productId);
+    if (!product) return res.status(400).json({ error: `Product ${item.productId} not found` });
+    const stockNum = Number(product.stock) || 0;
+    if (stockNum < item.qty) {
+      return res.status(400).json({ error: `"${product.name}" insufficient stock (${stockNum} available)` });
+    }
+    saleItems.push({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      costPrice: product.costPrice || 0,
+      qty: item.qty
+    });
+  }
+
+  const subtotal = saleItems.reduce((sum, i) => sum + (i.price * i.qty), 0);
+  const discountAmt = Number(discount) || 0;
+  const total = Math.max(0, subtotal - discountAmt);
+
+  const sale = {
+    id: 'sale-' + Date.now(),
+    items: saleItems,
+    subtotal,
+    discount: discountAmt,
+    total,
+    paymentMethod: sanitizeInput(paymentMethod || 'Cash'),
+    customerName: sanitizeInput(customerName || 'Walk-in'),
+    notes: sanitizeInput(notes || ''),
+    soldBy: req.admin.username,
+    timestamp: new Date().toISOString()
+  };
+
+  // Decrement stock
+  for (const item of saleItems) {
+    const pidx = products.findIndex(p => p.id === item.productId);
+    if (pidx === -1) continue;
+    const prevStock = Number(products[pidx].stock) || 0;
+    products[pidx].stock = prevStock - item.qty;
+    logInventory(item.productId, item.name, 'sale', -item.qty, prevStock, products[pidx].stock, `Sale ${sale.id}`, req.admin.username);
+  }
+  writeJSON('products.json', products);
+
+  const sales = readJSON('sales.json');
+  sales.push(sale);
+  writeJSON('sales.json', sales);
+  logAudit('sale_create', sale.id, `Walk-in sale: ₱${total.toLocaleString()} (${saleItems.length} items)`, req.admin.username);
+  console.log(`[ADMIN] Walk-in sale: ${sale.id} ₱${total}`);
+  res.json({ success: true, sale });
+});
+
+function handleVoidSale(req, res) {
+  const sales = readJSON('sales.json');
+  const idx = sales.findIndex(s => s.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Sale not found' });
+
+  const { reason } = req.body;
+  if (!reason) return res.status(400).json({ error: 'Void reason is required' });
+
+  const sale = sales[idx];
+  // Restore stock
+  const products = readJSON('products.json');
+  for (const item of (sale.items || [])) {
+    const pidx = products.findIndex(p => p.id === item.productId);
+    if (pidx === -1) continue;
+    const prevStock = Number(products[pidx].stock) || 0;
+    products[pidx].stock = prevStock + item.qty;
+    logInventory(item.productId, item.name, 'void', item.qty, prevStock, products[pidx].stock, `Voided sale ${sale.id}: ${sanitizeInput(reason)}`, req.admin.username);
+  }
+  writeJSON('products.json', products);
+
+  sale.voided = true;
+  sale.voidReason = sanitizeInput(reason);
+  sale.voidedBy = req.admin.username;
+  sale.voidedAt = new Date().toISOString();
+  writeJSON('sales.json', sales);
+  logAudit('sale_void', sale.id, `Voided: ${reason}`, req.admin.username);
+  console.log(`[ADMIN] Sale voided: ${sale.id}`);
+  res.json({ success: true });
+}
+app.post('/api/admin/sales/:id/void', authMiddleware, ownerOnly, handleVoidSale);
+app.delete('/api/admin/sales/:id', authMiddleware, ownerOnly, handleVoidSale);
+
+// ── Admin: Inventory Log ──────────────────────────────────────────
+
+app.get('/api/admin/inventory-log', authMiddleware, (req, res) => {
+  let log = readJSON('inventory-log.json');
+  const { productId, type, from, to } = req.query;
+  if (productId) log = log.filter(e => e.productId === productId);
+  if (type) log = log.filter(e => e.type === type);
+  if (from) log = log.filter(e => e.timestamp && e.timestamp.slice(0, 10) >= from);
+  if (to) log = log.filter(e => e.timestamp && e.timestamp.slice(0, 10) <= to);
+  res.json(log.reverse().slice(0, 500));
+});
+
+app.post('/api/admin/inventory/restock', authMiddleware, (req, res) => {
+  const { productId, qty, note } = req.body;
+  if (!productId || !qty || isNaN(Number(qty)) || Number(qty) <= 0) {
+    return res.status(400).json({ error: 'Product ID and valid quantity required' });
+  }
+  const products = readJSON('products.json');
+  const idx = products.findIndex(p => p.id === productId);
+  if (idx === -1) return res.status(404).json({ error: 'Product not found' });
+
+  const prevStock = Number(products[idx].stock) || 0;
+  const addQty = Number(qty);
+  products[idx].stock = prevStock + addQty;
+  writeJSON('products.json', products);
+  logInventory(productId, products[idx].name, 'restock', addQty, prevStock, products[idx].stock, sanitizeInput(note || 'Restock'), req.admin.username);
+  logAudit('restock', productId, `Restocked ${products[idx].name}: +${addQty} (${prevStock}→${products[idx].stock})`, req.admin.username);
+  console.log(`[ADMIN] Restocked ${products[idx].name}: +${addQty}`);
+  res.json({ success: true, product: products[idx] });
+});
+
+// ── Admin: Reports / P&L ──────────────────────────────────────────
+
+app.get('/api/admin/reports', authMiddleware, ownerOnly, (req, res) => {
+  const now = new Date();
+  const from = req.query.from || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const to = req.query.to || now.toISOString().slice(0, 10);
+
+  const orders = readJSON('orders.json');
+  const sales = readJSON('sales.json');
+  const expenses = readJSON('expenses.json');
+
+  // Online revenue (completed orders in range)
+  const completedOrders = orders.filter(o =>
+    o.status === 'Completed' && o.timestamp && o.timestamp.slice(0, 10) >= from && o.timestamp.slice(0, 10) <= to
+  );
+  const onlineRevenue = completedOrders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+
+  // Walk-in revenue (non-voided sales in range)
+  const validSales = sales.filter(s =>
+    !s.voided && s.timestamp && s.timestamp.slice(0, 10) >= from && s.timestamp.slice(0, 10) <= to
+  );
+  const walkinRevenue = validSales.reduce((sum, s) => sum + (s.total || 0), 0);
+
+  // COGS
+  const products = readJSON('products.json');
+  let cogs = 0;
+  // From walk-in sales
+  for (const sale of validSales) {
+    for (const item of (sale.items || [])) {
+      cogs += (item.costPrice || 0) * (item.qty || 1);
+    }
+  }
+  // From completed online orders
+  for (const order of completedOrders) {
+    for (const item of (order.items || [])) {
+      const product = products.find(p => p.id === item.productId);
+      const costPrice = product ? (product.costPrice || 0) : 0;
+      cogs += costPrice * (item.qty || item.quantity || 1);
+    }
+  }
+
+  // Expenses in range
+  const periodExpenses = expenses.filter(e => e.date >= from && e.date <= to);
+  const expenseByCategory = {};
+  let totalExpenses = 0;
+  for (const e of periodExpenses) {
+    expenseByCategory[e.category] = (expenseByCategory[e.category] || 0) + e.amount;
+    totalExpenses += e.amount;
+  }
+
+  const totalRevenue = onlineRevenue + walkinRevenue;
+  const grossProfit = totalRevenue - cogs;
+  const netProfit = grossProfit - totalExpenses;
+
+  // Daily revenue breakdown
+  const dailyRevenue = [];
+  const startDate = new Date(from + 'T00:00:00');
+  const endDate = new Date(to + 'T00:00:00');
+  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+    const dateStr = d.toISOString().slice(0, 10);
+    const dayOnline = completedOrders
+      .filter(o => o.timestamp && o.timestamp.slice(0, 10) === dateStr)
+      .reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+    const dayWalkin = validSales
+      .filter(s => s.timestamp && s.timestamp.slice(0, 10) === dateStr)
+      .reduce((sum, s) => sum + (s.total || 0), 0);
+    dailyRevenue.push({ date: dateStr, online: dayOnline, walkin: dayWalkin, total: dayOnline + dayWalkin });
+  }
+
+  // Top products
+  const productCounts = {};
+  for (const sale of validSales) {
+    for (const item of (sale.items || [])) {
+      productCounts[item.name] = (productCounts[item.name] || 0) + item.qty;
+    }
+  }
+  for (const order of completedOrders) {
+    for (const item of (order.items || [])) {
+      const name = item.name || item.product || 'Unknown';
+      productCounts[name] = (productCounts[name] || 0) + (item.qty || item.quantity || 1);
+    }
+  }
+  const topProducts = Object.entries(productCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([name, qty]) => ({ name, qty }));
+
+  res.json({
+    period: { from, to },
+    revenue: { online: onlineRevenue, walkin: walkinRevenue, total: totalRevenue },
+    cogs,
+    grossProfit,
+    grossMargin: totalRevenue > 0 ? Number(((grossProfit / totalRevenue) * 100).toFixed(1)) : 0,
+    expenses: { ...expenseByCategory, total: totalExpenses },
+    netProfit,
+    netMargin: totalRevenue > 0 ? Number(((netProfit / totalRevenue) * 100).toFixed(1)) : 0,
+    orderCount: { online: completedOrders.length, walkin: validSales.length, total: completedOrders.length + validSales.length },
+    topProducts,
+    dailyRevenue
+  });
+});
+
+// ── Admin: Audit Log ──────────────────────────────────────────────
+
+app.get('/api/admin/audit', authMiddleware, (req, res) => {
+  let log = readJSON('audit.json');
+  const { action, from, to, by } = req.query;
+  if (action) log = log.filter(e => e.action === action);
+  if (by) log = log.filter(e => e.by === by);
+  if (from) log = log.filter(e => e.timestamp && e.timestamp.slice(0, 10) >= from);
+  if (to) log = log.filter(e => e.timestamp && e.timestamp.slice(0, 10) <= to);
+  res.json(log.reverse().slice(0, 200));
 });
 
 // ── API 404 handler ──────────────────────────────────────────────

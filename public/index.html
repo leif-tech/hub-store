@@ -18,6 +18,33 @@
   <meta name="twitter:title" content="H.U.B | Custom PC Builds & Parts — Valenzuela">
   <meta name="twitter:description" content="PC parts, custom builds, and peripherals. Walk in or order online. 3/F Arbortowne Plaza II, Karuhatan, Valenzuela.">
   <meta name="twitter:image" content="/logo.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ComputerStore",
+    "name": "H.U.B - Hanap.Usap.Build",
+    "description": "PC parts, custom builds, and peripherals in Valenzuela, Philippines.",
+    "url": "https://hubstore.ph",
+    "logo": "https://hubstore.ph/logo.png",
+    "image": "https://hubstore.ph/logo.png",
+    "telephone": "+639760021202",
+    "email": "hanap.usap.build@gmail.com",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "3/F Unit 306 Arbortowne Plaza II, Karuhatan Road",
+      "addressLocality": "Valenzuela",
+      "addressRegion": "Metro Manila",
+      "postalCode": "1442",
+      "addressCountry": "PH"
+    },
+    "sameAs": [
+      "https://www.facebook.com/Hanap.Usap.Build",
+      "https://www.instagram.com/hanap.usap.build",
+      "https://www.tiktok.com/@hanap.usap.build"
+    ],
+    "priceRange": "₱₱"
+  }
+  </script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js" defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -76,19 +103,19 @@
 
     /* ===== NAVBAR ===== */
     .navbar{position:sticky;top:0;z-index:800;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-bottom:2px solid var(--border-blue);box-shadow:var(--shadow-sm)}
-    .navbar .container{display:flex;align-items:center;height:68px;padding:0 24px;gap:0}
+    .navbar .container{display:flex;align-items:center;justify-content:center;height:68px;padding:0 24px;gap:20px}
     .nav-logo{flex:none;display:flex;align-items:center;margin-right:8px}
     .nav-logo img{height:38px;width:auto}
-    .nav-right{flex:none;display:flex;align-items:center;gap:8px;margin-left:8px}
-    .nav-links{flex:1;display:flex;align-items:center;justify-content:center;gap:4px}
-    .nav-links a{padding:8px 14px;font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:500;color:var(--text);letter-spacing:0.2px;transition:color .2s;position:relative;white-space:nowrap;border-radius:6px}
+    .nav-right{flex:none;display:flex;align-items:center;gap:20px;margin-left:0}
+    .nav-links{display:flex;align-items:center;gap:20px;margin-left:0}
+    .nav-links a{padding:8px 0;font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:500;color:var(--text);letter-spacing:0.2px;transition:color .2s;position:relative;white-space:nowrap;border-radius:6px}
     .nav-links a:hover,.nav-links a.active{color:var(--blue)}
     .nav-links a::after{content:'';position:absolute;bottom:0;left:14px;right:14px;height:2px;background:var(--grad);transform:scaleX(0);transition:transform .25s}
     .nav-links a:hover::after,.nav-links a.active::after{transform:scaleX(1)}
     .nav-links .shop-link{color:var(--orange);font-weight:600}
     .nav-links .deals-link{color:#e11d48;font-weight:600}
     .nav-links .deals-link::after{background:#e11d48}
-    .nav-links .nav-cta{margin-left:4px;padding:8px 20px;border-radius:6px;background:var(--grad);color:#fff !important;box-shadow:var(--shadow-blue);font-family:'Rajdhani',sans-serif;font-size:0.9rem;font-weight:700;letter-spacing:0.3px}
+    .nav-links .nav-cta{margin-left:0;padding:8px 16px;border-radius:6px;background:var(--grad);color:#fff !important;box-shadow:var(--shadow-blue);font-family:'Rajdhani',sans-serif;font-size:0.9rem;font-weight:700;letter-spacing:0.3px}
     .nav-links .nav-cta::after{display:none}
     .nav-links .nav-cta:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(26,110,232,0.4)}
     .nav-search{position:relative;flex:1;max-width:280px}
@@ -99,7 +126,7 @@
     .nav-suggest{position:absolute;top:calc(100% + 8px);left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);overflow:hidden;z-index:100}
     .nav-suggest-item{padding:11px 16px;font-size:0.84rem;cursor:pointer;transition:background .15s;color:var(--heading);display:flex;align-items:center;gap:8px}
     .nav-suggest-item:hover{background:var(--blue-light)}
-    .nav-icons{display:flex;align-items:center;gap:6px}
+    .nav-icons{display:flex;align-items:center;gap:20px}
     .nav-icon-btn{position:relative;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--text);background:var(--bg-soft);transition:all .2s;border:1px solid var(--border)}
     .nav-icon-btn svg{width:18px;height:18px}
     .nav-icon-btn:hover{background:var(--blue-light);color:var(--blue);border-color:var(--border-blue)}
@@ -338,15 +365,18 @@
     .topbar-cart:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(26,110,232,0.4)}
     .topbar-cart-count{font-size:0.7rem;background:rgba(255,255,255,0.2);padding:1px 6px;border-radius:100px}
     .topbar-cart-total{font-size:0.8rem}
-    .shop-cat-strip{position:sticky;top:56px;z-index:8;background:rgba(255,255,255,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
-    .shop-cat-scroll{display:flex;overflow-x:auto;scrollbar-width:none;padding:18px 24px;gap:0;justify-content:center}
-    .shop-cat-scroll::-webkit-scrollbar{display:none}
-    .shop-cat-btn{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 24px;font-size:0.72rem;font-weight:600;color:var(--text-dim);cursor:pointer;border:none;background:none;transition:all .25s;white-space:nowrap;text-transform:capitalize;letter-spacing:0.3px;border-radius:0}
+    .shop-cat-strip{position:sticky;top:56px;z-index:8;background:rgba(255,255,255,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:thin}
+    .shop-cat-scroll{display:flex;padding:18px 24px;gap:0;width:fit-content;margin:0 auto}
+    .shop-cat-strip::-webkit-scrollbar{height:6px}
+    .shop-cat-strip::-webkit-scrollbar-track{background:transparent}
+    .shop-cat-strip::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:3px}
+    .shop-cat-strip::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,0.3)}
+    .shop-cat-btn{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 8px;font-size:0.72rem;font-weight:600;color:var(--text-dim);cursor:pointer;border:none;background:none;transition:all .25s;white-space:nowrap;text-transform:capitalize;letter-spacing:0.3px;border-radius:0}
     .shop-cat-btn:hover{color:var(--heading);transform:translateY(-2px)}
     .shop-cat-btn.active{color:var(--blue)}
-    .shop-cat-btn .cat-icon{width:180px;height:180px;display:flex;align-items:center;justify-content:center;overflow:visible;transition:all .25s}
+    .shop-cat-btn .cat-icon{width:150px;height:150px;display:flex;align-items:center;justify-content:center;overflow:visible;transition:all .25s}
     .shop-cat-btn .cat-icon img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.12))}
-    .shop-cat-btn .cat-icon .cat-placeholder{width:64px;height:64px;background:rgba(255,255,255,0.08);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.6rem}
+    .shop-cat-btn .cat-icon .cat-placeholder{width:56px;height:56px;background:rgba(255,255,255,0.08);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.6rem}
     .shop-cat-btn:hover .cat-icon img{transform:scale(1.12)}
     .shop-cat-btn[data-cat="deals"]{color:#e11d48}
     .shop-cat-btn[data-cat="deals"].active{color:#e11d48}
@@ -900,9 +930,9 @@
   </div>
 
   <!-- AUTH MODAL -->
-  <div class="auth-overlay" id="authOverlay" onclick="if(event.target===this)closeAuthModal()">
+  <div class="auth-overlay" id="authOverlay" role="dialog" aria-modal="true" aria-label="Sign in" onclick="if(event.target===this)closeAuthModal()">
     <div class="auth-modal">
-      <button class="auth-modal-close" onclick="closeAuthModal()">&times;</button>
+      <button class="auth-modal-close" onclick="closeAuthModal()" aria-label="Close sign in">&times;</button>
       <h2>Sign In to Continue</h2>
       <p class="auth-sub">Sign in to save your cart, wishlist, and earn loyalty points</p>
       <button class="auth-btn auth-btn-google" onclick="signInWithGoogle()">
@@ -1413,8 +1443,8 @@
 
   <!-- CART DRAWER -->
   <div class="cart-overlay" id="cartOverlay" onclick="toggleCartDrawer()"></div>
-  <div class="cart-drawer" id="cartDrawer">
-    <div class="cart-header"><h3>Your Cart</h3><button class="cart-close" onclick="toggleCartDrawer()">&times;</button></div>
+  <div class="cart-drawer" id="cartDrawer" role="dialog" aria-modal="true" aria-label="Shopping cart">
+    <div class="cart-header"><h3>Your Cart</h3><button class="cart-close" onclick="toggleCartDrawer()" aria-label="Close cart">&times;</button></div>
     <div class="cart-body" id="cartBody"><div class="cart-empty">Your cart is empty</div></div>
     <div class="cart-footer" id="cartFooter" style="display:none">
       <div class="cart-total"><span>Total</span><span id="cartTotal"></span></div>
@@ -1424,8 +1454,8 @@
 
   <!-- WISHLIST DRAWER -->
   <div class="wish-overlay" id="wishOverlay" onclick="toggleWishDrawer()"></div>
-  <div class="wish-drawer" id="wishDrawer">
-    <div class="cart-header"><h3>Wishlist</h3><button class="cart-close" onclick="toggleWishDrawer()">&times;</button></div>
+  <div class="wish-drawer" id="wishDrawer" role="dialog" aria-modal="true" aria-label="Wishlist">
+    <div class="cart-header"><h3>Wishlist</h3><button class="cart-close" onclick="toggleWishDrawer()" aria-label="Close wishlist">&times;</button></div>
     <div class="cart-body" id="wishBody"><div class="cart-empty">Your wishlist is empty</div></div>
   </div>
 
