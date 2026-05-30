@@ -47,6 +47,7 @@
   </script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Exo+2:wght@800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
@@ -1595,18 +1596,30 @@
       }).catch(() => {});
     }
 
+    const GOOGLE_CLIENT_ID = '17557183042-3rgbarbjogpfbvbicoebbvt6rnr5idbt.apps.googleusercontent.com';
     function signInWithGoogle() {
       if (!auth) { showToast('Auth Unavailable', 'Firebase is not configured yet.', '&#9888;'); return; }
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).catch(err => {
-        if (err.code === 'auth/popup-blocked') {
-          auth.signInWithRedirect(provider);
-        } else if (err.code === 'auth/account-exists-with-different-credential') {
-          showToast('Account Exists', 'Try signing in with the other provider linked to this email.', '&#9888;');
-        } else if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-          showToast('Sign-In Error', err.message, '&#9888;');
+      if (typeof google === 'undefined' || !google.accounts) {
+        showToast('Loading', 'Google sign-in is loading, please try again.', '&#9888;'); return;
+      }
+      google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: 'openid profile email',
+        callback: function(resp) {
+          if (resp.error) {
+            showToast('Sign-In Error', resp.error, '&#9888;');
+            return;
+          }
+          const credential = firebase.auth.GoogleAuthProvider.credential(null, resp.access_token);
+          auth.signInWithCredential(credential).catch(function(err) {
+            if (err.code === 'auth/account-exists-with-different-credential') {
+              showToast('Account Exists', 'Try signing in with the other provider linked to this email.', '&#9888;');
+            } else {
+              showToast('Sign-In Error', err.message, '&#9888;');
+            }
+          });
         }
-      });
+      }).requestAccessToken();
     }
     function signInWithFacebook() {
       if (!auth) { showToast('Auth Unavailable', 'Firebase is not configured yet.', '&#9888;'); return; }
