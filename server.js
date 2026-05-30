@@ -10,6 +10,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const nodemailer = require('nodemailer');
+const https = require('https');
 
 let Anthropic, anthropic;
 try {
@@ -99,6 +100,60 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
   crossOriginOpenerPolicy: false
 }));
+
+// ── Firebase Auth Proxy ──────────────────────────────────────────────────────
+// Firebase Hosting was never deployed for hub-store-aa249, so the auth handler
+// at /__/auth/handler can't find /__/firebase/init.json and fails with
+// "The requested action is invalid." Fix: serve init.json locally and proxy
+// the auth handler scripts from Firebase. authDomain in the client is set to
+// location.host so the popup opens on OUR domain where init.json exists.
+const FIREBASE_AUTH_HOST = 'hub-store-aa249.firebaseapp.com';
+
+app.get('/__/firebase/init.json', (req, res) => {
+  res.json({
+    apiKey: 'AIzaSyA06UYB6ddl73SbSjUcpVQzdXVqCR6FWSk',
+    authDomain: req.get('host'),
+    projectId: 'hub-store-aa249',
+    storageBucket: 'hub-store-aa249.firebasestorage.app',
+    messagingSenderId: '17557183042',
+    appId: '1:17557183042:web:e3a2c6fe3ef9d32074ebdb'
+  });
+});
+
+app.use('/__/auth', (req, res) => {
+  const opts = {
+    hostname: FIREBASE_AUTH_HOST,
+    port: 443,
+    path: req.originalUrl,
+    method: req.method,
+    headers: {
+      host: FIREBASE_AUTH_HOST,
+      accept: req.get('accept') || '*/*',
+      'accept-encoding': 'identity'
+    }
+  };
+  const proxy = https.request(opts, (upstream) => {
+    const fwd = {};
+    for (const [k, v] of Object.entries(upstream.headers)) {
+      if (!['content-encoding', 'transfer-encoding', 'content-security-policy',
+            'x-frame-options', 'strict-transport-security'].includes(k)) {
+        fwd[k] = v;
+      }
+    }
+    res.writeHead(upstream.statusCode, fwd);
+    upstream.pipe(res);
+  });
+  proxy.on('error', (err) => {
+    console.error('[Auth Proxy]', err.message);
+    res.status(502).send('Auth proxy error');
+  });
+  if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+    req.pipe(proxy);
+  } else {
+    proxy.end();
+  }
+});
+
 app.use(express.json({ limit: '10mb' }));
 
 // H2: Rate limiters
