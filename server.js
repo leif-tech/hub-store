@@ -25,6 +25,8 @@ try {
 }
 
 const app = express();
+// H6: Trust reverse proxy (Railway/Render) so rate limiter gets real client IP
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_PATH || path.join(__dirname, 'data');
 const SEED_DIR = path.join(__dirname, 'data');
@@ -181,6 +183,16 @@ function appendToFile(filename, entry) {
   arr.push({ ...entry, timestamp: new Date().toISOString() });
   writeJSON(filename, arr);
   return arr[arr.length - 1];
+}
+
+// B4: Simple mutex for stock-critical operations to prevent race conditions
+const _locks = {};
+function withLock(key, fn) {
+  if (!_locks[key]) _locks[key] = Promise.resolve();
+  const prev = _locks[key];
+  let release;
+  _locks[key] = new Promise(r => { release = r; });
+  return prev.then(() => fn()).finally(release);
 }
 
 // H5: Strip HTML tags, encode dangerous chars, and trim/limit string length to prevent XSS in stored data
@@ -1388,14 +1400,19 @@ app.put('/api/admin/tradein', authMiddleware, (req, res) => {
 
 // ── Points System (Customer) ─────────────────────────────────────
 
-// Get QR token for a customer
+// H1: Points endpoints require matching X-Customer-UID header to prevent enumeration
 app.get('/api/points/qr-token/:uid', (req, res) => {
+  if (req.headers['x-customer-uid'] !== req.params.uid) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
   const token = generateQRToken(req.params.uid);
   res.json({ token });
 });
 
-// Get own points balance
 app.get('/api/points/:uid', (req, res) => {
+  if (req.headers['x-customer-uid'] !== req.params.uid) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
   const data = getCustomerPoints(req.params.uid);
   res.json({
     balance: data.balance,
@@ -1666,7 +1683,7 @@ app.post('/api/admin/sales', authMiddleware, (req, res) => {
     const pidx = products.findIndex(p => p.id === item.productId);
     if (pidx === -1) continue;
     const prevStock = Number(products[pidx].stock) || 0;
-    products[pidx].stock = prevStock - item.qty;
+    products[pidx].stock = Math.max(0, prevStock - item.qty);
     logInventory(item.productId, item.name, 'sale', -item.qty, prevStock, products[pidx].stock, `Sale ${sale.id}`, req.admin.username);
   }
   writeJSON('products.json', products);
@@ -1857,6 +1874,11 @@ app.get('/api/admin/audit', authMiddleware, ownerOnly, (req, res) => {
 });
 
 // ── API 404 handler ──────────────────────────────────────────────
+
+// H5: Health check endpoint for uptime monitors and Railway
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', uptime: Math.floor(process.uptime()), timestamp: new Date().toISOString() });
+});
 
 app.all('/api/*', (req, res) => {
   res.status(404).json({ error: 'Not found' });

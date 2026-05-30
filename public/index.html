@@ -1553,9 +1553,9 @@
         mobileLink.onclick = function(e) { e.preventDefault(); closeMobile(); signOutUser(); };
         localStorage.setItem('hub_user', JSON.stringify({ name: user.displayName, email: user.email, uid: user.uid, photo: user.photoURL }));
         registerCustomer(user);
-        fetch('/api/points/user/'+user.uid).then(r=>r.json()).then(d=>{
+        fetch('/api/points/'+user.uid,{headers:{'X-Customer-UID':user.uid}}).then(r=>r.json()).then(d=>{
           const el=document.getElementById('udPoints');
-          if(el)el.textContent=(d.points||0)+' pts';
+          if(el)el.textContent=(d.balance||0)+' pts';
         }).catch(()=>{});
         if (pendingAuthAction) { const action = pendingAuthAction; pendingAuthAction = null; closeAuthModal(); setTimeout(action, 100); }
       } else {
@@ -1683,6 +1683,8 @@
     }
 
     function formatPrice(p){return'\u20B1'+p.toLocaleString('en-PH')}
+    // B2: HTML escape to prevent XSS via product names/labels
+    function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 
     function buyNow(name,price,btn){
       if(btn)btn.stopPropagation&&btn.stopPropagation();
@@ -1703,9 +1705,9 @@
       const condText=meta.condition==='new'?'Brand New':'Pre-Owned';
       const wishIcon=isWished(idx)?'&#9829;':'&#9825;';
       const wishClass=isWished(idx)?' wishlisted':'';
-      const quickActions=`<div class="card-quick-actions"><button class="card-quick-btn${wishClass}" onclick="event.stopPropagation();toggleWish(${idx})" title="Wishlist">${wishIcon}</button><button class="card-quick-btn" onclick="event.stopPropagation();toggleCompare(${idx});showToast('Compare Updated','${p.name.replace(/'/g,"\\'")}','&#9878;')" title="Compare">&#9878;</button></div>`;
+      const quickActions=`<div class="card-quick-actions"><button class="card-quick-btn${wishClass}" onclick="event.stopPropagation();toggleWish(${idx})" title="Wishlist">${wishIcon}</button><button class="card-quick-btn" onclick="event.stopPropagation();toggleCompare(${idx});showToast('Compare Updated','${esc(p.name).replace(/'/g,"\\'")}','&#9878;')" title="Compare">&#9878;</button></div>`;
       const slug=toSlug(p.name);
-      return `<div class="${prefix}-card" onclick="navigateTo('/shop/${slug}')">${badgeHTML}<div class="stock-badge ${stockClass}">${stockText}</div><div class="${prefix}-card-img">${quickActions}${imgInner}</div><div class="${prefix}-card-body"><span class="cond-badge ${condClass}">${condText}</span><div class="${prefix}-card-cat">${p.label}</div><div class="${prefix}-card-name">${p.name}</div><div class="${prefix}-card-bottom"><span class="${prefix}-card-price">${formatPrice(p.price)}</span></div></div><div class="${prefix}-card-btns"><button class="${prefix}-card-btn-cart" onclick="event.stopPropagation();addToCart(${idx})">Add to Cart</button><button class="${prefix}-card-btn-buy" onclick="event.stopPropagation();buyNowCard(${idx})">Buy Now</button></div></div>`;
+      return `<div class="${prefix}-card" onclick="navigateTo('/shop/${slug}')">${badgeHTML}<div class="stock-badge ${stockClass}">${stockText}</div><div class="${prefix}-card-img">${quickActions}${imgInner}</div><div class="${prefix}-card-body"><span class="cond-badge ${condClass}">${condText}</span><div class="${prefix}-card-cat">${esc(p.label)}</div><div class="${prefix}-card-name">${esc(p.name)}</div><div class="${prefix}-card-bottom"><span class="${prefix}-card-price">${formatPrice(p.price)}</span></div></div><div class="${prefix}-card-btns"><button class="${prefix}-card-btn-cart" onclick="event.stopPropagation();addToCart(${idx})">Add to Cart</button><button class="${prefix}-card-btn-buy" onclick="event.stopPropagation();buyNowCard(${idx})">Buy Now</button></div></div>`;
     }
 
     // ===== CATEGORY TILES =====
@@ -1743,7 +1745,7 @@
       if(!grid)return;
       const config=buildCatTileConfig();
       grid.innerHTML=config.map(c=>{
-        return `<button class="cat-tile" onclick="navigateTo('/shop?cat=${c.key}')"><span class="cat-tile-label">${c.label}</span></button>`;
+        return `<button class="cat-tile" onclick="navigateTo('/shop?cat=${esc(c.key)}')"><span class="cat-tile-label">${esc(c.label)}</span></button>`;
       }).join('')||'<p style="text-align:center;color:var(--text-dim);padding:40px">No categories found.</p>';
     }
     function renderFeatured(){renderCategoryTiles();}
@@ -1753,7 +1755,7 @@
       const container=document.getElementById('toastContainer');
       const toast=document.createElement('div');
       toast.className='toast';
-      toast.innerHTML=`<span class="toast-icon">${icon||'&#10003;'}</span><div class="toast-body"><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div><span class="toast-close" onclick="this.parentElement.remove()">&times;</span><div class="toast-progress"></div>`;
+      toast.innerHTML=`<span class="toast-icon">${icon||'&#10003;'}</span><div class="toast-body"><div class="toast-title">${esc(title)}</div><div class="toast-msg">${esc(msg)}</div></div><span class="toast-close" onclick="this.parentElement.remove()">&times;</span><div class="toast-progress"></div>`;
       container.appendChild(toast);
       requestAnimationFrame(()=>requestAnimationFrame(()=>toast.classList.add('show')));
       setTimeout(()=>{toast.classList.remove('show');setTimeout(()=>toast.remove(),400)},3000);
@@ -1923,13 +1925,13 @@
 
       document.getElementById('pdContent').innerHTML=`
         <div class="pd-grid">
-          <div class="pd-images"><div class="pd-main-img" ${fullImg?`onclick="openLightbox('${fullImg}')"`:''}>${p.img?`<img src="${fullImg}" alt="${p.name.replace(/"/g,'&quot;')}">`:'<div class="placeholder" style="font-size:4rem;color:var(--text-dim)">&#128187;</div>'}</div></div>
+          <div class="pd-images"><div class="pd-main-img" ${fullImg?`onclick="openLightbox('${fullImg}')"`:''}>${p.img?`<img src="${fullImg}" alt="${esc(p.name)}">`:'<div class="placeholder" style="font-size:4rem;color:var(--text-dim)">&#128187;</div>'}</div></div>
           <div class="pd-info">
-            <div class="pd-cat">${p.label}</div>
-            <h1 class="pd-name">${p.name}</h1>
-            <div class="pd-brand">Brand: <strong>${brand}</strong></div>
-            ${p.warranty?`<div class="pd-warranty"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> ${p.warranty} Warranty</div>`:''}
-            ${p.description?`<div class="pd-desc">${p.description}</div>`:''}
+            <div class="pd-cat">${esc(p.label)}</div>
+            <h1 class="pd-name">${esc(p.name)}</h1>
+            <div class="pd-brand">Brand: <strong>${esc(brand)}</strong></div>
+            ${p.warranty?`<div class="pd-warranty"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> ${esc(p.warranty)} Warranty</div>`:''}
+            ${p.description?`<div class="pd-desc">${esc(p.description)}</div>`:''}
             <div class="pd-stock-pill ${meta.stock==='in'?'in':meta.stock==='low'?'low':'out'}"><span style="width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block"></span>${meta.stock==='in'?(meta.stockQty!==null?meta.stockQty+' On-Hand':'On-Hand'):meta.stock==='low'?(meta.stockQty!==null?'Only '+meta.stockQty+' left':'Low Stock'):'Pre-Order'}</div>
             <div class="pd-pricing-card">
               <div class="pd-pricing-row pd-pricing-cash">
@@ -2176,7 +2178,7 @@
       const searchCat=searchAliases[q]||null;
       const matches=products.filter(p=>p.name.toLowerCase().includes(q)||p.label.toLowerCase().includes(q)||(searchCat&&p.cat===searchCat)).slice(0,6);
       if(!matches.length){box.innerHTML='<p style="color:rgba(255,255,255,0.35);font-size:0.84rem;grid-column:1/-1">No results found.</p>';return}
-      box.innerHTML=matches.map(p=>{const slug=toSlug(p.name);return `<div class="sov-product" onclick="closeSearchOverlay();navigateTo('/shop/${slug}')"><img class="sov-product-img" src="${p.img||'/placeholder.jpg'}" alt="${p.name}" loading="lazy"><div class="sov-product-name">${p.name}</div><div class="sov-product-price">${formatPrice(p.price)}</div></div>`}).join('');
+      box.innerHTML=matches.map(p=>{const slug=toSlug(p.name);return `<div class="sov-product" onclick="closeSearchOverlay();navigateTo('/shop/${slug}')"><img class="sov-product-img" src="${p.img||'/placeholder.jpg'}" alt="${esc(p.name)}" loading="lazy"><div class="sov-product-name">${esc(p.name)}</div><div class="sov-product-price">${formatPrice(p.price)}</div></div>`}).join('');
     }
     function overlaySearchGo(){
       const q=document.getElementById('searchOverlayInput').value.trim();
@@ -2187,7 +2189,7 @@
     function renderSovProducts(){
       const box=document.getElementById('sovProducts');
       if(!box||!products.length)return;
-      box.innerHTML=products.slice(0,6).map((p,i)=>`<div class="sov-product" onclick="closeSearchOverlay();navigateTo('/shop/${toSlug(p.name)}')"><img class="sov-product-img" src="${p.img||'/placeholder.jpg'}" alt="${p.name}" loading="lazy"><div class="sov-product-name">${p.name}</div><div class="sov-product-price">${formatPrice(p.price)}</div></div>`).join('');
+      box.innerHTML=products.slice(0,6).map((p,i)=>`<div class="sov-product" onclick="closeSearchOverlay();navigateTo('/shop/${toSlug(p.name)}')"><img class="sov-product-img" src="${p.img||'/placeholder.jpg'}" alt="${esc(p.name)}" loading="lazy"><div class="sov-product-name">${esc(p.name)}</div><div class="sov-product-price">${formatPrice(p.price)}</div></div>`).join('');
     }
 
     // ===== SHOPPING CART =====
@@ -2233,7 +2235,7 @@
       footer.style.display='block';
       const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
       document.getElementById('cartTotal').textContent=formatPrice(total);
-      body.innerHTML=cart.map(i=>`<div class="cart-item"><div class="cart-item-img">${i.img?`<img src="${i.img}" alt="">`:''}</div><div class="cart-item-info"><div class="cart-item-name">${i.name}</div><div class="cart-item-price">${formatPrice(i.price)}</div><div class="cart-item-qty"><button onclick="updateCartQty(${i.idx},-1)">-</button><span>${i.qty}</span><button onclick="updateCartQty(${i.idx},1)">+</button></div><div class="cart-item-remove" onclick="removeFromCart(${i.idx})">Remove</div></div></div>`).join('');
+      body.innerHTML=cart.map(i=>`<div class="cart-item"><div class="cart-item-img">${i.img?`<img src="${i.img}" alt="">`:''}</div><div class="cart-item-info"><div class="cart-item-name">${esc(i.name)}</div><div class="cart-item-price">${formatPrice(i.price)}</div><div class="cart-item-qty"><button onclick="updateCartQty(${i.idx},-1)">-</button><span>${i.qty}</span><button onclick="updateCartQty(${i.idx},1)">+</button></div><div class="cart-item-remove" onclick="removeFromCart(${i.idx})">Remove</div></div></div>`).join('');
     }
     function toggleCartDrawer(){
       document.getElementById('cartOverlay').classList.toggle('open');
@@ -2267,7 +2269,7 @@
     function renderWish(){
       const body=document.getElementById('wishBody');
       if(!wishlist.length){body.innerHTML='<div class="cart-empty">Your wishlist is empty</div>';return}
-      body.innerHTML=wishlist.map(idx=>{const p=products[idx];if(!p)return'';return`<div class="cart-item"><div class="cart-item-img">${p.img?`<img src="${p.img}" alt="">`:''}</div><div class="cart-item-info"><div class="cart-item-name">${p.name}</div><div class="cart-item-price">${formatPrice(p.price)}</div><div style="display:flex;gap:8px;margin-top:6px"><button onclick="addToCart(${idx});toggleWish(${idx})" style="font-size:0.72rem;color:var(--blue);font-weight:600;text-decoration:underline">Add to Cart</button><button onclick="toggleWish(${idx})" style="font-size:0.72rem;color:#ef4444">Remove</button></div></div></div>`}).join('');
+      body.innerHTML=wishlist.map(idx=>{const p=products[idx];if(!p)return'';return`<div class="cart-item"><div class="cart-item-img">${p.img?`<img src="${p.img}" alt="">`:''}</div><div class="cart-item-info"><div class="cart-item-name">${esc(p.name)}</div><div class="cart-item-price">${formatPrice(p.price)}</div><div style="display:flex;gap:8px;margin-top:6px"><button onclick="addToCart(${idx});toggleWish(${idx})" style="font-size:0.72rem;color:var(--blue);font-weight:600;text-decoration:underline">Add to Cart</button><button onclick="toggleWish(${idx})" style="font-size:0.72rem;color:#ef4444">Remove</button></div></div></div>`}).join('');
     }
     function toggleWishDrawer(){
       document.getElementById('wishOverlay').classList.toggle('open');
@@ -2300,7 +2302,7 @@
       const lowestPrice=Math.min(...prices);
       const fsk=(k)=>k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
 
-      let html=`<table class="compare-table"><thead><tr><th></th>${prods.map(x=>`<th style="text-align:center;padding:20px 16px"><div style="width:120px;height:120px;margin:0 auto 12px;background:var(--bg-soft);border-radius:12px;display:flex;align-items:center;justify-content:center;padding:12px;border:1px solid var(--border)">${x.p.img?`<img src="${x.p.img}" alt="" style="max-width:100%;max-height:100%;object-fit:contain">`:'<span style="font-size:2rem;color:var(--text-dim)">&#128187;</span>'}</div><div style="font-size:0.82rem;font-weight:700;line-height:1.35;max-width:180px;margin:0 auto;color:var(--heading)">${x.p.name}</div></th>`).join('')}</tr></thead><tbody>`;
+      let html=`<table class="compare-table"><thead><tr><th></th>${prods.map(x=>`<th style="text-align:center;padding:20px 16px"><div style="width:120px;height:120px;margin:0 auto 12px;background:var(--bg-soft);border-radius:12px;display:flex;align-items:center;justify-content:center;padding:12px;border:1px solid var(--border)">${x.p.img?`<img src="${x.p.img}" alt="" style="max-width:100%;max-height:100%;object-fit:contain">`:'<span style="font-size:2rem;color:var(--text-dim)">&#128187;</span>'}</div><div style="font-size:0.82rem;font-weight:700;line-height:1.35;max-width:180px;margin:0 auto;color:var(--heading)">${esc(x.p.name)}</div></th>`).join('')}</tr></thead><tbody>`;
 
       html+=`<tr class="section-row"><td colspan="${prods.length+1}">Pricing & Availability</td></tr>`;
       html+=`<tr><td>Cash Price</td>${prods.map(x=>`<td ${x.p.price===lowestPrice&&prods.length>1?'class="highlight"':''}><span style="font-weight:800;color:var(--heading);font-size:1rem">${formatPrice(x.p.price)}</span>${x.p.price===lowestPrice&&new Set(prices).size>1?' <span style="display:inline-block;margin-top:4px;font-size:0.68rem;font-weight:700;color:#16a34a;background:#f0fdf4;padding:2px 8px;border-radius:100px">Best Price</span>':''}</td>`).join('')}</tr>`;
@@ -2310,8 +2312,8 @@
       }
 
       html+=`<tr class="section-row"><td colspan="${prods.length+1}">General Information</td></tr>`;
-      html+=`<tr><td>Category</td>${prods.map(x=>`<td>${x.p.label}</td>`).join('')}</tr>`;
-      html+=`<tr><td>Brand</td>${prods.map(x=>`<td style="font-weight:600">${x.p.brand||getBrand(x.p.name)}</td>`).join('')}</tr>`;
+      html+=`<tr><td>Category</td>${prods.map(x=>`<td>${esc(x.p.label)}</td>`).join('')}</tr>`;
+      html+=`<tr><td>Brand</td>${prods.map(x=>`<td style="font-weight:600">${esc(x.p.brand||getBrand(x.p.name))}</td>`).join('')}</tr>`;
       html+=`<tr><td>Condition</td>${prods.map(x=>`<td>${x.meta.condition==='new'?'<span style="color:#2563eb;font-weight:600">Brand New</span>':'<span style="color:#d97706;font-weight:600">Pre-Owned</span>'}</td>`).join('')}</tr>`;
       html+=`<tr><td>Stock</td>${prods.map(x=>{
         const s=x.meta.stock;const qty=x.meta.stockQty;
@@ -2319,7 +2321,7 @@
         if(s==='low')return'<td><span style="color:#d97706;font-weight:600">'+(qty!==null?qty+' left':'Low Stock')+'</span></td>';
         return'<td><span style="color:var(--blue);font-weight:600">Pre-Order</span></td>';
       }).join('')}</tr>`;
-      if(prods.some(x=>x.p.warranty))html+=`<tr><td>Warranty</td>${prods.map(x=>`<td>${x.p.warranty?'<span style="color:#7c3aed;font-weight:600">'+x.p.warranty+'</span>':'<span style="color:var(--text-dim)">—</span>'}</td>`).join('')}</tr>`;
+      if(prods.some(x=>x.p.warranty))html+=`<tr><td>Warranty</td>${prods.map(x=>`<td>${x.p.warranty?'<span style="color:#7c3aed;font-weight:600">'+esc(x.p.warranty)+'</span>':'<span style="color:var(--text-dim)">—</span>'}</td>`).join('')}</tr>`;
       if(prods.some(x=>x.p.weight))html+=`<tr><td>Weight</td>${prods.map(x=>`<td>${x.p.weight?x.p.weight+' kg':'<span style="color:var(--text-dim)">—</span>'}</td>`).join('')}</tr>`;
 
       if(allSpecKeys.size>0){
@@ -2344,10 +2346,10 @@
         const specCounts=prods.map(x=>Object.keys(specDB[x.p.name]||{}).length);
         const mostSpecs=prods[specCounts.indexOf(Math.max(...specCounts))];
         verdict=`<div class="compare-verdict"><h4><svg width="18" height="18" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg> Quick Verdict</h4>`;
-        if(new Set(prices).size>1)verdict+=`<p><strong>${cheapest.p.name}</strong> is the most affordable at <strong>${formatPrice(cheapest.p.price)}</strong>.</p>`;
-        if(allSpecKeys.size>0&&new Set(specCounts).size>1)verdict+=`<p><strong>${mostSpecs.p.name}</strong> has the most detailed specifications listed.</p>`;
+        if(new Set(prices).size>1)verdict+=`<p><strong>${esc(cheapest.p.name)}</strong> is the most affordable at <strong>${formatPrice(cheapest.p.price)}</strong>.</p>`;
+        if(allSpecKeys.size>0&&new Set(specCounts).size>1)verdict+=`<p><strong>${esc(mostSpecs.p.name)}</strong> has the most detailed specifications listed.</p>`;
         if(prods.every(x=>x.p.cat===prods[0].p.cat)){
-          verdict+=`<p class="note">All products are in the same category (${prods[0].p.label}), making this a direct comparison.</p>`;
+          verdict+=`<p class="note">All products are in the same category (${esc(prods[0].p.label)}), making this a direct comparison.</p>`;
         }else{
           verdict+=`<p class="note">These products are from different categories. Specs may not be directly comparable.</p>`;
         }
@@ -2355,7 +2357,7 @@
       }
 
       // Cart buttons
-      const actions=`<div class="compare-cart-btns">${prods.map(x=>`<button class="compare-cart-btn" onclick="addToCart(${x.idx});document.getElementById('compareModal').classList.remove('open')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg> Add ${x.p.name.length>25?x.p.name.substring(0,23)+'...':x.p.name}</button>`).join('')}</div>`;
+      const actions=`<div class="compare-cart-btns">${prods.map(x=>{const n=esc(x.p.name);return`<button class="compare-cart-btn" onclick="addToCart(${x.idx});document.getElementById('compareModal').classList.remove('open')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg> Add ${n.length>25?n.substring(0,23)+'...':n}</button>`}).join('')}</div>`;
 
       document.getElementById('compareTableWrap').innerHTML=html;
       // Insert verdict and actions after compare-body
