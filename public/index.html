@@ -2428,13 +2428,14 @@
     (function(){
       const mapIframe=document.getElementById('contactMap');
       if(!mapIframe)return;
+      const target=document.getElementById('contact')||mapIframe;
       const mapObs=new IntersectionObserver((entries,obs)=>{
         if(entries[0].isIntersecting){
           mapIframe.src=mapIframe.dataset.src;
           obs.disconnect();
         }
-      },{rootMargin:'200px'});
-      mapObs.observe(mapIframe);
+      },{rootMargin:'400px'});
+      mapObs.observe(target);
     })();
 
     // ===== LOAD PRODUCTS ON PAGE LOAD =====
