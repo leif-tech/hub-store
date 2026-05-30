@@ -75,12 +75,18 @@ const upload = multer({
   }
 });
 
-app.use(compression());
+app.use(compression({
+  filter: (req, res) => {
+    // Skip compression for Firebase auth proxy paths — proxied content must pass through untouched
+    if (req.originalUrl.startsWith('/__/')) return false;
+    return compression.filter(req, res);
+  }
+}));
 // IMPORTANT: Do NOT change these Helmet settings without testing Google & Facebook login.
 // crossOriginOpenerPolicy MUST be false — setting it to 'same-origin' will break
 // Firebase signInWithPopup for both Google and Facebook by killing window.opener
 // in the OAuth popup, causing silent auth failures.
-app.use(helmet({
+const helmetMiddleware = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
@@ -90,7 +96,7 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "blob:", "https:"],
       connectSrc: ["'self'", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com", "https://www.googleapis.com", "https://firebase.googleapis.com", "https://firebaseinstallations.googleapis.com", "https://accounts.google.com", "https://oauth2.googleapis.com", "https://whitelabel-ai-production.up.railway.app"],
-      frameSrc: ["'self'", "https://accounts.google.com", "https://www.facebook.com", "https://web.facebook.com", "https://maps.google.com", "https://www.google.com"],
+      frameSrc: ["'self'", "https://accounts.google.com", "https://apis.google.com", "https://www.facebook.com", "https://web.facebook.com", "https://maps.google.com", "https://www.google.com"],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
       formAction: ["'self'"],
@@ -99,7 +105,12 @@ app.use(helmet({
   },
   crossOriginEmbedderPolicy: false,
   crossOriginOpenerPolicy: false
-}));
+});
+// Skip Helmet for Firebase auth proxy paths — proxied pages need clean headers
+app.use((req, res, next) => {
+  if (req.originalUrl.startsWith('/__/')) return next();
+  helmetMiddleware(req, res, next);
+});
 
 // ── Firebase Auth Proxy ──────────────────────────────────────────────────────
 // Firebase Hosting was never deployed for hub-store-aa249, so the auth handler
@@ -133,12 +144,15 @@ app.use('/__/auth', (req, res) => {
     }
   };
   const proxy = https.request(opts, (upstream) => {
+    // Strip headers that break the popup↔iframe↔parent relay chain or conflict with Express
+    const STRIP = new Set([
+      'content-encoding', 'transfer-encoding', 'content-length',
+      'content-security-policy', 'x-frame-options', 'strict-transport-security',
+      'cross-origin-opener-policy', 'cross-origin-embedder-policy', 'cross-origin-resource-policy'
+    ]);
     const fwd = {};
     for (const [k, v] of Object.entries(upstream.headers)) {
-      if (!['content-encoding', 'transfer-encoding', 'content-security-policy',
-            'x-frame-options', 'strict-transport-security'].includes(k)) {
-        fwd[k] = v;
-      }
+      if (!STRIP.has(k)) fwd[k] = v;
     }
     res.writeHead(upstream.statusCode, fwd);
     upstream.pipe(res);
