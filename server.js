@@ -12,6 +12,16 @@ const rateLimit = require('express-rate-limit');
 const nodemailer = require('nodemailer');
 const https = require('https');
 
+// Firebase Admin SDK for server-side customer auth verification
+let firebaseAdmin;
+try {
+  firebaseAdmin = require('firebase-admin');
+  firebaseAdmin.initializeApp({ projectId: process.env.FIREBASE_PROJECT_ID || 'hub-store-aa249' });
+  console.log('[INIT] Firebase Admin SDK initialized');
+} catch (e) {
+  console.log('[INIT] Firebase Admin SDK not available:', e.message);
+}
+
 let Anthropic, anthropic;
 try {
   Anthropic = require('@anthropic-ai/sdk');
@@ -44,12 +54,35 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 // Seed persistent volume from git data on first deploy (if volume is empty)
-// admins.json is ALWAYS re-seeded to pick up password/role changes from git
+// admins.json is MERGED: git accounts update existing ones, but runtime-created accounts are preserved
 if (DATA_DIR !== SEED_DIR && fs.existsSync(SEED_DIR)) {
-  const alwaysReseed = ['admins.json'];
   for (const file of fs.readdirSync(SEED_DIR)) {
     const dest = path.join(DATA_DIR, file);
-    if (!fs.existsSync(dest) || alwaysReseed.includes(file)) {
+    if (file === 'admins.json') {
+      // Merge: update/add git admins into persistent admins, preserve runtime-created accounts
+      try {
+        const gitAdmins = JSON.parse(fs.readFileSync(path.join(SEED_DIR, file), 'utf8'));
+        let liveAdmins = [];
+        try { liveAdmins = JSON.parse(fs.readFileSync(dest, 'utf8')); } catch {}
+        for (const ga of gitAdmins) {
+          const existing = liveAdmins.find(a => a.username === ga.username);
+          if (existing) {
+            // Update password/role/status from git (picks up changes made in source)
+            existing.password = ga.password;
+            existing.role = ga.role;
+            existing.status = ga.status || existing.status;
+          } else {
+            liveAdmins.push(ga);
+          }
+        }
+        fs.writeFileSync(dest, JSON.stringify(liveAdmins, null, 2));
+        console.log(`[INIT] Merged admins.json (${gitAdmins.length} from git, ${liveAdmins.length} total)`);
+      } catch (e) {
+        // Fallback: copy from git if merge fails
+        fs.copyFileSync(path.join(SEED_DIR, file), dest);
+        console.log(`[INIT] Seeded ${file} (merge failed: ${e.message})`);
+      }
+    } else if (!fs.existsSync(dest)) {
       fs.copyFileSync(path.join(SEED_DIR, file), dest);
       console.log(`[INIT] Seeded ${file} to persistent storage`);
     }
@@ -199,6 +232,13 @@ const signupLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many signup attempts. Try again in an hour.' }
 });
+const adminMutationLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Slow down.' }
+});
 
 // Static files: long cache for assets, no-cache for HTML so updates show immediately
 const assetCacheOptions = { maxAge: '7d', etag: true, lastModified: true };
@@ -227,13 +267,25 @@ function readJSON(filename) {
     const data = JSON.parse(fs.readFileSync(file, 'utf8'));
     jsonCache[filename] = data;
     return JSON.parse(JSON.stringify(data));
-  } catch { return []; }
+  } catch (err) {
+    console.error(`[DATA] Failed to parse ${filename}:`, err.message);
+    // Check if file exists but is corrupted (vs simply not existing yet)
+    const filePath = path.join(DATA_DIR, filename);
+    if (fs.existsSync(filePath) && fs.statSync(filePath).size > 2) {
+      console.error(`[DATA] WARNING: ${filename} exists but is corrupted (${fs.statSync(filePath).size} bytes). NOT overwriting — returning empty array. Manual recovery may be needed.`);
+    }
+    return [];
+  }
 }
 
 function writeJSON(filename, data) {
   const json = JSON.stringify(data, null, 2);
   jsonCache[filename] = JSON.parse(json);
-  fs.writeFileSync(path.join(DATA_DIR, filename), json);
+  // Atomic write: write to temp file then rename to prevent corruption on crash
+  const filePath = path.join(DATA_DIR, filename);
+  const tmpPath = filePath + '.tmp';
+  fs.writeFileSync(tmpPath, json);
+  fs.renameSync(tmpPath, filePath);
 }
 
 // Startup: reset admin password if ADMIN_RESET_PASS env var is set
@@ -252,16 +304,6 @@ function appendToFile(filename, entry) {
   arr.push({ ...entry, timestamp: new Date().toISOString() });
   writeJSON(filename, arr);
   return arr[arr.length - 1];
-}
-
-// B4: Simple mutex for stock-critical operations to prevent race conditions
-const _locks = {};
-function withLock(key, fn) {
-  if (!_locks[key]) _locks[key] = Promise.resolve();
-  const prev = _locks[key];
-  let release;
-  _locks[key] = new Promise(r => { release = r; });
-  return prev.then(() => fn()).finally(release);
 }
 
 // H5: Strip HTML tags, encode dangerous chars, and trim/limit string length to prevent XSS in stored data
@@ -342,7 +384,9 @@ function verifyQRToken(token) {
   const uid = parts.slice(0, -1).join(':');
   const sig = parts[parts.length - 1];
   const expected = crypto.createHmac('sha256', JWT_SECRET).update(uid).digest('hex');
-  if (sig !== expected) return null;
+  const sigBuf = Buffer.from(sig, 'hex');
+  const expectedBuf = Buffer.from(expected, 'hex');
+  if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) return null;
   return uid;
 }
 
@@ -400,6 +444,38 @@ function authMiddleware(req, res, next) {
 function ownerOnly(req, res, next) {
   if (req.admin.role !== 'owner') {
     return res.status(403).json({ error: 'Owner access required' });
+  }
+  next();
+}
+
+// Customer auth middleware — verifies Firebase ID token
+async function customerAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Fallback: allow unauthenticated if Firebase Admin not loaded (dev/offline)
+    if (!firebaseAdmin) return next();
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  if (!firebaseAdmin) return next();
+  try {
+    const decoded = await firebaseAdmin.auth().verifyIdToken(authHeader.split(' ')[1]);
+    req.customer = { uid: decoded.uid, email: decoded.email, name: decoded.name };
+    next();
+  } catch (err) {
+    console.error('[AUTH] Firebase token verification failed:', err.message);
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+}
+
+// Optional customer auth — extracts verified uid if token present, but allows unauthenticated (guest checkout)
+async function customerAuthOptional(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ') || !firebaseAdmin) return next();
+  try {
+    const decoded = await firebaseAdmin.auth().verifyIdToken(authHeader.split(' ')[1]);
+    req.customer = { uid: decoded.uid, email: decoded.email, name: decoded.name };
+  } catch (err) {
+    console.error('[AUTH] Optional token verification failed:', err.message);
   }
   next();
 }
@@ -607,10 +683,17 @@ app.post('/api/contact', contactLimiter, csrfCheck, (req, res) => {
 });
 
 // Customer registration (from Firebase Auth logins)
-app.post('/api/customers', csrfCheck, (req, res) => {
-  const { uid, name, email, provider, photoURL } = req.body;
+app.post('/api/customers', csrfCheck, customerAuth, async (req, res) => {
+  // Use verified uid from token if available, fall back to body for backwards compat
+  const verifiedUid = req.customer ? req.customer.uid : null;
+  const { uid: bodyUid, name, email, provider, photoURL } = req.body;
+  const uid = verifiedUid || bodyUid;
   if (!uid || !name) {
     return res.status(400).json({ error: 'uid and name are required' });
+  }
+  // If token was verified, ensure body uid matches (prevent spoofing)
+  if (verifiedUid && bodyUid && verifiedUid !== bodyUid) {
+    return res.status(403).json({ error: 'UID mismatch' });
   }
   const customers = readJSON('customers.json');
   const existing = customers.find(c => c.uid === uid);
@@ -618,17 +701,17 @@ app.post('/api/customers', csrfCheck, (req, res) => {
     existing.lastLogin = new Date().toISOString();
     if (email && !existing.email) existing.email = sanitizeInput(email);
     if (name) existing.name = sanitizeInput(name);
-    if (photoURL) existing.photoURL = photoURL;
+    if (photoURL) existing.photoURL = sanitizeInput(photoURL, 2000);
     existing.loginCount = (existing.loginCount || 1) + 1;
     writeJSON('customers.json', customers);
     return res.json({ success: true, updated: true });
   }
   const customer = {
-    uid,
+    uid: sanitizeInput(uid),
     name: sanitizeInput(name),
     email: email ? sanitizeInput(email) : null,
-    provider: provider || 'unknown',
-    photoURL: photoURL || null,
+    provider: sanitizeInput(provider || 'unknown'),
+    photoURL: photoURL ? sanitizeInput(photoURL, 2000) : null,
     loginCount: 1,
     firstLogin: new Date().toISOString(),
     lastLogin: new Date().toISOString()
@@ -649,7 +732,7 @@ setInterval(() => {
 }, 30000);
 
 // B1+H4+B5: Order submission with server-side price verification and stock management
-app.post('/api/order', orderLimiter, csrfCheck, (req, res) => {
+app.post('/api/order', orderLimiter, csrfCheck, customerAuthOptional, async (req, res) => {
   const { customer, items, shipping, payment, paymentRef, total } = req.body;
 
   // Validate customer fields
@@ -676,6 +759,9 @@ app.post('/api/order', orderLimiter, csrfCheck, (req, res) => {
   for (const item of items) {
     if (!item.name || item.price == null || !item.qty) {
       return res.status(400).json({ error: 'Each item must have name, price, and qty' });
+    }
+    if (!Number.isInteger(item.qty) || item.qty < 1) {
+      return res.status(400).json({ error: 'Item quantity must be a positive whole number' });
     }
   }
 
@@ -767,30 +853,29 @@ app.post('/api/order', orderLimiter, csrfCheck, (req, res) => {
     payment,
     paymentRef: sanitizeInput(paymentRef || ''),
     total: serverTotal,
-    customerUid: req.body.customerUid || null,
+    customerUid: (req.customer ? req.customer.uid : sanitizeInput(req.body.customerUid || '')) || null,
     status: 'Pending'
   };
   appendToFile('orders.json', order);
   console.log(`[ORDER] ${order.id} - ${verifiedItems.length} item(s) - Total: ₱${serverTotal}`);
 
-  // B5: Decrement stock after order is saved
+  // B5: Decrement stock after order is saved (use same products reference to avoid TOCTOU race)
   let productsUpdated = false;
-  const productsCopy = readJSON('products.json');
   for (const item of verifiedItems) {
     if (!item.productId) continue;
-    const pidx = productsCopy.findIndex(p => p.id === item.productId);
+    const pidx = products.findIndex(p => p.id === item.productId);
     if (pidx === -1) continue;
-    const stockNum = Number(productsCopy[pidx].stock);
+    const stockNum = Number(products[pidx].stock);
     if (!isNaN(stockNum) && stockNum > 0) {
       const qty = item.qty || 1;
       const newStock = Math.max(0, stockNum - qty);
-      logInventory(item.productId, productsCopy[pidx].name, 'online-order', -qty, stockNum, newStock, `Order ${orderId}`, 'system');
-      productsCopy[pidx].stock = newStock;
+      logInventory(item.productId, products[pidx].name, 'online-order', -qty, stockNum, newStock, `Order ${orderId}`, 'system');
+      products[pidx].stock = newStock;
       productsUpdated = true;
     }
   }
   if (productsUpdated) {
-    writeJSON('products.json', productsCopy);
+    writeJSON('products.json', products);
     console.log(`[ORDER] Stock decremented for order ${orderId}`);
   }
 
@@ -1042,7 +1127,7 @@ app.get('/api/admin/stats', authMiddleware, (req, res) => {
 
 // ── Admin: Delete Category ────────────────────────────────────────
 
-app.delete('/api/admin/categories/:cat', authMiddleware, (req, res) => {
+app.delete('/api/admin/categories/:cat', authMiddleware, ownerOnly, (req, res) => {
   const cat = req.params.cat;
   let products = readJSON('products.json');
   const matching = products.filter(p => p.cat === cat);
@@ -1066,7 +1151,7 @@ app.get('/api/admin/products', authMiddleware, (req, res) => {
   res.json(products);
 });
 
-app.post('/api/admin/products', authMiddleware, (req, res) => {
+app.post('/api/admin/products', authMiddleware, adminMutationLimiter, (req, res) => {
   const products = readJSON('products.json');
   const { cat, label, name, price, costPrice, priceTiers, img, brand, description, weight, warranty, stock, condition, badge, specs, shopee } = req.body;
   if (!cat || !name || !price || isNaN(Number(price)) || Number(price) <= 0) {
@@ -1094,7 +1179,7 @@ app.post('/api/admin/products', authMiddleware, (req, res) => {
   res.json({ success: true, product });
 });
 
-app.put('/api/admin/products/:id', authMiddleware, (req, res) => {
+app.put('/api/admin/products/:id', authMiddleware, adminMutationLimiter, (req, res) => {
   const products = readJSON('products.json');
   const idx = products.findIndex(p => p.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Product not found' });
@@ -1145,7 +1230,7 @@ app.delete('/api/admin/products/:id', authMiddleware, ownerOnly, (req, res) => {
 
 // ── Admin: Image Upload ──────────────────────────────────────────
 
-app.post('/api/admin/upload', authMiddleware, (req, res, next) => {
+app.post('/api/admin/upload', authMiddleware, adminMutationLimiter, (req, res, next) => {
   upload.single('image')(req, res, (err) => {
     if (err) {
       if (err instanceof multer.MulterError) {
@@ -1162,7 +1247,7 @@ app.post('/api/admin/upload', authMiddleware, (req, res, next) => {
 
 // ── Admin: Analyze Image (Upload + AI Detection) ─────────────────
 
-app.post('/api/admin/analyze-image', authMiddleware, (req, res, next) => {
+app.post('/api/admin/analyze-image', authMiddleware, adminMutationLimiter, (req, res, next) => {
   upload.single('image')(req, res, async (err) => {
     if (err) {
       if (err instanceof multer.MulterError) {
@@ -1247,7 +1332,7 @@ Return ONLY valid JSON, no markdown, no code fences.`
 
 // ── Admin: Bulk Product Actions ──────────────────────────────────
 
-app.post('/api/admin/products/bulk', authMiddleware, (req, res) => {
+app.post('/api/admin/products/bulk', authMiddleware, ownerOnly, adminMutationLimiter, (req, res) => {
   const { action, ids, value } = req.body;
   if (!ids || !ids.length) return res.status(400).json({ error: 'No products selected' });
 
@@ -1469,17 +1554,19 @@ app.put('/api/admin/tradein', authMiddleware, (req, res) => {
 
 // ── Points System (Customer) ─────────────────────────────────────
 
-// H1: Points endpoints require matching X-Customer-UID header to prevent enumeration
-app.get('/api/points/qr-token/:uid', (req, res) => {
-  if (req.headers['x-customer-uid'] !== req.params.uid) {
+// H1: Points endpoints — verified via Firebase token (fallback to X-Customer-UID for compat)
+app.get('/api/points/qr-token/:uid', customerAuth, (req, res) => {
+  const verifiedUid = req.customer ? req.customer.uid : req.headers['x-customer-uid'];
+  if (verifiedUid !== req.params.uid) {
     return res.status(403).json({ error: 'Unauthorized' });
   }
   const token = generateQRToken(req.params.uid);
   res.json({ token });
 });
 
-app.get('/api/points/:uid', (req, res) => {
-  if (req.headers['x-customer-uid'] !== req.params.uid) {
+app.get('/api/points/:uid', customerAuth, (req, res) => {
+  const verifiedUid = req.customer ? req.customer.uid : req.headers['x-customer-uid'];
+  if (verifiedUid !== req.params.uid) {
     return res.status(403).json({ error: 'Unauthorized' });
   }
   const data = getCustomerPoints(req.params.uid);
@@ -1595,6 +1682,9 @@ app.get('/api/settings', (req, res) => {
 // SSE: real-time settings stream
 const settingsClients = new Set();
 app.get('/api/settings/stream', (req, res) => {
+  if (settingsClients.size >= 500) {
+    return res.status(503).send('Too many connections');
+  }
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -1712,8 +1802,8 @@ app.post('/api/admin/sales', authMiddleware, (req, res) => {
   const saleItems = [];
 
   for (const item of items) {
-    if (!item.productId || !item.qty || item.qty < 1) {
-      return res.status(400).json({ error: 'Each item needs productId and qty' });
+    if (!item.productId || !item.qty || !Number.isInteger(item.qty) || item.qty < 1) {
+      return res.status(400).json({ error: 'Each item needs productId and qty (positive whole number)' });
     }
     const product = products.find(p => p.id === item.productId);
     if (!product) return res.status(400).json({ error: `Product ${item.productId} not found` });
@@ -1731,7 +1821,7 @@ app.post('/api/admin/sales', authMiddleware, (req, res) => {
   }
 
   const subtotal = saleItems.reduce((sum, i) => sum + (i.price * i.qty), 0);
-  const discountAmt = Number(discount) || 0;
+  const discountAmt = Math.max(0, Number(discount) || 0);
   const total = Math.max(0, subtotal - discountAmt);
 
   const sale = {
@@ -1969,6 +2059,12 @@ app.get('/data-deletion', (req, res) => {
 // Catch-all: serve index.html for SPA
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Global error handler — catch unhandled errors in route handlers
+app.use((err, req, res, next) => {
+  console.error('[ERROR]', err.stack || err.message);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 app.listen(PORT, () => {

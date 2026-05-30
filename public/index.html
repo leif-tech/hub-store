@@ -12,12 +12,12 @@
   <meta property="og:site_name" content="H.U.B Store">
   <meta property="og:title" content="H.U.B | Custom PC Builds & Parts — Valenzuela">
   <meta property="og:description" content="PC parts, custom builds, and peripherals. Walk in or order online. 3/F Unit 306 Arbortowne Plaza II, Karuhatan, Valenzuela.">
-  <meta property="og:image" content="/logo.png">
+  <meta property="og:image" content="https://www.hanapusapbuild.store/logo.png">
   <meta property="og:url" content="https://hubstore.ph">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="H.U.B | Custom PC Builds & Parts — Valenzuela">
   <meta name="twitter:description" content="PC parts, custom builds, and peripherals. Walk in or order online. 3/F Arbortowne Plaza II, Karuhatan, Valenzuela.">
-  <meta name="twitter:image" content="/logo.png">
+  <meta name="twitter:image" content="https://www.hanapusapbuild.store/logo.png">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -1553,7 +1553,7 @@
         mobileLink.onclick = function(e) { e.preventDefault(); closeMobile(); signOutUser(); };
         localStorage.setItem('hub_user', JSON.stringify({ name: user.displayName, email: user.email, uid: user.uid, photo: user.photoURL }));
         registerCustomer(user);
-        fetch('/api/points/'+user.uid,{headers:{'X-Customer-UID':user.uid}}).then(r=>r.json()).then(d=>{
+        user.getIdToken().then(t=>fetch('/api/points/'+user.uid,{headers:{'Authorization':'Bearer '+t,'X-Customer-UID':user.uid}})).catch(()=>fetch('/api/points/'+user.uid,{headers:{'X-Customer-UID':user.uid}})).then(r=>r.json()).then(d=>{
           const el=document.getElementById('udPoints');
           if(el)el.textContent=(d.balance||0)+' pts';
         }).catch(()=>{});
@@ -1584,10 +1584,12 @@
       openAuthModal();
     }
 
-    function registerCustomer(user) {
+    async function registerCustomer(user) {
       const provider = user.providerData && user.providerData[0] ? user.providerData[0].providerId : 'unknown';
+      const headers = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
+      try { const token = await user.getIdToken(); headers['Authorization'] = 'Bearer ' + token; } catch(e) {}
       fetch('/api/customers', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        method: 'POST', headers,
         body: JSON.stringify({
           uid: user.uid, name: user.displayName || 'User',
           email: user.email || (user.providerData && user.providerData[0] ? user.providerData[0].email : null),
@@ -1629,6 +1631,7 @@
     function signOutUser() {
       if (!auth) return;
       auth.signOut();
+      localStorage.removeItem('hub_token');
       document.getElementById('navUserDropdown').classList.remove('open');
       showToast('Signed Out', 'You have been signed out.', '&#128274;');
     }
@@ -1663,7 +1666,7 @@
         if(!res.ok)throw new Error('Server error '+res.status);
         const raw=await res.json();
         const data=Array.isArray(raw)?raw:(raw.products||[]);
-        products=data.map(p=>({cat:p.cat,label:p.label,name:p.name,price:p.price,priceTiers:p.priceTiers||null,img:p.img,brand:p.brand||null,description:p.description||null,weight:p.weight||null,warranty:p.warranty||null,originalPrice:p.originalPrice||p.comparePrice||null,salePrice:p.salePrice||null}));
+        products=data.map(p=>({id:p.id,cat:p.cat,label:p.label,name:p.name,price:p.price,priceTiers:p.priceTiers||null,img:p.img,brand:p.brand||null,description:p.description||null,weight:p.weight||null,warranty:p.warranty||null,originalPrice:p.originalPrice||p.comparePrice||null,salePrice:p.salePrice||null}));
         specDB={};productMeta={};
         data.forEach((p,i)=>{
           if(p.specs&&Object.keys(p.specs).length)specDB[p.name]=p.specs;
@@ -1686,6 +1689,8 @@
     }
 
     function formatPrice(p){return'\u20B1'+p.toLocaleString('en-PH')}
+    function findProduct(id){return products.find(p=>p.id===id)}
+    function findProductIdx(id){return products.findIndex(p=>p.id===id)}
     // B2: HTML escape to prevent XSS via product names/labels
     function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 
@@ -1699,18 +1704,20 @@
     // ===== CARD RENDERER =====
     function cardHTML(p,prefix){
       const idx=products.indexOf(p);
+      const pid=p.id;
       const meta=productMeta[idx]||{stock:'in',condition:'new',badge:null};
-      const imgInner=p.img?`<img src="${p.img}" alt="" loading="lazy" width="300" height="300">`:'';
+      const imgInner=p.img?`<img src="${p.img}" alt="${esc(p.name)}" loading="lazy" width="300" height="300">`:'';
       const badgeHTML=meta.badge?`<div class="badge badge-${meta.badge}">${meta.badge}</div>`:'';
       const stockClass=meta.stock==='in'?'stock-in':meta.stock==='low'?'stock-low':'stock-preorder';
       const stockText=meta.stock==='in'?(meta.stockQty!==null?meta.stockQty+' on-hand':'On-Hand'):meta.stock==='low'?(meta.stockQty!==null?'Only '+meta.stockQty+' left! Grab Now':'Grab Now!'):'Pre-Order';
       const condClass=meta.condition==='new'?'cond-new':'cond-preowned';
       const condText=meta.condition==='new'?'Brand New':'Pre-Owned';
-      const wishIcon=isWished(idx)?'&#9829;':'&#9825;';
-      const wishClass=isWished(idx)?' wishlisted':'';
-      const quickActions=`<div class="card-quick-actions"><button class="card-quick-btn${wishClass}" onclick="event.stopPropagation();toggleWish(${idx})" title="Wishlist">${wishIcon}</button><button class="card-quick-btn" onclick="event.stopPropagation();toggleCompare(${idx});showToast('Compare Updated','${esc(p.name).replace(/'/g,"\\'")}','&#9878;')" title="Compare">&#9878;</button></div>`;
+      const wishIcon=isWished(pid)?'&#9829;':'&#9825;';
+      const wishClass=isWished(pid)?' wishlisted':'';
+      const eid=esc(pid);
+      const quickActions=`<div class="card-quick-actions"><button class="card-quick-btn${wishClass}" onclick="event.stopPropagation();toggleWish('${eid}')" title="Wishlist">${wishIcon}</button><button class="card-quick-btn" onclick="event.stopPropagation();toggleCompare('${eid}');showToast('Compare Updated','${esc(p.name).replace(/'/g,"\\'")}','&#9878;')" title="Compare">&#9878;</button></div>`;
       const slug=toSlug(p.name);
-      return `<div class="${prefix}-card" onclick="navigateTo('/shop/${slug}')">${badgeHTML}<div class="stock-badge ${stockClass}">${stockText}</div><div class="${prefix}-card-img">${quickActions}${imgInner}</div><div class="${prefix}-card-body"><span class="cond-badge ${condClass}">${condText}</span><div class="${prefix}-card-cat">${esc(p.label)}</div><div class="${prefix}-card-name">${esc(p.name)}</div><div class="${prefix}-card-bottom"><span class="${prefix}-card-price">${formatPrice(p.price)}</span></div></div><div class="${prefix}-card-btns"><button class="${prefix}-card-btn-cart" onclick="event.stopPropagation();addToCart(${idx})">Add to Cart</button><button class="${prefix}-card-btn-buy" onclick="event.stopPropagation();buyNowCard(${idx})">Buy Now</button></div></div>`;
+      return `<div class="${prefix}-card" onclick="navigateTo('/shop/${slug}')">${badgeHTML}<div class="stock-badge ${stockClass}">${stockText}</div><div class="${prefix}-card-img">${quickActions}${imgInner}</div><div class="${prefix}-card-body"><span class="cond-badge ${condClass}">${condText}</span><div class="${prefix}-card-cat">${esc(p.label)}</div><div class="${prefix}-card-name">${esc(p.name)}</div><div class="${prefix}-card-bottom"><span class="${prefix}-card-price">${formatPrice(p.price)}</span></div></div><div class="${prefix}-card-btns"><button class="${prefix}-card-btn-cart" onclick="event.stopPropagation();addToCart('${eid}')">Add to Cart</button><button class="${prefix}-card-btn-buy" onclick="event.stopPropagation();buyNowCard('${eid}')">Buy Now</button></div></div>`;
     }
 
     // ===== CATEGORY TILES =====
@@ -1956,13 +1963,13 @@
             </div>
             <div class="pd-actions">
               <div class="pd-actions-primary">
-                <button class="pd-buy" onclick="addToCart(${idx})"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg> Add to Cart</button>
+                <button class="pd-buy" onclick="addToCart('${esc(p.id)}')"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg> Add to Cart</button>
                 <button class="pd-buy secondary" onclick="buyNow('${p.name.replace(/'/g,"\\'")}',${p.price})"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Buy Now</button>
               </div>
               <div class="pd-actions-secondary">
-                <a href="https://www.facebook.com/messages/t/HUBValenzuela" target="_blank" class="pd-action"><svg width="14" height="14" fill="#1877f2" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.908 1.434 5.503 3.678 7.2V22l3.455-1.896A10.7 10.7 0 0012 20.486c5.523 0 10-4.145 10-9.243S17.523 2 12 2zm1.077 12.456l-2.549-2.72-4.974 2.72 5.472-5.81 2.613 2.72 4.91-2.72-5.472 5.81z"/></svg> Messenger</a>
-                <button class="pd-action" onclick="toggleWish(${idx})"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg> <span>Wishlist</span></button>
-                <button class="pd-action" onclick="toggleCompare(${idx})"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg> <span>Compare</span></button>
+                <a href="https://www.facebook.com/messages/t/Hanap.Usap.Build" target="_blank" class="pd-action"><svg width="14" height="14" fill="#1877f2" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.908 1.434 5.503 3.678 7.2V22l3.455-1.896A10.7 10.7 0 0012 20.486c5.523 0 10-4.145 10-9.243S17.523 2 12 2zm1.077 12.456l-2.549-2.72-4.974 2.72 5.472-5.81 2.613 2.72 4.91-2.72-5.472 5.81z"/></svg> Messenger</a>
+                <button class="pd-action" onclick="toggleWish('${esc(p.id)}')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg> <span>Wishlist</span></button>
+                <button class="pd-action" onclick="toggleCompare('${esc(p.id)}')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg> <span>Compare</span></button>
               </div>
             </div>
             ${specRows?`<div class="pd-specs"><div class="pd-specs-header"><svg width="18" height="18" fill="none" stroke="var(--blue)" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg><h3>Specifications</h3></div><table class="pd-specs-table"><tbody>${specRows}</tbody></table></div>`:''}
@@ -2102,7 +2109,7 @@
         if(entries[0].isIntersecting&&shopRendered<shopFiltered.length){
           renderNextBatch();
         }
-      },{root:null,rootMargin:'400px'});
+      },{root:document.getElementById('shopPage'),rootMargin:'400px'});
       shopObserver.observe(sentinel);
     }
 
@@ -2197,19 +2204,23 @@
 
     // ===== SHOPPING CART =====
     let cart=JSON.parse(localStorage.getItem('hub_cart')||'[]');
+    // Migrate old idx-based cart to id-based (one-time)
+    if(cart.length&&cart[0].idx!==undefined&&!cart[0].pid){cart=[];localStorage.setItem('hub_cart','[]')}
     function saveCart(){localStorage.setItem('hub_cart',JSON.stringify(cart));renderCart();updateCartBadge()}
     function updateCartBadge(){
       const t=cart.reduce((s,i)=>s+i.qty,0);
       const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
-      document.getElementById('cartBadge').textContent=t||'';
+      const badge=document.getElementById('cartBadge');
+      badge.textContent=t||'';
+      badge.classList.toggle('show',t>0);
       document.querySelectorAll('.topbar-cart-count').forEach(el=>el.textContent=t||'');
       document.querySelectorAll('.topbar-cart-total').forEach(el=>el.textContent=t?formatPrice(total):'');
     }
-    function addToCart(idx,qty=1,silent=false){
-      if(!currentUser){requireAuth(()=>addToCart(idx,qty,silent));return}
-      const p=products[idx];if(!p)return;
-      const existing=cart.find(i=>i.idx===idx);
-      if(existing){existing.qty+=qty}else{cart.push({idx,qty,name:p.name,price:p.price,img:p.img})}
+    function addToCart(pid,qty=1,silent=false){
+      if(!currentUser){requireAuth(()=>addToCart(pid,qty,silent));return}
+      const p=findProduct(pid);if(!p)return;
+      const existing=cart.find(i=>i.pid===pid);
+      if(existing){existing.qty+=qty}else{cart.push({pid,qty,name:p.name,price:p.price,img:p.img})}
       saveCart();
       if(!silent&&typeof showToast==='function')showToast('Added to Cart',p.name,'&#128722;');
       if(!localStorage.getItem('hub_guide_cart_seen')){
@@ -2217,19 +2228,21 @@
         showToast('Tip','Click the cart icon to view items and checkout','&#128712;');
       }
     }
-    function buyNowCard(idx){
-      if(!currentUser){requireAuth(()=>buyNowCard(idx));return}
-      addToCart(idx,1,true);
+    function buyNowCard(pid){
+      if(!currentUser){requireAuth(()=>buyNowCard(pid));return}
+      addToCart(pid,1,true);
       const drawer=document.getElementById('cartDrawer');
+      const overlay=document.getElementById('cartOverlay');
       if(!drawer.classList.contains('open')){
         drawer.classList.add('open');
+        overlay.classList.add('open');
         document.body.style.overflow='hidden';
       }
       renderCart();
     }
-    function removeFromCart(idx){cart=cart.filter(i=>i.idx!==idx);saveCart()}
-    function updateCartQty(idx,delta){
-      const item=cart.find(i=>i.idx===idx);
+    function removeFromCart(pid){cart=cart.filter(i=>i.pid!==pid);saveCart()}
+    function updateCartQty(pid,delta){
+      const item=cart.find(i=>i.pid===pid);
       if(item){item.qty=Math.max(1,item.qty+delta);saveCart()}
     }
     function renderCart(){
@@ -2238,41 +2251,44 @@
       footer.style.display='block';
       const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
       document.getElementById('cartTotal').textContent=formatPrice(total);
-      body.innerHTML=cart.map(i=>`<div class="cart-item"><div class="cart-item-img">${i.img?`<img src="${i.img}" alt="">`:''}</div><div class="cart-item-info"><div class="cart-item-name">${esc(i.name)}</div><div class="cart-item-price">${formatPrice(i.price)}</div><div class="cart-item-qty"><button onclick="updateCartQty(${i.idx},-1)">-</button><span>${i.qty}</span><button onclick="updateCartQty(${i.idx},1)">+</button></div><div class="cart-item-remove" onclick="removeFromCart(${i.idx})">Remove</div></div></div>`).join('');
+      body.innerHTML=cart.map(i=>`<div class="cart-item"><div class="cart-item-img">${i.img?`<img src="${i.img}" alt="">`:''}</div><div class="cart-item-info"><div class="cart-item-name">${esc(i.name)}</div><div class="cart-item-price">${formatPrice(i.price)}</div><div class="cart-item-qty"><button onclick="updateCartQty('${esc(i.pid)}',-1)">-</button><span>${i.qty}</span><button onclick="updateCartQty('${esc(i.pid)}',1)">+</button></div><div class="cart-item-remove" onclick="removeFromCart('${esc(i.pid)}')">Remove</div></div></div>`).join('');
     }
     function toggleCartDrawer(){
       document.getElementById('cartOverlay').classList.toggle('open');
       document.getElementById('cartDrawer').classList.toggle('open');
       document.body.style.overflow=document.getElementById('cartDrawer').classList.contains('open')?'hidden':'';
     }
-    function cartCheckout(){
+    async function cartCheckout(){
       if(!cart.length){showToast('Cart Empty','Add items before checking out','&#9888;');return}
       if(!currentUser){requireAuth(()=>cartCheckout());return}
       const params=cart.map(i=>i.name+'|'+i.price+'|'+i.qty).join(';;');
       const u=currentUser;
+      try{const t=await u.getIdToken();localStorage.setItem('hub_token',t)}catch(e){}
       window.open('/checkout.html?cart='+encodeURIComponent(params)+'&uname='+encodeURIComponent(u.displayName||'')+'&uemail='+encodeURIComponent(u.email||'')+'&uid='+encodeURIComponent(u.uid),'_blank');
     }
     updateCartBadge();renderCart();
 
     // ===== WISHLIST =====
     let wishlist=JSON.parse(localStorage.getItem('hub_wish')||'[]');
+    // Migrate old idx-based wishlist to id-based (one-time)
+    if(wishlist.length&&typeof wishlist[0]==='number'){wishlist=[];localStorage.setItem('hub_wish','[]')}
     function saveWish(){localStorage.setItem('hub_wish',JSON.stringify(wishlist));renderWish();updateWishBadge()}
-    function updateWishBadge(){document.getElementById('wishBadge').textContent=wishlist.length||''}
-    function toggleWish(idx){
-      if(!currentUser){requireAuth(()=>toggleWish(idx));return}
-      const wasWished=wishlist.includes(idx);
-      if(wasWished){wishlist=wishlist.filter(i=>i!==idx)}else{wishlist.push(idx)}
+    function updateWishBadge(){const b=document.getElementById('wishBadge');b.textContent=wishlist.length||'';b.classList.toggle('show',wishlist.length>0)}
+    function toggleWish(pid){
+      if(!currentUser){requireAuth(()=>toggleWish(pid));return}
+      const wasWished=wishlist.includes(pid);
+      if(wasWished){wishlist=wishlist.filter(i=>i!==pid)}else{wishlist.push(pid)}
       saveWish();
       if(typeof showToast==='function'){
-        const p=products[idx];
+        const p=findProduct(pid);
         if(p)showToast(wasWished?'Removed from Wishlist':'Added to Wishlist',p.name,wasWished?'&#9825;':'&#9829;');
       }
     }
-    function isWished(idx){return wishlist.includes(idx)}
+    function isWished(pid){return wishlist.includes(pid)}
     function renderWish(){
       const body=document.getElementById('wishBody');
       if(!wishlist.length){body.innerHTML='<div class="cart-empty">Your wishlist is empty</div>';return}
-      body.innerHTML=wishlist.map(idx=>{const p=products[idx];if(!p)return'';return`<div class="cart-item"><div class="cart-item-img">${p.img?`<img src="${p.img}" alt="">`:''}</div><div class="cart-item-info"><div class="cart-item-name">${esc(p.name)}</div><div class="cart-item-price">${formatPrice(p.price)}</div><div style="display:flex;gap:8px;margin-top:6px"><button onclick="addToCart(${idx});toggleWish(${idx})" style="font-size:0.72rem;color:var(--blue);font-weight:600;text-decoration:underline">Add to Cart</button><button onclick="toggleWish(${idx})" style="font-size:0.72rem;color:#ef4444">Remove</button></div></div></div>`}).join('');
+      body.innerHTML=wishlist.map(pid=>{const p=findProduct(pid);if(!p)return'';const eid=esc(pid);return`<div class="cart-item"><div class="cart-item-img">${p.img?`<img src="${p.img}" alt="">`:''}</div><div class="cart-item-info"><div class="cart-item-name">${esc(p.name)}</div><div class="cart-item-price">${formatPrice(p.price)}</div><div style="display:flex;gap:8px;margin-top:6px"><button onclick="addToCart('${eid}');toggleWish('${eid}')" style="font-size:0.72rem;color:var(--blue);font-weight:600;text-decoration:underline">Add to Cart</button><button onclick="toggleWish('${eid}')" style="font-size:0.72rem;color:#ef4444">Remove</button></div></div></div>`}).join('');
     }
     function toggleWishDrawer(){
       document.getElementById('wishOverlay').classList.toggle('open');
@@ -2283,10 +2299,13 @@
 
     // ===== COMPARE =====
     let compareList=JSON.parse(localStorage.getItem('hub_compare')||'[]');
+    // Migrate old idx-based compare to id-based (one-time)
+    if(compareList.length&&typeof compareList[0]==='number'){compareList=[];localStorage.setItem('hub_compare','[]')}
     function saveCompare(){localStorage.setItem('hub_compare',JSON.stringify(compareList));updateCompareBar()}
-    function toggleCompare(idx){
-      if(compareList.includes(idx)){compareList=compareList.filter(i=>i!==idx);showToast('Removed from Compare',products[idx]?.name||'Product','&#9878;')}
-      else if(compareList.length<3){compareList.push(idx);showToast('Added to Compare',products[idx]?.name+' ('+compareList.length+'/3)','&#9878;')}
+    function toggleCompare(pid){
+      const p=findProduct(pid);
+      if(compareList.includes(pid)){compareList=compareList.filter(i=>i!==pid);showToast('Removed from Compare',p?.name||'Product','&#9878;')}
+      else if(compareList.length<3){compareList.push(pid);showToast('Added to Compare',(p?.name||'Product')+' ('+compareList.length+'/3)','&#9878;')}
       else{showToast('Compare Full','Remove a product first (max 3)','&#9888;');return}
       saveCompare();
     }
@@ -2298,7 +2317,7 @@
 
     function showCompare(){
       if(compareList.length<2){showToast('Compare','Select at least 2 products to compare','&#9878;');return}
-      const prods=compareList.map(i=>({p:products[i],meta:productMeta[i]||{},idx:i})).filter(x=>x.p);
+      const prods=compareList.map(pid=>{const idx=findProductIdx(pid);return{p:findProduct(pid),meta:productMeta[idx]||{},pid}}).filter(x=>x.p);
       const allSpecKeys=new Set();
       prods.forEach(x=>{const s=specDB[x.p.name]||{};Object.keys(s).forEach(k=>allSpecKeys.add(k))});
       const prices=prods.map(x=>x.p.price);
@@ -2360,7 +2379,7 @@
       }
 
       // Cart buttons
-      const actions=`<div class="compare-cart-btns">${prods.map(x=>{const n=esc(x.p.name);return`<button class="compare-cart-btn" onclick="addToCart(${x.idx});document.getElementById('compareModal').classList.remove('open')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg> Add ${n.length>25?n.substring(0,23)+'...':n}</button>`}).join('')}</div>`;
+      const actions=`<div class="compare-cart-btns">${prods.map(x=>{const n=esc(x.p.name);return`<button class="compare-cart-btn" onclick="addToCart('${esc(x.pid)}');document.getElementById('compareModal').classList.remove('open')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg> Add ${n.length>25?n.substring(0,23)+'...':n}</button>`}).join('')}</div>`;
 
       document.getElementById('compareTableWrap').innerHTML=html;
       // Insert verdict and actions after compare-body
@@ -2391,17 +2410,19 @@
       const actDiv=document.querySelector('.pd-actions');
       if(actDiv){
         const p=products[idx];
-        const wished=isWished(idx);
-        const compared=compareList.includes(idx);
+        const pid=p.id;
+        const eid=esc(pid);
+        const wished=isWished(pid);
+        const compared=compareList.includes(pid);
         actDiv.innerHTML=`
           <div class="pd-actions-primary">
-            <button class="pd-buy" onclick="addToCart(${idx})"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg> Add to Cart</button>
+            <button class="pd-buy" onclick="addToCart('${eid}')"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg> Add to Cart</button>
             <button class="pd-buy secondary" onclick="buyNow('${p.name.replace(/'/g,"\\'")}',${p.price})"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Buy Now</button>
           </div>
           <div class="pd-actions-secondary">
-            <a href="https://www.facebook.com/messages/t/HUBValenzuela" target="_blank" class="pd-action"><svg width="14" height="14" fill="#1877f2" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.908 1.434 5.503 3.678 7.2V22l3.455-1.896A10.7 10.7 0 0012 20.486c5.523 0 10-4.145 10-9.243S17.523 2 12 2zm1.077 12.456l-2.549-2.72-4.974 2.72 5.472-5.81 2.613 2.72 4.91-2.72-5.472 5.81z"/></svg> Messenger</a>
-            <button class="pd-action${wished?' active':''}" onclick="toggleWish(${idx});this.classList.toggle('active');this.querySelector('span').textContent=isWished(${idx})?'Wishlisted':'Wishlist'"><svg width="14" height="14" fill="${wished?'var(--gold)':'none'}" stroke="${wished?'var(--gold)':'currentColor'}" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg> <span>${wished?'Wishlisted':'Wishlist'}</span></button>
-            <button class="pd-action${compared?' active':''}" onclick="toggleCompare(${idx});this.classList.toggle('active');this.querySelector('span').textContent=compareList.includes(${idx})?'Comparing':'Compare'"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg> <span>${compared?'Comparing':'Compare'}</span></button>
+            <a href="https://www.facebook.com/messages/t/Hanap.Usap.Build" target="_blank" class="pd-action"><svg width="14" height="14" fill="#1877f2" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.908 1.434 5.503 3.678 7.2V22l3.455-1.896A10.7 10.7 0 0012 20.486c5.523 0 10-4.145 10-9.243S17.523 2 12 2zm1.077 12.456l-2.549-2.72-4.974 2.72 5.472-5.81 2.613 2.72 4.91-2.72-5.472 5.81z"/></svg> Messenger</a>
+            <button class="pd-action${wished?' active':''}" onclick="toggleWish('${eid}');this.classList.toggle('active');this.querySelector('span').textContent=isWished('${eid}')?'Wishlisted':'Wishlist'"><svg width="14" height="14" fill="${wished?'var(--gold)':'none'}" stroke="${wished?'var(--gold)':'currentColor'}" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg> <span>${wished?'Wishlisted':'Wishlist'}</span></button>
+            <button class="pd-action${compared?' active':''}" onclick="toggleCompare('${eid}');this.classList.toggle('active');this.querySelector('span').textContent=compareList.includes('${eid}')?'Comparing':'Compare'"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg> <span>${compared?'Comparing':'Compare'}</span></button>
           </div>
         `;
       }

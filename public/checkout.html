@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Checkout - H.U.B</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/png" href="/favicon.png">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Exo+2:wght@600;700;800;900&display=swap" rel="stylesheet">
   <style>
@@ -267,7 +266,7 @@
           <h3>Order Placed!</h3>
           <p id="orderConfirmDetails"></p>
           <p>Send your <strong style="color:var(--heading)">payment screenshot</strong> to our Facebook Messenger so we can verify and process your order.</p>
-          <a href="https://www.facebook.com/messages/t/HUBValenzuela" target="_blank" rel="noopener" class="btn btn-fb" style="width:auto;margin:0 auto">
+          <a href="https://www.facebook.com/messages/t/Hanap.Usap.Build" target="_blank" rel="noopener" class="btn btn-fb" style="width:auto;margin:0 auto">
             <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.908 1.434 5.503 3.678 7.2V22l3.455-1.896A10.7 10.7 0 0012 20.486c5.523 0 10-4.145 10-9.243S17.523 2 12 2zm1.077 12.456l-2.549-2.72-4.974 2.72 5.472-5.81 2.613 2.72 4.91-2.72-5.472 5.81z"/></svg>
             Send Proof via Messenger
           </a>
@@ -294,7 +293,7 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const fmt = p => '\u20B1' + p.toLocaleString('en-PH');
-    const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
     // Pre-fill from URL params or localStorage
     const storedUser = JSON.parse(localStorage.getItem('hub_user') || 'null');
@@ -447,7 +446,10 @@
         customerUid: customerUid || null
       };
 
-      fetch('/api/order', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: JSON.stringify(order) })
+      const orderHeaders = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
+      const hubToken = localStorage.getItem('hub_token');
+      if (hubToken) orderHeaders['Authorization'] = 'Bearer ' + hubToken;
+      fetch('/api/order', { method: 'POST', headers: orderHeaders, body: JSON.stringify(order) })
         .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
         .then(({ ok, data }) => {
           if (!ok || !data.success) throw new Error(data.error || 'Order could not be placed');

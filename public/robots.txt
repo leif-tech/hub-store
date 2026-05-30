@@ -1,6 +1,9 @@
 User-agent: *
 Disallow: /admin
 Disallow: /api/
+Disallow: /checkout
+Disallow: /checkout-success
+Disallow: /fb-auth-callback
 Allow: /
 
-Sitemap: https://hubstore.ph/sitemap.xml
+Sitemap: https://www.hanapusapbuild.store/sitemap.xml

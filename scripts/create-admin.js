@@ -6,7 +6,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 
 const username = process.argv[2] || 'admin';
-const password = process.argv[3] || 'dcte2024';
+const password = process.argv[3] || 'hub2024';
 const role = process.argv[4] || 'admin';
 
 if (!['owner', 'admin'].includes(role)) {

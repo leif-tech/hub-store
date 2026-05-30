@@ -79,8 +79,11 @@
     .footer-social a{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;transition:all .2s}
     .footer-social a:hover{background:var(--blue);color:#fff}
 
+    .nav-hamburger{display:none;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:8px}
     @media(max-width:768px){
-      .nav-links{display:none}
+      .nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:var(--dark);flex-direction:column;padding:16px 24px;gap:12px;border-top:1px solid var(--border)}
+      .nav-links.open{display:flex}
+      .nav-hamburger{display:block}
       .footer-top{grid-template-columns:1fr}
       .page-header h1{font-size:1.7rem}
     }
@@ -91,6 +94,7 @@
   <nav class="navbar">
     <div class="container">
       <a href="/" class="nav-logo"><img src="/logo.png" alt="H.U.B"></a>
+      <button class="nav-hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">&#9776;</button>
       <div class="nav-links">
         <a href="/">Home</a>
         <a href="/shop" class="shop-link">Store</a>
@@ -169,7 +173,7 @@
     <ul class="content-list">
       <li>Email: <a class="link" href="mailto:hanap.usap.build@gmail.com">hanap.usap.build@gmail.com</a></li>
       <li>Address: 3/F Unit 306 Arbortowne Plaza II, Karuhatan Road, Valenzuela, Philippines 1442</li>
-      <li>Facebook: <a class="link" href="https://www.facebook.com/HUBValenzuela" target="_blank" rel="noopener">H.U.B Facebook Page</a></li>
+      <li>Facebook: <a class="link" href="https://www.facebook.com/Hanap.Usap.Build" target="_blank" rel="noopener">H.U.B Facebook Page</a></li>
     </ul>
   </div>
 
