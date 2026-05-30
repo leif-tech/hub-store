@@ -70,17 +70,6 @@ const upload = multer({
   }
 });
 
-// Startup: reset admin password if ADMIN_RESET_PASS env var is set
-if (process.env.ADMIN_RESET_PASS) {
-  const admins = readJSON('admins.json');
-  const admin = admins.find(a => a.username === 'admin');
-  if (admin) {
-    admin.password = bcrypt.hashSync(process.env.ADMIN_RESET_PASS, 10);
-    writeJSON('admins.json', admins);
-    console.log('[STARTUP] Admin password reset via ADMIN_RESET_PASS env var');
-  }
-}
-
 app.use(compression());
 // IMPORTANT: Do NOT change these Helmet settings without testing Google & Facebook login.
 // crossOriginOpenerPolicy MUST be false — setting it to 'same-origin' will break
@@ -130,6 +119,13 @@ const contactLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many messages sent. Try again in an hour.' }
 });
+const signupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many signup attempts. Try again in an hour.' }
+});
 
 // Static files: long cache for assets, no-cache for HTML so updates show immediately
 const assetCacheOptions = { maxAge: '7d', etag: true, lastModified: true };
@@ -165,6 +161,17 @@ function writeJSON(filename, data) {
   const json = JSON.stringify(data, null, 2);
   jsonCache[filename] = JSON.parse(json);
   fs.writeFileSync(path.join(DATA_DIR, filename), json);
+}
+
+// Startup: reset admin password if ADMIN_RESET_PASS env var is set
+if (process.env.ADMIN_RESET_PASS) {
+  const admins = readJSON('admins.json');
+  const admin = admins.find(a => a.username === 'admin');
+  if (admin) {
+    admin.password = bcrypt.hashSync(process.env.ADMIN_RESET_PASS, 10);
+    writeJSON('admins.json', admins);
+    console.log('[STARTUP] Admin password reset via ADMIN_RESET_PASS env var');
+  }
 }
 
 function appendToFile(filename, entry) {
@@ -308,8 +315,8 @@ function authMiddleware(req, res, next) {
 }
 
 function ownerOnly(req, res, next) {
-  if (req.admin.role !== 'owner' && req.admin.role !== 'admin') {
-    return res.status(403).json({ error: 'Admin access required' });
+  if (req.admin.role !== 'owner') {
+    return res.status(403).json({ error: 'Owner access required' });
   }
   next();
 }
@@ -696,7 +703,14 @@ app.post('/api/admin/login', loginLimiter, (req, res) => {
   if (!admin || !bcrypt.compareSync(password, admin.password)) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
-  const role = admin.role || 'employee';
+  const status = admin.status || 'active';
+  if (status === 'pending') {
+    return res.status(403).json({ error: 'Your account is awaiting owner approval.' });
+  }
+  if (status === 'deactivated') {
+    return res.status(403).json({ error: 'Your account has been deactivated. Contact the owner.' });
+  }
+  const role = admin.role || 'admin';
   const token = jwt.sign({ username: admin.username, role }, JWT_SECRET, { expiresIn: '24h' });
   res.json({ success: true, token, username: admin.username, role });
 });
@@ -704,13 +718,115 @@ app.post('/api/admin/login', loginLimiter, (req, res) => {
 app.get('/api/admin/verify', authMiddleware, (req, res) => {
   const admins = readJSON('admins.json');
   const admin = admins.find(a => a.username === req.admin.username);
-  const role = admin ? admin.role || 'employee' : req.admin.role || 'employee';
+  if (!admin) return res.status(401).json({ error: 'Account not found' });
+  const status = admin.status || 'active';
+  if (status === 'deactivated') return res.status(403).json({ error: 'Account deactivated' });
+  if (status === 'pending') return res.status(403).json({ error: 'Account awaiting approval' });
+  const role = admin.role || 'admin';
   res.json({ valid: true, username: req.admin.username, role });
+});
+
+// ── Admin: Signup ────────────────────────────────────────────────
+
+app.post('/api/admin/signup', signupLimiter, (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password required' });
+  }
+  if (!/^[a-zA-Z0-9_]{3,30}$/.test(username)) {
+    return res.status(400).json({ error: 'Username must be 3-30 alphanumeric characters (underscores allowed)' });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+  const admins = readJSON('admins.json');
+  if (admins.find(a => a.username.toLowerCase() === username.toLowerCase())) {
+    return res.status(409).json({ error: 'Username already taken' });
+  }
+  const hash = bcrypt.hashSync(password, 10);
+  admins.push({
+    username,
+    password: hash,
+    role: 'admin',
+    status: 'pending',
+    createdAt: new Date().toISOString()
+  });
+  writeJSON('admins.json', admins);
+  logAudit('admin_signup', username, 'New admin signup (pending approval)', username);
+  res.json({ success: true, message: 'Account created! Awaiting owner approval.' });
+});
+
+// ── Admin: Admin Management (owner-only) ─────────────────────────
+
+app.get('/api/admin/admins', authMiddleware, ownerOnly, (req, res) => {
+  const admins = readJSON('admins.json');
+  res.json(admins.map(a => ({
+    username: a.username,
+    role: a.role || 'admin',
+    status: a.status || 'active',
+    createdAt: a.createdAt,
+    approvedBy: a.approvedBy,
+    approvedAt: a.approvedAt
+  })));
+});
+
+app.put('/api/admin/admins/approve', authMiddleware, ownerOnly, (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: 'Username required' });
+  const admins = readJSON('admins.json');
+  const admin = admins.find(a => a.username === username);
+  if (!admin) return res.status(404).json({ error: 'Admin not found' });
+  if ((admin.status || 'active') !== 'pending') return res.status(400).json({ error: 'Account is not pending' });
+  admin.status = 'active';
+  admin.approvedBy = req.admin.username;
+  admin.approvedAt = new Date().toISOString();
+  writeJSON('admins.json', admins);
+  logAudit('admin_approve', username, `Approved by ${req.admin.username}`, req.admin.username);
+  res.json({ success: true });
+});
+
+app.put('/api/admin/admins/reject', authMiddleware, ownerOnly, (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: 'Username required' });
+  const admins = readJSON('admins.json');
+  const idx = admins.findIndex(a => a.username === username);
+  if (idx === -1) return res.status(404).json({ error: 'Admin not found' });
+  if ((admins[idx].status || 'active') !== 'pending') return res.status(400).json({ error: 'Account is not pending' });
+  admins.splice(idx, 1);
+  writeJSON('admins.json', admins);
+  logAudit('admin_reject', username, `Rejected by ${req.admin.username}`, req.admin.username);
+  res.json({ success: true });
+});
+
+app.put('/api/admin/admins/deactivate', authMiddleware, ownerOnly, (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: 'Username required' });
+  const admins = readJSON('admins.json');
+  const admin = admins.find(a => a.username === username);
+  if (!admin) return res.status(404).json({ error: 'Admin not found' });
+  if (admin.role === 'owner') return res.status(400).json({ error: 'Cannot deactivate owner account' });
+  admin.status = 'deactivated';
+  writeJSON('admins.json', admins);
+  logAudit('admin_deactivate', username, `Deactivated by ${req.admin.username}`, req.admin.username);
+  res.json({ success: true });
+});
+
+app.put('/api/admin/admins/activate', authMiddleware, ownerOnly, (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: 'Username required' });
+  const admins = readJSON('admins.json');
+  const admin = admins.find(a => a.username === username);
+  if (!admin) return res.status(404).json({ error: 'Admin not found' });
+  if (admin.role === 'owner') return res.status(400).json({ error: 'Owner is always active' });
+  admin.status = 'active';
+  writeJSON('admins.json', admins);
+  logAudit('admin_activate', username, `Activated by ${req.admin.username}`, req.admin.username);
+  res.json({ success: true });
 });
 
 // ── Admin: Dashboard Stats ───────────────────────────────────────
 
-app.get('/api/admin/stats', authMiddleware, ownerOnly, (req, res) => {
+app.get('/api/admin/stats', authMiddleware, (req, res) => {
   const products = readJSON('products.json');
   const orders = readJSON('orders.json');
   const contacts = readJSON('contacts.json');
@@ -790,26 +906,29 @@ app.get('/api/admin/stats', authMiddleware, ownerOnly, (req, res) => {
   // Recent walk-in sales
   const recentSales = sales.filter(s => !s.voided).slice(-5).reverse();
 
-  res.json({
+  const stats = {
     totalProducts: products.length,
     totalOrders: orders.length,
     totalContacts: contacts.length,
     totalCustomers: customers.length,
-    totalRevenue,
     lowStock,
     outOfStock,
     recentOrders,
-    revenueByDay,
     ordersByStatus,
     topProducts,
-    todayRevenue,
     todaySalesCount,
-    revenueChange,
-    monthProfit,
-    monthExpenses,
-    monthRevenue,
     recentSales
-  });
+  };
+
+  // Owner gets full financial data; admin gets only operational stats
+  if (req.admin.role === 'owner') {
+    Object.assign(stats, {
+      totalRevenue, revenueByDay, todayRevenue, revenueChange,
+      monthProfit, monthExpenses, monthRevenue
+    });
+  }
+
+  res.json(stats);
 });
 
 // ── Admin: Delete Category ────────────────────────────────────────
@@ -831,7 +950,11 @@ app.delete('/api/admin/categories/:cat', authMiddleware, (req, res) => {
 // ── Admin: Products CRUD ─────────────────────────────────────────
 
 app.get('/api/admin/products', authMiddleware, (req, res) => {
-  res.json(readJSON('products.json'));
+  let products = readJSON('products.json');
+  if (req.admin.role !== 'owner') {
+    products = products.map(p => { const { costPrice, ...rest } = p; return rest; });
+  }
+  res.json(products);
 });
 
 app.post('/api/admin/products', authMiddleware, (req, res) => {
@@ -1395,7 +1518,7 @@ app.put('/api/admin/settings', authMiddleware, ownerOnly, (req, res) => {
 
 // ── Admin: Expenses CRUD ──────────────────────────────────────────
 
-app.get('/api/admin/expenses', authMiddleware, (req, res) => {
+app.get('/api/admin/expenses', authMiddleware, ownerOnly, (req, res) => {
   let expenses = readJSON('expenses.json');
   const { from, to } = req.query;
   if (from) expenses = expenses.filter(e => e.date >= from);
@@ -1695,7 +1818,7 @@ app.get('/api/admin/reports', authMiddleware, ownerOnly, (req, res) => {
 
 // ── Admin: Audit Log ──────────────────────────────────────────────
 
-app.get('/api/admin/audit', authMiddleware, (req, res) => {
+app.get('/api/admin/audit', authMiddleware, ownerOnly, (req, res) => {
   let log = readJSON('audit.json');
   const { action, from, to, by } = req.query;
   if (action) log = log.filter(e => e.action === action);

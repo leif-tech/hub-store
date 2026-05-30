@@ -34,6 +34,10 @@
     .login-box input{margin-bottom:14px;padding:12px 16px;font-size:0.9rem}
     .login-box .btn{width:100%;margin-top:8px;padding:12px;font-size:0.9rem}
     .login-error{color:var(--danger);font-size:0.8rem;margin-top:10px;min-height:20px}
+    .login-success{color:var(--success);font-size:0.8rem;margin-top:10px;min-height:20px}
+    .login-tabs{display:flex;margin-bottom:24px;border-radius:10px;background:var(--bg);padding:4px}
+    .login-tab{flex:1;padding:10px;font-family:'Exo 2',sans-serif;font-weight:600;font-size:0.82rem;border-radius:8px;cursor:pointer;transition:all 0.2s;color:var(--text-dim);background:transparent;border:none}
+    .login-tab.active{background:#fff;color:var(--navy);box-shadow:var(--shadow)}
 
     /* ── Sidebar Layout ── */
     .admin-wrap{display:none}
@@ -225,7 +229,7 @@
     /* ── Role badge ── */
     .role-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.62rem;font-weight:700;text-transform:uppercase;font-family:'Exo 2',sans-serif;letter-spacing:0.5px}
     .role-badge.owner{background:rgba(26,110,232,0.1);color:var(--purple)}
-    .role-badge.employee{background:rgba(14,165,233,0.1);color:var(--cyan)}
+    .role-badge.admin{background:rgba(14,165,233,0.1);color:var(--cyan)}
 
     /* ── Toast ── */
     .admin-toast{position:fixed;bottom:24px;right:24px;z-index:9999;padding:14px 24px;border-radius:12px;color:#fff;font-size:0.85rem;font-weight:600;font-family:'Exo 2',sans-serif;box-shadow:0 8px 24px rgba(0,0,0,0.15);transform:translateY(100px);opacity:0;transition:all .3s;pointer-events:none}
@@ -317,12 +321,28 @@
     </div>
     <h1>H.U.B Admin</h1>
     <p>Sign in to manage your store</p>
-    <form onsubmit="doLogin(event)">
-      <input type="text" id="loginUser" placeholder="Username" autocomplete="username" required>
-      <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password" required>
-      <button type="submit" class="btn btn-primary" id="loginBtn">Sign In</button>
-    </form>
-    <div class="login-error" id="loginError"></div>
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="switchLoginTab('login',this)">Sign In</button>
+      <button class="login-tab" onclick="switchLoginTab('signup',this)">Sign Up</button>
+    </div>
+    <div id="loginFormWrap">
+      <form onsubmit="doLogin(event)">
+        <input type="text" id="loginUser" placeholder="Username" autocomplete="username" required>
+        <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password" required>
+        <button type="submit" class="btn btn-primary" id="loginBtn">Sign In</button>
+      </form>
+      <div class="login-error" id="loginError"></div>
+    </div>
+    <div id="signupFormWrap" style="display:none">
+      <form onsubmit="doSignup(event)">
+        <input type="text" id="signupUser" placeholder="Username" autocomplete="username" required minlength="3" maxlength="30">
+        <input type="password" id="signupPass" placeholder="Password (min 6 chars)" autocomplete="new-password" required minlength="6">
+        <input type="password" id="signupPassConfirm" placeholder="Confirm Password" autocomplete="new-password" required minlength="6">
+        <button type="submit" class="btn btn-primary" id="signupBtn">Create Account</button>
+      </form>
+      <div class="login-error" id="signupError"></div>
+      <div class="login-success" id="signupSuccess"></div>
+    </div>
   </div>
 </div>
 
@@ -877,8 +897,25 @@
             </label>
           </div>
 
+          <!-- Admin Management (owner only) -->
+          <div id="adminMgmtSection" style="background:var(--card);border-radius:14px;border:1px solid var(--border);padding:28px;box-shadow:var(--shadow);margin-top:20px">
+            <h4 style="font-family:'Exo 2',sans-serif;font-size:0.88rem;color:var(--navy);margin:0 0 6px;font-weight:700">Admin Management</h4>
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:20px">Approve new signups and manage admin accounts.</p>
+
+            <div id="pendingAdminsWrap" style="display:none;margin-bottom:20px">
+              <h5 style="font-family:'Exo 2',sans-serif;font-size:0.78rem;color:var(--warning);margin:0 0 10px;font-weight:700">Pending Approvals</h5>
+              <div id="pendingAdminsList"></div>
+            </div>
+
+            <h5 style="font-family:'Exo 2',sans-serif;font-size:0.78rem;color:var(--text-dim);margin:0 0 10px;font-weight:700">All Admins</h5>
+            <div class="table-wrap" style="max-height:300px">
+              <table><thead><tr><th>Username</th><th>Role</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+              <tbody id="adminsBody"><tr><td colspan="5" style="text-align:center;color:var(--text-dim)">Loading...</td></tr></tbody></table>
+            </div>
+          </div>
+
           <!-- Audit Log -->
-          <div style="background:var(--card);border-radius:14px;border:1px solid var(--border);padding:28px;box-shadow:var(--shadow);margin-top:20px">
+          <div id="auditLogSection" style="background:var(--card);border-radius:14px;border:1px solid var(--border);padding:28px;box-shadow:var(--shadow);margin-top:20px">
             <h4 style="font-family:'Exo 2',sans-serif;font-size:0.88rem;color:var(--navy);margin:0 0 14px;font-weight:700">Activity Log</h4>
             <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
               <select id="auditActionFilter" onchange="loadAuditLog()" style="max-width:180px;padding:6px 10px;font-size:0.75rem">
@@ -1296,7 +1333,7 @@
       if (!res.ok) throw new Error(data.error || 'Login failed');
       token = data.token;
       adminUsername = data.username;
-      adminRole = data.role || 'employee';
+      adminRole = data.role || 'admin';
       sessionStorage.setItem('hub_admin_token', token);
       sessionStorage.setItem('hub_admin_user', adminUsername);
       sessionStorage.setItem('hub_admin_role', adminRole);
@@ -1305,6 +1342,49 @@
       document.getElementById('loginError').textContent = err.message;
     }
     btn.textContent = 'Sign In'; btn.disabled = false;
+  }
+
+  function switchLoginTab(tab, btn) {
+    document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('loginFormWrap').style.display = tab === 'login' ? '' : 'none';
+    document.getElementById('signupFormWrap').style.display = tab === 'signup' ? '' : 'none';
+    document.getElementById('loginError').textContent = '';
+    document.getElementById('signupError').textContent = '';
+    document.getElementById('signupSuccess').textContent = '';
+  }
+
+  async function doSignup(e) {
+    e.preventDefault();
+    const btn = document.getElementById('signupBtn');
+    const pass = document.getElementById('signupPass').value;
+    const passConfirm = document.getElementById('signupPassConfirm').value;
+    document.getElementById('signupError').textContent = '';
+    document.getElementById('signupSuccess').textContent = '';
+    if (pass !== passConfirm) {
+      document.getElementById('signupError').textContent = 'Passwords do not match';
+      return;
+    }
+    btn.textContent = 'Creating...'; btn.disabled = true;
+    try {
+      const res = await fetch(API + '/api/admin/signup', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          username: document.getElementById('signupUser').value,
+          password: pass
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Signup failed');
+      document.getElementById('signupSuccess').textContent = data.message;
+      document.getElementById('signupUser').value = '';
+      document.getElementById('signupPass').value = '';
+      document.getElementById('signupPassConfirm').value = '';
+    } catch (err) {
+      document.getElementById('signupError').textContent = err.message;
+    }
+    btn.textContent = 'Create Account'; btn.disabled = false;
   }
 
   function doLogout() {
@@ -1320,9 +1400,9 @@
     if (!token) return false;
     try {
       const res = await fetch(API + '/api/admin/verify', { headers: authHeaders() });
-      if (!res.ok) return false;
+      if (!res.ok) { if (res.status === 403) doLogout(); return false; }
       const data = await res.json();
-      adminRole = data.role || 'employee';
+      adminRole = data.role || 'admin';
       sessionStorage.setItem('hub_admin_role', adminRole);
       return true;
     } catch { return false; }
@@ -1336,11 +1416,16 @@
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminWrap').style.display = 'block';
 
-    // Update sidebar user info
-    const roleLabel = 'Admin';
+    const isOwner = adminRole === 'owner';
+    const roleLabel = isOwner ? 'Owner' : 'Admin';
     document.getElementById('sidebarUsername').textContent = adminUsername;
     document.getElementById('sidebarRole').textContent = roleLabel;
     document.getElementById('sidebarAvatar').textContent = (adminUsername || 'A').charAt(0).toUpperCase();
+
+    // Role-based sidebar: hide restricted tabs for non-owner
+    document.getElementById('navBtn-expenses').style.display = isOwner ? '' : 'none';
+    document.getElementById('navBtn-reports').style.display = isOwner ? '' : 'none';
+    document.getElementById('navBtn-settings').style.display = isOwner ? '' : 'none';
 
     switchTab('dashboard', document.getElementById('navBtn-dashboard'));
   }
@@ -1348,6 +1433,13 @@
   // ── Tabs ───────────────────────────────────────────────────
 
   function switchTab(name, btn) {
+    // Guard restricted tabs for non-owner
+    const ownerTabs = ['expenses', 'reports', 'settings'];
+    if (ownerTabs.includes(name) && adminRole !== 'owner') {
+      showAdminToast('Access restricted to owner', 'error');
+      return;
+    }
+
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
@@ -1372,7 +1464,7 @@
     if (name === 'inventory') loadInventoryLog();
     if (name === 'expenses') loadExpenses();
     if (name === 'reports') { setReportPeriod('month', document.querySelector('#reportPresets .active')); }
-    if (name === 'settings') { loadSettings(); loadAuditLog(); }
+    if (name === 'settings') { loadSettings(); loadAuditLog(); loadAdminList(); }
   }
 
   function showAdminGuideOnce(tab) {
@@ -1396,22 +1488,32 @@
       dashStats = await res.json();
       const s = dashStats;
 
+      const isOwner = adminRole === 'owner';
       const changeIcon = s.revenueChange > 0 ? '↑' : s.revenueChange < 0 ? '↓' : '';
       const changeColor = s.revenueChange > 0 ? 'var(--success)' : s.revenueChange < 0 ? 'var(--danger)' : 'var(--text-dim)';
-      document.getElementById('statsGrid').innerHTML = `
+
+      let statsHTML = '';
+      if (isOwner) {
+        statsHTML += `
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(22,163,106,0.08)"><svg stroke="var(--success)" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 100 4h4a2 2 0 110 4H8M12 18V6"/></svg></div>
           <div class="label">Today's Revenue</div><div class="value green">${formatPrice(s.todayRevenue || 0)}</div>
           ${s.revenueChange ? `<div style="font-size:0.7rem;color:${changeColor};margin-top:4px">${changeIcon} ${Math.abs(s.revenueChange)}% vs yesterday</div>` : ''}
-        </div>
+        </div>`;
+      }
+      statsHTML += `
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(14,165,233,0.08)"><svg stroke="var(--cyan)" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div>
           <div class="label">Today's Orders</div><div class="value cyan">${s.todaySalesCount || 0}</div>
-        </div>
+        </div>`;
+      if (isOwner) {
+        statsHTML += `
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(26,110,232,0.08)"><svg stroke="var(--purple)" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
           <div class="label">Monthly Profit</div><div class="value" style="color:${(s.monthProfit||0)>=0?'var(--success)':'var(--danger)'}">${formatPrice(s.monthProfit || 0)}</div>
-        </div>
+        </div>`;
+      }
+      statsHTML += `
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(245,158,11,0.08)"><svg stroke="var(--warning)" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div>
           <div class="label">Low Stock Items</div><div class="value warn">${s.lowStock + s.outOfStock}</div>
@@ -1419,8 +1521,12 @@
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(26,110,232,0.08)"><svg stroke="var(--purple)" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
           <div class="label">Customers</div><div class="value purple">${s.totalCustomers || 0}</div>
-        </div>
-      `;
+        </div>`;
+      document.getElementById('statsGrid').innerHTML = statsHTML;
+
+      // Hide revenue chart for non-owner
+      const revenueChartCard = document.getElementById('revenueChart').closest('.chart-card');
+      if (revenueChartCard) revenueChartCard.style.display = isOwner ? '' : 'none';
 
       let alertHTML = '';
       if (s.lowStock > 0) alertHTML += `<div class="alert alert-warning">&#9888; ${s.lowStock} product(s) with low stock (1-10 units)</div>`;
@@ -1569,11 +1675,21 @@
   function renderProducts() {
     const search = (document.getElementById('prodSearch').value || '').toLowerCase();
     const catFilter = document.getElementById('prodCatFilter').value;
+    const isOwner = adminRole === 'owner';
     let list = allProducts;
     if (search) list = list.filter(p => p.name.toLowerCase().includes(search) || p.cat.includes(search));
     if (catFilter === '__uncategorized__') list = list.filter(p => !p.cat);
     else if (catFilter) list = list.filter(p => p.cat === catFilter);
     const tbody = document.getElementById('productsBody');
+
+    // Update table header to hide cost/margin for non-owner
+    const prodTable = tbody.closest('table');
+    const ths = prodTable.querySelectorAll('thead th');
+    if (ths.length >= 7) {
+      ths[5].style.display = isOwner ? '' : 'none'; // Cost
+      ths[6].style.display = isOwner ? '' : 'none'; // Margin
+    }
+
     tbody.innerHTML = list.map(p => {
       const ss = deriveStockStatus(p.stock);
       const stockNum = typeof p.stock === 'number' ? p.stock : '\u2014';
@@ -1587,8 +1703,8 @@
         <td style="font-weight:500;max-width:300px">${escapeHTML(p.name)}</td>
         <td>${escapeHTML(catLabels[p.cat] || p.cat)}</td>
         <td style="font-weight:600">${formatPrice(p.price)}</td>
-        <td style="color:var(--text-dim)">${cost > 0 ? formatPrice(cost) : '-'}</td>
-        <td>${margin !== '-' ? `<span style="color:${parseFloat(margin)>=20?'var(--success)':'var(--warning)'}">${margin}%</span>` : '-'}</td>
+        <td style="color:var(--text-dim);${isOwner?'':'display:none'}">${cost > 0 ? formatPrice(cost) : '-'}</td>
+        <td style="${isOwner?'':'display:none'}">${margin !== '-' ? `<span style="color:${parseFloat(margin)>=20?'var(--success)':'var(--warning)'}">${margin}%</span>` : '-'}</td>
         <td><span class="stock-${ss}">${stockNum}</span> <span style="font-size:0.68rem;color:var(--text-dim)">${stockStatusText(ss)}</span></td>
         <td>${p.badge ? `<span class="badge-pill badge-${escapeHTML(p.badge)}">${escapeHTML(p.badge)}</span>` : '-'}</td>
         <td>
@@ -1596,7 +1712,7 @@
           <button onclick="deleteProduct('${escapeHTML(p.id)}','${escapeHTML(p.name).replace(/'/g, "\\'")}')" style="color:var(--danger);font-size:0.78rem">Delete</button>
         </td>
       </tr>`;
-    }).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text-dim);padding:40px">No products found</td></tr>';
+    }).join('') || `<tr><td colspan="${isOwner?10:8}" style="text-align:center;color:var(--text-dim);padding:40px">No products found</td></tr>`;
   }
 
   // ── Product Selection / Bulk Actions ──────────────────────
@@ -1687,6 +1803,7 @@
     document.getElementById('fName').value = product ? product.name : '';
     document.getElementById('fPrice').value = product ? product.price : '';
     document.getElementById('fCostPrice').value = product && product.costPrice ? product.costPrice : '';
+    document.getElementById('fCostPrice').closest('.form-group').style.display = adminRole === 'owner' ? '' : 'none';
     document.getElementById('fPriceInstallment').value = product && product.priceTiers && product.priceTiers.installment ? product.priceTiers.installment : '';
     document.getElementById('fPriceCreditCard').value = product && product.priceTiers && product.priceTiers.creditCard ? product.priceTiers.creditCard : '';
     document.getElementById('fPriceHomeCredit').value = product && product.priceTiers && product.priceTiers.homeCredit ? product.priceTiers.homeCredit : '';
@@ -2958,6 +3075,65 @@
   }
 
   // ── Audit Log ─────────────────────────────────────────────────
+
+  // ── Admin Management ──────────────────────────────────────────
+
+  async function loadAdminList() {
+    try {
+      const res = await fetch(API + '/api/admin/admins', { headers: authHeaders() });
+      if (!res.ok) return;
+      const admins = await res.json();
+
+      // Pending approvals
+      const pending = admins.filter(a => a.status === 'pending');
+      const pendingWrap = document.getElementById('pendingAdminsWrap');
+      if (pending.length) {
+        pendingWrap.style.display = '';
+        document.getElementById('pendingAdminsList').innerHTML = pending.map(a => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:10px;margin-bottom:8px">
+            <div>
+              <span style="font-weight:600;font-size:0.85rem;color:var(--navy)">${escapeHTML(a.username)}</span>
+              <span style="font-size:0.72rem;color:var(--text-dim);margin-left:8px">Applied ${formatDate(a.createdAt)}</span>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-success btn-sm" onclick="adminAction('approve','${escapeHTML(a.username)}')">Approve</button>
+              <button class="btn btn-danger btn-sm" onclick="adminAction('reject','${escapeHTML(a.username)}')">Reject</button>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        pendingWrap.style.display = 'none';
+      }
+
+      // All admins table
+      const tbody = document.getElementById('adminsBody');
+      tbody.innerHTML = admins.filter(a => a.status !== 'pending').map(a => {
+        const statusClass = a.status === 'active' ? 'status-confirmed' : 'status-cancelled';
+        const isOwner = a.role === 'owner';
+        return `<tr>
+          <td style="font-weight:600">${escapeHTML(a.username)}</td>
+          <td><span class="status" style="background:${isOwner?'rgba(26,110,232,0.08)':'rgba(14,165,233,0.08)'};color:${isOwner?'var(--purple)':'var(--cyan)'};font-size:0.65rem">${isOwner?'Owner':'Admin'}</span></td>
+          <td><span class="status ${statusClass}" style="font-size:0.65rem">${a.status || 'active'}</span></td>
+          <td style="font-size:0.78rem">${formatDate(a.createdAt)}</td>
+          <td>${isOwner ? '' : (a.status === 'active' ? `<button class="btn btn-danger btn-sm" onclick="adminAction('deactivate','${escapeHTML(a.username)}')">Deactivate</button>` : `<button class="btn btn-success btn-sm" onclick="adminAction('activate','${escapeHTML(a.username)}')">Activate</button>`)}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-dim)">No admins yet</td></tr>';
+    } catch (e) { console.error('Admin list error:', e); }
+  }
+
+  async function adminAction(action, username) {
+    try {
+      const res = await fetch(API + '/api/admin/admins/' + action, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ username })
+      });
+      const data = await res.json();
+      if (!res.ok) { showAdminToast(data.error || 'Failed', 'error'); return; }
+      showAdminToast(username + ' ' + action + 'd', 'success');
+      loadAdminList();
+    } catch { showAdminToast('Action failed', 'error'); }
+  }
 
   async function loadAuditLog() {
     const action = document.getElementById('auditActionFilter').value;
