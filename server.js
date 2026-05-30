@@ -90,7 +90,7 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "blob:", "https:"],
       connectSrc: ["'self'", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com", "https://www.googleapis.com", "https://firebase.googleapis.com", "https://firebaseinstallations.googleapis.com", "https://accounts.google.com", "https://oauth2.googleapis.com", "https://whitelabel-ai-production.up.railway.app"],
-      frameSrc: ["https://accounts.google.com", "https://www.facebook.com", "https://web.facebook.com", "https://maps.google.com", "https://www.google.com"],
+      frameSrc: ["'self'", "https://accounts.google.com", "https://www.facebook.com", "https://web.facebook.com", "https://maps.google.com", "https://www.google.com"],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
       formAction: ["'self'"],
