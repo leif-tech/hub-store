@@ -1557,7 +1557,8 @@
           const el=document.getElementById('udPoints');
           if(el)el.textContent=(d.balance||0)+' pts';
         }).catch(()=>{});
-        if (pendingAuthAction) { const action = pendingAuthAction; pendingAuthAction = null; closeAuthModal(); setTimeout(action, 100); }
+        closeAuthModal();
+        if (pendingAuthAction) { const action = pendingAuthAction; pendingAuthAction = null; setTimeout(action, 100); }
       } else {
         loginBtn.style.display = 'flex';
         avatar.style.display = 'none';
