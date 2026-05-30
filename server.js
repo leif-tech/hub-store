@@ -463,9 +463,10 @@ async function sendOrderEmails(order) {
 
 // ── Public API ───────────────────────────────────────────────────
 
-// GET /api/products — public storefront
+// GET /api/products — public storefront (supports optional pagination)
+// Query params: page (1-based), limit (0=all, default), cat, q (search), sort (price-low|price-high|name)
 app.get('/api/products', (req, res) => {
-  const products = readJSON('products.json')
+  let products = readJSON('products.json')
     .map(p => ({
       id: p.id, cat: p.cat, label: p.label, name: p.name, price: p.price,
       priceTiers: p.priceTiers || null, img: p.img, brand: p.brand || null,
@@ -475,7 +476,32 @@ app.get('/api/products', (req, res) => {
       condition: p.condition || 'new', badge: p.badge || null,
       stockStatus: deriveStockStatus(p.stock)
     }));
-  res.json(products);
+
+  // Optional server-side filtering
+  const { cat, q, sort, page, limit: limitStr } = req.query;
+  if (cat && cat !== 'all') products = products.filter(p => p.cat === cat);
+  if (q) {
+    const search = q.toLowerCase();
+    products = products.filter(p =>
+      p.name.toLowerCase().includes(search) ||
+      p.label.toLowerCase().includes(search) ||
+      p.cat.toLowerCase().includes(search)
+    );
+  }
+  if (sort === 'price-low') products.sort((a, b) => a.price - b.price);
+  else if (sort === 'price-high') products.sort((a, b) => b.price - a.price);
+  else if (sort === 'name') products.sort((a, b) => a.name.localeCompare(b.name));
+
+  const limit = parseInt(limitStr) || 0;
+  // limit=0 (default) → return all, backward compatible
+  if (!limit) return res.json(products);
+
+  // Paginated envelope
+  const pageNum = Math.max(1, parseInt(page) || 1);
+  const total = products.length;
+  const start = (pageNum - 1) * limit;
+  const paged = products.slice(start, start + limit);
+  res.json({ products: paged, total, page: pageNum, limit, hasMore: start + limit < total });
 });
 
 // M1: Contact form submission with server-side email validation + H5: sanitize inputs
