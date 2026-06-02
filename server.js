@@ -783,21 +783,12 @@ setInterval(() => {
 
 // B1+H4+B5: Order submission with server-side price verification and stock management
 app.post('/api/order', orderLimiter, csrfCheck, customerAuthOptional, async (req, res) => {
-  const { customer, items, shipping, payment, paymentRef, total, turnstileToken, honeypot } = req.body;
+  const { customer, items, shipping, payment, paymentRef, total, honeypot } = req.body;
 
   // Anti-spam: honeypot check (bots fill hidden fields)
   if (honeypot) {
     console.warn('[SPAM] Honeypot triggered from', req.ip);
     return res.status(400).json({ error: 'Order could not be placed. Please try again.' });
-  }
-
-  // Anti-spam: Turnstile verification
-  if (TURNSTILE_SECRET) {
-    const turnstileOk = await verifyTurnstile(turnstileToken, req.ip);
-    if (!turnstileOk) {
-      console.warn('[SPAM] Turnstile failed from', req.ip);
-      return res.status(403).json({ error: 'Security check failed. Please refresh the page and try again.' });
-    }
   }
 
   // Validate customer fields
