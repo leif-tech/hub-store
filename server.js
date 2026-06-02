@@ -10,6 +10,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const https = require('https');
 
 // Firebase Admin SDK for server-side customer auth verification
@@ -480,9 +481,15 @@ async function customerAuthOptional(req, res, next) {
 
 // ── Email ─────────────────────────────────────────────────────────
 
-// H3: Email notifications — opt-in via SMTP env vars
+// H3: Email notifications — Resend (primary) or SMTP (fallback)
+let resendClient = null;
 let emailTransporter = null;
-if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+const RESEND_FROM = process.env.RESEND_FROM || 'H.U.B Store <onboarding@resend.dev>';
+
+if (process.env.RESEND_API_KEY) {
+  resendClient = new Resend(process.env.RESEND_API_KEY);
+  console.log('[EMAIL] Resend configured (from:', RESEND_FROM + ')');
+} else if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   emailTransporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT) || 587,
@@ -491,11 +498,24 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   });
   console.log('[EMAIL] SMTP configured:', process.env.SMTP_HOST);
 } else {
-  console.log('[EMAIL] SMTP not configured — email notifications disabled. Set SMTP_HOST, SMTP_USER, SMTP_PASS to enable.');
+  console.log('[EMAIL] Not configured — set RESEND_API_KEY (recommended) or SMTP_HOST/USER/PASS to enable.');
 }
 
 const STORE_EMAIL = process.env.STORE_EMAIL || process.env.SMTP_USER || 'hub@email.com';
 const OWNER_EMAIL = process.env.OWNER_EMAIL;
+
+async function sendEmail({ from, to, subject, html, text }) {
+  if (resendClient) {
+    const { error } = await resendClient.emails.send({ from: RESEND_FROM, to, subject, html, text });
+    if (error) throw new Error(error.message);
+    return;
+  }
+  if (emailTransporter) {
+    await emailTransporter.sendMail({ from, to, subject, html, text });
+    return;
+  }
+  throw new Error('No email provider configured');
+}
 
 // ── Anti-spam: Cloudflare Turnstile ──────────────────────────────
 const TURNSTILE_SITE_KEY = process.env.TURNSTILE_SITE_KEY || '';
@@ -530,7 +550,7 @@ async function verifyTurnstile(token, ip) {
 }
 
 async function sendOrderEmails(order) {
-  if (!emailTransporter) return;
+  if (!resendClient && !emailTransporter) return;
 
   const shippingLabel = {
     local: 'Local Delivery (Valenzuela City)',
@@ -552,7 +572,7 @@ async function sendOrderEmails(order) {
   // Customer confirmation email
   if (order.customer.email) {
     try {
-      await emailTransporter.sendMail({
+      await sendEmail({
         from: `"H.U.B Store" <${STORE_EMAIL}>`,
         to: order.customer.email,
         subject: `Order Received — ${order.id} | H.U.B Store`,
@@ -604,7 +624,7 @@ async function sendOrderEmails(order) {
   // Owner new-order alert
   if (OWNER_EMAIL) {
     try {
-      await emailTransporter.sendMail({
+      await sendEmail({
         from: `"H.U.B Store" <${STORE_EMAIL}>`,
         to: OWNER_EMAIL,
         subject: `🛒 New Order: ${order.id} — ${order.customer.firstName} ${order.customer.lastName}`,
