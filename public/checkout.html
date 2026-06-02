@@ -225,29 +225,8 @@
 
         <div class="card">
           <div class="card-title">Payment Method</div>
-          <div class="payment-tabs">
-            <button class="pay-tab active" data-pay="GCash" onclick="switchTab('gcash',this)">GCash</button>
-            <button class="pay-tab" data-pay="Maya" onclick="switchTab('maya',this)">Maya</button>
-            <button class="pay-tab" data-pay="Bank Transfer" onclick="switchTab('bank',this)">Bank Transfer</button>
-          </div>
-
-          <div class="pay-content active" id="tab-gcash">
-            <h3>GCash</h3>
-            <p class="acct-name">H.U.B Store | 09XX XXX XXXX</p>
-            <img src="/qr-gcash.jpg" alt="GCash QR Code" class="qr-img" onerror="this.style.display='none'">
-            <p class="pay-note">Scan QR with GCash app and send the exact total amount</p>
-          </div>
-          <div class="pay-content" id="tab-maya">
-            <h3>Maya (PayMaya)</h3>
-            <p class="acct-name">H.U.B Store | 09XX XXX XXXX</p>
-            <img src="/qr-maya.jpg" alt="Maya QR Code" class="qr-img" onerror="this.style.display='none'">
-            <p class="pay-note">Scan QR with Maya app and send the exact total amount</p>
-          </div>
-          <div class="pay-content" id="tab-bank">
-            <h3>Bank Transfer (InstaPay)</h3>
-            <p class="acct-name">H.U.B | BDO / BPI — Account details via Messenger</p>
-            <p class="pay-note" style="font-size:0.8rem;color:var(--text)">Message us on Facebook for bank account details before transferring</p>
-          </div>
+          <div class="payment-tabs" id="paymentTabs"></div>
+          <div id="paymentContents"></div>
 
           <p class="warning">&#9888; Please confirm stock availability before paying. Message us on Facebook Messenger first.</p>
 
@@ -364,6 +343,44 @@
       document.getElementById('shippingLabel').textContent = labels[type];
       updateTotal();
     }
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    // Default payment methods (fallback if API fails)
+    const defaultPaymentMethods = [
+      { id: 'gcash', name: 'GCash', accountInfo: 'H.U.B Store | 09XX XXX XXXX', qrImage: '/qr-gcash.jpg', instructions: 'Scan QR with GCash app and send the exact total amount', enabled: true },
+      { id: 'maya', name: 'Maya', accountInfo: 'H.U.B Store | 09XX XXX XXXX', qrImage: '/qr-maya.jpg', instructions: 'Scan QR with Maya app and send the exact total amount', enabled: true },
+      { id: 'bank', name: 'Bank Transfer', accountInfo: 'H.U.B | BDO / BPI — Account details via Messenger', qrImage: '', instructions: 'Message us on Facebook for bank account details before transferring', enabled: true }
+    ];
+
+    function renderPaymentMethods(methods) {
+      const enabledMethods = methods.filter(m => m.enabled);
+      if (!enabledMethods.length) return;
+      const tabsEl = document.getElementById('paymentTabs');
+      const contentsEl = document.getElementById('paymentContents');
+      tabsEl.innerHTML = enabledMethods.map((m, i) =>
+        `<button class="pay-tab${i === 0 ? ' active' : ''}" data-pay="${esc(m.name)}" onclick="switchTab('${esc(m.id)}',this)">${esc(m.name)}</button>`
+      ).join('');
+      contentsEl.innerHTML = enabledMethods.map((m, i) =>
+        `<div class="pay-content${i === 0 ? ' active' : ''}" id="tab-${esc(m.id)}">
+          <h3>${esc(m.name)}</h3>
+          <p class="acct-name">${esc(m.accountInfo)}</p>
+          ${m.qrImage ? `<img src="${esc(m.qrImage)}" alt="${esc(m.name)} QR Code" class="qr-img" onerror="this.style.display='none'">` : ''}
+          <p class="pay-note">${esc(m.instructions)}</p>
+        </div>`
+      ).join('');
+    }
+
+    (async function loadPaymentMethods() {
+      try {
+        const res = await fetch('/api/settings');
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        renderPaymentMethods(data.paymentMethods || defaultPaymentMethods);
+      } catch(e) {
+        renderPaymentMethods(defaultPaymentMethods);
+      }
+    })();
 
     function switchTab(id, btn) {
       document.querySelectorAll('.pay-tab').forEach(t => t.classList.remove('active'));

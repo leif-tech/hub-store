@@ -718,7 +718,7 @@
     @keyframes compareBarIn{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
     @keyframes compareModalIn{from{opacity:0}to{opacity:1}}
     @keyframes compareContentIn{from{opacity:0;transform:scale(0.94) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
-    .compare-bar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1e293b,#0f172a);color:rgba(255,255,255,0.9);padding:14px 28px;border-radius:100px;z-index:900;display:none;align-items:center;gap:16px;font-size:0.86rem;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);animation:compareBarIn .3s ease-out}
+    .compare-bar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1e293b,#0f172a);color:rgba(255,255,255,0.9);padding:14px 28px;border-radius:100px;z-index:960;display:none;align-items:center;gap:16px;font-size:0.86rem;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);animation:compareBarIn .3s ease-out}
     .compare-bar.show{display:flex}
     .compare-btn-go{padding:9px 22px;border-radius:100px;background:var(--grad);color:#fff;font-size:0.8rem;font-weight:700;transition:all .25s;box-shadow:0 4px 12px rgba(26,110,232,0.3)}
     .compare-btn-go:hover{transform:scale(1.05);box-shadow:0 6px 20px rgba(26,110,232,0.4)}
@@ -1610,7 +1610,7 @@
       provider.addScope('profile');
       auth.signInWithPopup(provider).catch(err => {
         if (err.code === 'auth/popup-blocked') {
-          auth.signInWithRedirect(provider);
+          showToast('Popup Blocked', 'Please allow popups for this site and try again.', '&#9888;');
         } else if (err.code === 'auth/account-exists-with-different-credential') {
           showToast('Account Exists', 'Try signing in with Facebook instead — same email is already linked.', '&#9888;');
         } else if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
@@ -1625,7 +1625,7 @@
       provider.addScope('public_profile');
       auth.signInWithPopup(provider).catch(err => {
         if (err.code === 'auth/popup-blocked') {
-          auth.signInWithRedirect(provider);
+          showToast('Popup Blocked', 'Please allow popups for this site and try again.', '&#9888;');
         } else if (err.code === 'auth/account-exists-with-different-credential') {
           showToast('Account Exists', 'Try signing in with Google instead same email is already linked.', '&#9888;');
         } else if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
@@ -1864,8 +1864,8 @@
     // ===== URL ROUTING =====
     function toSlug(name){return encodeURIComponent(name.replace(/\s+/g,'-').toLowerCase())}
     function fromSlug(slug){
-      const decoded=decodeURIComponent(slug).replace(/-/g,' ').toLowerCase();
-      return products.findIndex(p=>p.name.toLowerCase()===decoded);
+      const target=decodeURIComponent(slug);
+      return products.findIndex(p=>decodeURIComponent(toSlug(p.name))===target);
     }
 
     const sectionMap={'/home':'hero','/services':'services','/about':'about','/contact':'contact','/reviews':'reviews'};

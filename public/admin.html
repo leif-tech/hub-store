@@ -930,6 +930,20 @@
             </label>
           </div>
 
+          <!-- Payment Methods (owner only) -->
+          <div id="paymentMethodsSection" style="background:var(--card);border-radius:14px;border:1px solid var(--border);padding:28px;box-shadow:var(--shadow);margin-top:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <h4 style="font-family:'Exo 2',sans-serif;font-size:0.88rem;color:var(--navy);margin:0;font-weight:700">Payment Methods</h4>
+              <button onclick="addPaymentMethod()" class="btn btn-sm" style="font-size:0.7rem;padding:4px 12px;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer">+ Add Method</button>
+            </div>
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:20px">Manage payment options shown at checkout (max 5).</p>
+            <div id="paymentMethodsList"></div>
+            <button onclick="savePaymentMethods()" class="btn" style="margin-top:16px;width:100%;padding:10px;font-size:0.78rem;font-weight:700;background:var(--blue);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:'Exo 2',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save Payment Methods
+            </button>
+          </div>
+
           <!-- Admin Management (owner only) -->
           <div id="adminMgmtSection" style="background:var(--card);border-radius:14px;border:1px solid var(--border);padding:28px;box-shadow:var(--shadow);margin-top:20px">
             <h4 style="font-family:'Exo 2',sans-serif;font-size:0.88rem;color:var(--navy);margin:0 0 6px;font-weight:700">Admin Management</h4>
@@ -1497,7 +1511,7 @@
     if (name === 'inventory') loadInventoryLog();
     if (name === 'expenses') loadExpenses();
     if (name === 'reports') { setReportPeriod('month', document.querySelector('#reportPresets .active')); }
-    if (name === 'settings') { loadSettings(); loadAuditLog(); loadAdminList(); }
+    if (name === 'settings') { loadSettings(); loadPaymentMethods(); loadAuditLog(); loadAdminList(); }
   }
 
   function showAdminGuideOnce(tab) {
@@ -3217,6 +3231,134 @@
       showAdminToast(value ? 'Enabled' : 'Disabled', 'success');
     } catch(e) {
       showAdminToast('Failed to save setting', 'error');
+    }
+  }
+
+  // ── Payment Methods Management ────────────────────────────────
+
+  let paymentMethodsData = [];
+
+  function renderPaymentMethods() {
+    const list = document.getElementById('paymentMethodsList');
+    if (!list) return;
+    if (!paymentMethodsData.length) {
+      list.innerHTML = '<p style="font-size:0.75rem;color:var(--text-dim);text-align:center;padding:20px">No payment methods configured</p>';
+      return;
+    }
+    list.innerHTML = paymentMethodsData.map((m, i) => `
+      <div style="background:var(--bg);border-radius:12px;padding:16px;margin-bottom:12px;border:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="position:relative;width:36px;min-width:36px;height:20px;cursor:pointer">
+              <input type="checkbox" ${m.enabled ? 'checked' : ''} onchange="paymentMethodsData[${i}].enabled=this.checked" style="opacity:0;width:0;height:0;position:absolute">
+              <span style="position:absolute;inset:0;background:${m.enabled ? 'var(--blue)' : '#d1d5db'};border-radius:20px;transition:background .2s"></span>
+              <span style="position:absolute;top:2px;left:${m.enabled ? '18' : '2'}px;width:16px;height:16px;background:#fff;border-radius:50%;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)"></span>
+            </label>
+            <span style="font-size:0.78rem;font-weight:600;color:var(--navy);font-family:'Exo 2',sans-serif">${escapeHTML(m.name || 'Untitled')}</span>
+          </div>
+          <button onclick="removePaymentMethod(${i})" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:0.7rem;font-weight:600;padding:4px 8px" title="Delete">&#10005;</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <label style="font-size:0.65rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;display:block">Method Name</label>
+            <input value="${escapeHTML(m.name || '')}" onchange="paymentMethodsData[${i}].name=this.value" style="width:100%;padding:8px 10px;font-size:0.75rem;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--navy)">
+          </div>
+          <div>
+            <label style="font-size:0.65rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;display:block">Account Info</label>
+            <input value="${escapeHTML(m.accountInfo || '')}" onchange="paymentMethodsData[${i}].accountInfo=this.value" style="width:100%;padding:8px 10px;font-size:0.75rem;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--navy)">
+          </div>
+        </div>
+        <div style="margin-bottom:8px">
+          <label style="font-size:0.65rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;display:block">Instructions</label>
+          <textarea onchange="paymentMethodsData[${i}].instructions=this.value" style="width:100%;padding:8px 10px;font-size:0.75rem;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--navy);resize:vertical;min-height:40px" rows="2">${escapeHTML(m.instructions || '')}</textarea>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <label style="font-size:0.65rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px">QR Code</label>
+          ${m.qrImage ? `<img src="${escapeHTML(m.qrImage)}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" onerror="this.style.display='none'">` : '<span style="font-size:0.7rem;color:var(--text-dim)">None</span>'}
+          <label style="font-size:0.7rem;font-weight:600;color:var(--blue);cursor:pointer;padding:4px 10px;border:1px solid var(--blue);border-radius:6px">
+            Upload
+            <input type="file" accept="image/*" onchange="uploadPaymentQR(${i},this)" style="display:none">
+          </label>
+          ${m.qrImage ? `<button onclick="paymentMethodsData[${i}].qrImage='';renderPaymentMethods()" style="font-size:0.65rem;color:var(--danger);background:none;border:none;cursor:pointer">Remove</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function loadPaymentMethods() {
+    try {
+      const res = await fetch(API + '/api/settings');
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      paymentMethodsData = data.paymentMethods || [];
+      renderPaymentMethods();
+    } catch(e) {
+      console.error('Failed to load payment methods', e);
+    }
+  }
+
+  function addPaymentMethod() {
+    if (paymentMethodsData.length >= 5) {
+      return showAdminToast('Maximum 5 payment methods allowed', 'error');
+    }
+    paymentMethodsData.push({
+      id: 'pm-' + Date.now(),
+      name: '',
+      accountInfo: '',
+      qrImage: '',
+      instructions: '',
+      enabled: true
+    });
+    renderPaymentMethods();
+  }
+
+  function removePaymentMethod(index) {
+    if (!confirm('Delete this payment method?')) return;
+    paymentMethodsData.splice(index, 1);
+    renderPaymentMethods();
+  }
+
+  async function uploadPaymentQR(index, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const form = new FormData();
+    form.append('qr', file);
+    try {
+      const res = await fetch(API + '/api/admin/payment-qr', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + adminToken },
+        body: form
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      paymentMethodsData[index].qrImage = data.url;
+      renderPaymentMethods();
+      showAdminToast('QR image uploaded', 'success');
+    } catch(e) {
+      showAdminToast('Failed to upload QR image', 'error');
+    }
+  }
+
+  async function savePaymentMethods() {
+    // Validate: each method needs a name
+    for (const m of paymentMethodsData) {
+      if (!m.name || !m.name.trim()) {
+        return showAdminToast('All payment methods must have a name', 'error');
+      }
+    }
+    try {
+      const res = await fetch(API + '/api/admin/settings/payment', {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ paymentMethods: paymentMethodsData })
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      paymentMethodsData = data.paymentMethods;
+      renderPaymentMethods();
+      showAdminToast('Payment methods saved', 'success');
+    } catch(e) {
+      showAdminToast('Failed to save payment methods', 'error');
     }
   }
 

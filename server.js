@@ -38,6 +38,15 @@ try {
 const app = express();
 // H6: Trust reverse proxy (Railway/Render) so rate limiter gets real client IP
 app.set('trust proxy', 1);
+
+// Canonical domain: redirect www → non-www (fixes Google OAuth cross-origin issues)
+app.use((req, res, next) => {
+  const host = req.get('host');
+  if (host && host.startsWith('www.')) {
+    return res.redirect(301, `https://${host.slice(4)}${req.originalUrl}`);
+  }
+  next();
+});
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_PATH || path.join(__dirname, 'data');
 const SEED_DIR = path.join(__dirname, 'data');
@@ -110,7 +119,7 @@ const upload = multer({
 
 app.use(compression({
   filter: (req, res) => {
-    // Skip compression for Firebase auth proxy paths — proxied content must pass through untouched
+    // Skip compression for Firebase auth pages — scripts are loaded from CDN, HTML is tiny
     if (req.originalUrl.startsWith('/__/')) return false;
     return compression.filter(req, res);
   }
@@ -145,13 +154,11 @@ app.use((req, res, next) => {
   helmetMiddleware(req, res, next);
 });
 
-// ── Firebase Auth Proxy ──────────────────────────────────────────────────────
-// Firebase Hosting was never deployed for hub-store-aa249, so the auth handler
-// at /__/auth/handler can't find /__/firebase/init.json and fails with
-// "The requested action is invalid." Fix: serve init.json locally and proxy
-// the auth handler scripts from Firebase. authDomain in the client is set to
-// location.host so the popup opens on OUR domain where init.json exists.
-const FIREBASE_AUTH_HOST = 'hub-store-aa249.firebaseapp.com';
+// ── Firebase Auth Handler (direct-serve) ────────────────────────────────────
+// Firebase Hosting was never deployed for hub-store-aa249, so we serve the auth
+// handler and iframe pages directly with scripts from Firebase's CDN.
+// authDomain in the client is set to location.host so popups stay same-origin.
+const FB_CDN = 'https://hub-store-aa249.firebaseapp.com/__/auth';
 
 app.get('/__/firebase/init.json', (req, res) => {
   res.json({
@@ -164,41 +171,32 @@ app.get('/__/firebase/init.json', (req, res) => {
   });
 });
 
-app.use('/__/auth', (req, res) => {
-  const opts = {
-    hostname: FIREBASE_AUTH_HOST,
-    port: 443,
-    path: req.originalUrl,
-    method: req.method,
-    headers: {
-      host: FIREBASE_AUTH_HOST,
-      accept: req.get('accept') || '*/*',
-      'accept-encoding': 'identity'
-    }
-  };
-  const proxy = https.request(opts, (upstream) => {
-    // Strip headers that break the popup↔iframe↔parent relay chain or conflict with Express
-    const STRIP = new Set([
-      'content-encoding', 'transfer-encoding', 'content-length',
-      'content-security-policy', 'x-frame-options', 'strict-transport-security',
-      'cross-origin-opener-policy', 'cross-origin-embedder-policy', 'cross-origin-resource-policy'
-    ]);
-    const fwd = {};
-    for (const [k, v] of Object.entries(upstream.headers)) {
-      if (!STRIP.has(k)) fwd[k] = v;
-    }
-    res.writeHead(upstream.statusCode, fwd);
-    upstream.pipe(res);
-  });
-  proxy.on('error', (err) => {
-    console.error('[Auth Proxy]', err.message);
-    res.status(502).send('Auth proxy error');
-  });
-  if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
-    req.pipe(proxy);
-  } else {
-    proxy.end();
-  }
+// Serve the auth handler page directly — loads JS from Firebase CDN
+app.get('/__/auth/handler', (req, res) => {
+  res.type('html').send(`<!DOCTYPE html>
+<html><head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script type="text/javascript" src="${FB_CDN}/experiments.js"></script>
+<script type="text/javascript" src="${FB_CDN}/handler.js"></script>
+<script type="text/javascript">
+var POST_BODY = '';
+fireauth.oauthhelper.widget.initialize();
+</script>
+</head><body></body></html>`);
+});
+
+// Serve the auth iframe relay page directly
+app.get('/__/auth/iframe', (req, res) => {
+  res.type('html').send(`<!DOCTYPE html>
+<html><head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script type="text/javascript" src="${FB_CDN}/iframe.js"></script>
+<script type="text/javascript">
+fireauth.iframe.AuthRelay.initialize();
+</script>
+</head><body></body></html>`);
 });
 
 app.use(express.json({ limit: '10mb' }));
@@ -770,8 +768,9 @@ app.post('/api/order', orderLimiter, csrfCheck, customerAuthOptional, async (req
   if (!shipping || !validShipping.includes(shipping)) {
     return res.status(400).json({ error: 'Invalid shipping method' });
   }
-  const validPayment = ['GCash', 'Maya', 'Bank Transfer'];
-  if (!payment || !validPayment.includes(payment)) {
+  const settings = readSettings();
+  const enabledMethods = (settings.paymentMethods || DEFAULT_PAYMENT_METHODS).filter(m => m.enabled).map(m => m.name);
+  if (!payment || !enabledMethods.includes(payment)) {
     return res.status(400).json({ error: 'Invalid payment method' });
   }
 
@@ -1713,11 +1712,22 @@ app.get('/api/admin/points', authMiddleware, (req, res) => {
 
 // ── Site Settings ────────────────────────────────────────────────
 
+const DEFAULT_PAYMENT_METHODS = [
+  { id: 'gcash', name: 'GCash', accountInfo: 'H.U.B Store | 09XX XXX XXXX', qrImage: '/qr-gcash.jpg', instructions: 'Scan QR with GCash app and send the exact total amount', enabled: true },
+  { id: 'maya', name: 'Maya', accountInfo: 'H.U.B Store | 09XX XXX XXXX', qrImage: '/qr-maya.jpg', instructions: 'Scan QR with Maya app and send the exact total amount', enabled: true },
+  { id: 'bank', name: 'Bank Transfer', accountInfo: 'H.U.B | BDO / BPI — Account details via Messenger', qrImage: '', instructions: 'Message us on Facebook for bank account details before transferring', enabled: true }
+];
+
 function readSettings() {
   const file = path.join(DATA_DIR, 'settings.json');
+  let settings;
   try {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
-  } catch { return { showUrgencyCTA: true }; }
+    settings = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch { settings = { showUrgencyCTA: true }; }
+  if (!settings.paymentMethods) {
+    settings.paymentMethods = DEFAULT_PAYMENT_METHODS;
+  }
+  return settings;
 }
 
 // GET /api/settings — public (frontend needs this)
@@ -1764,6 +1774,53 @@ app.put('/api/admin/settings', authMiddleware, ownerOnly, (req, res) => {
   broadcastSettings(updated);
   logAudit('settings_update', 'settings', `Updated: ${Object.keys(req.body).join(', ')}`, req.admin.username);
   res.json({ success: true, settings: updated });
+});
+
+// PUT /api/admin/settings/payment — owner only, update payment methods
+app.put('/api/admin/settings/payment', authMiddleware, ownerOnly, (req, res) => {
+  const { paymentMethods } = req.body;
+  if (!Array.isArray(paymentMethods)) {
+    return res.status(400).json({ error: 'paymentMethods must be an array' });
+  }
+  if (paymentMethods.length > 5) {
+    return res.status(400).json({ error: 'Maximum 5 payment methods allowed' });
+  }
+  const sanitized = paymentMethods.map(m => ({
+    id: sanitizeInput(m.id || ('pm-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6))),
+    name: sanitizeInput(m.name || 'Untitled'),
+    accountInfo: sanitizeInput(m.accountInfo || ''),
+    qrImage: sanitizeInput(m.qrImage || '', 500),
+    instructions: sanitizeInput(m.instructions || '', 500),
+    enabled: m.enabled !== false
+  }));
+  const current = readSettings();
+  current.paymentMethods = sanitized;
+  writeJSON('settings.json', current);
+  broadcastSettings(current);
+  logAudit('settings_update', 'payment_methods', `Updated ${sanitized.length} payment methods`, req.admin.username);
+  res.json({ success: true, paymentMethods: sanitized });
+});
+
+// POST /api/admin/payment-qr — owner only, upload QR image
+app.post('/api/admin/payment-qr', authMiddleware, ownerOnly, (req, res) => {
+  upload.single('qr')(req, res, (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: 'File too large (max 5MB)' });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    // Rename to qr-specific name
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const newName = 'qr-' + Date.now() + ext;
+    const newPath = path.join(UPLOADS_DIR, newName);
+    fs.renameSync(req.file.path, newPath);
+    const url = '/uploads/' + newName;
+    res.json({ success: true, url });
+  });
 });
 
 // ── Admin: Expenses CRUD ──────────────────────────────────────────
