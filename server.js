@@ -724,16 +724,11 @@ async function sendOrderEmails(order) {
     </td></tr>
     </table>
 
-    <!-- Action Buttons -->
+    <!-- Action Button -->
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-    <tr>
-      <td style="padding-right:8px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="background:linear-gradient(135deg,#0f3d91,#1a6ee8);border-radius:10px;text-align:center">
-        <a href="https://hanapusapbuild.store/admin" style="display:inline-block;padding:14px 24px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;width:100%;box-sizing:border-box;text-align:center">View in Admin Panel →</a>
-      </td></tr></table></td>
-      <td style="padding-left:8px;width:140px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="background:#1877f2;border-radius:10px;text-align:center">
-        <a href="https://m.me/Hanap.Usap.Build" style="display:inline-block;padding:14px 16px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;text-align:center">💬 Message</a>
-      </td></tr></table></td>
-    </tr>
+    <tr><td style="background:linear-gradient(135deg,#0f3d91,#1a6ee8);border-radius:10px;text-align:center">
+      <a href="https://hanapusapbuild.store/admin" style="display:inline-block;padding:14px 24px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;width:100%;box-sizing:border-box;text-align:center">View in Admin Panel →</a>
+    </td></tr>
     </table>
 
   </td></tr>
