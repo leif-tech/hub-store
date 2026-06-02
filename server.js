@@ -11,7 +11,6 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const nodemailer = require('nodemailer');
 const { Resend } = require('resend');
-const https = require('https');
 
 // Firebase Admin SDK for server-side customer auth verification
 let firebaseAdmin;
@@ -133,13 +132,13 @@ const helmetMiddleware = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.gstatic.com", "https://cdn.jsdelivr.net", "https://apis.google.com", "https://accounts.google.com", "https://connect.facebook.net", "https://challenges.cloudflare.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.gstatic.com", "https://cdn.jsdelivr.net", "https://apis.google.com", "https://accounts.google.com", "https://connect.facebook.net"],
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "blob:", "https:"],
-      connectSrc: ["'self'", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com", "https://www.googleapis.com", "https://firebase.googleapis.com", "https://firebaseinstallations.googleapis.com", "https://accounts.google.com", "https://oauth2.googleapis.com", "https://whitelabel-ai-production.up.railway.app", "https://challenges.cloudflare.com"],
-      frameSrc: ["'self'", "https://accounts.google.com", "https://apis.google.com", "https://www.facebook.com", "https://web.facebook.com", "https://maps.google.com", "https://www.google.com", "https://challenges.cloudflare.com"],
+      connectSrc: ["'self'", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com", "https://www.googleapis.com", "https://firebase.googleapis.com", "https://firebaseinstallations.googleapis.com", "https://accounts.google.com", "https://oauth2.googleapis.com", "https://whitelabel-ai-production.up.railway.app"],
+      frameSrc: ["'self'", "https://accounts.google.com", "https://apis.google.com", "https://www.facebook.com", "https://web.facebook.com", "https://maps.google.com", "https://www.google.com"],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
       formAction: ["'self'"],
@@ -515,38 +514,6 @@ async function sendEmail({ from, to, subject, html, text }) {
     return;
   }
   throw new Error('No email provider configured');
-}
-
-// ── Anti-spam: Cloudflare Turnstile ──────────────────────────────
-const TURNSTILE_SITE_KEY = process.env.TURNSTILE_SITE_KEY || '';
-const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET || '';
-if (TURNSTILE_SECRET) {
-  console.log('[SECURITY] Cloudflare Turnstile enabled');
-} else {
-  console.log('[SECURITY] Turnstile not configured — set TURNSTILE_SITE_KEY & TURNSTILE_SECRET to enable.');
-}
-
-// Public endpoint — returns site key so checkout can render the widget
-app.get('/api/turnstile-key', (req, res) => {
-  res.json({ siteKey: TURNSTILE_SITE_KEY || null });
-});
-
-async function verifyTurnstile(token, ip) {
-  if (!TURNSTILE_SECRET) return true; // skip if not configured
-  if (!token) return false;
-  try {
-    const body = JSON.stringify({ secret: TURNSTILE_SECRET, response: token, remoteip: ip });
-    const resp = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body
-    });
-    const data = await resp.json();
-    return data.success === true;
-  } catch (err) {
-    console.error('[TURNSTILE] Verification error:', err.message);
-    return true; // fail-open so real customers aren't blocked if Cloudflare is down
-  }
 }
 
 async function sendOrderEmails(order) {

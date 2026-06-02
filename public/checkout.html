@@ -6,7 +6,10 @@
   <title>Checkout - H.U.B</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/png" href="/favicon.png">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Exo+2:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Exo+2:wght@600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Exo+2:wght@600;700;800;900&display=swap"></noscript>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Plus Jakarta Sans',sans-serif;background:#f4f7ff;color:#374151;min-height:100vh}
@@ -126,7 +129,7 @@
 
   <div class="container">
     <h1>Checkout</h1>
-    <div class="checkout-grid" style="display:grid !important;visibility:visible !important;opacity:1 !important">
+    <div class="checkout-grid">
       <!-- LEFT: Billing & Shipping -->
       <div>
         <div class="card">
@@ -289,7 +292,7 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const fmt = p => '\u20B1' + p.toLocaleString('en-PH');
-    const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
     // Pre-fill from URL params or localStorage
     const storedUser = JSON.parse(localStorage.getItem('hub_user') || 'null');
@@ -530,22 +533,6 @@
     document.querySelectorAll('#orderForm input, #orderForm select, #orderForm textarea').forEach(el => {
       el.addEventListener('input', () => clearFieldError(el));
     });
-  </script>
-  <script>
-    // Safety: ensure checkout content is always visible (guards against external script interference)
-    document.addEventListener('DOMContentLoaded', function() {
-      var g = document.querySelector('.checkout-grid');
-      if (g) { g.style.display = 'grid'; g.style.visibility = 'visible'; g.style.opacity = '1'; }
-      // Force all cards visible
-      document.querySelectorAll('.checkout-grid > div, .checkout-grid .card').forEach(function(el) {
-        el.style.display = ''; el.style.visibility = 'visible'; el.style.opacity = '1';
-      });
-    });
-    // Also run after 1 second as a fallback
-    setTimeout(function() {
-      var g = document.querySelector('.checkout-grid');
-      if (g) { g.style.display = 'grid'; g.style.visibility = 'visible'; g.style.opacity = '1'; }
-    }, 1000);
   </script>
 </body>
 </html>
