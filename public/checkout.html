@@ -339,9 +339,6 @@
       row.innerHTML = `<div class="item-info"><div class="item-name">${esc(item.name)}</div><div class="item-qty">x ${item.qty}</div></div><span class="item-price">${fmt(item.price * item.qty)}</span>`;
       orderItemsEl.appendChild(row);
     });
-    document.getElementById('subtotal').textContent = fmt(subtotalPrice);
-    updateTotal();
-    document.title = 'Checkout - H.U.B';
 
     let shippingType = 'local';
     function updateTotal() {
@@ -352,6 +349,9 @@
         document.getElementById('totalPrice').innerHTML = fmt(subtotalPrice) + ' <span style="font-size:0.7rem;font-weight:600;color:var(--text-dim)">+ shipping</span>';
       }
     }
+    document.getElementById('subtotal').textContent = fmt(subtotalPrice);
+    updateTotal();
+    document.title = 'Checkout - H.U.B';
 
     function selectShip(el, type) {
       document.querySelectorAll('.ship-option').forEach(o => o.classList.remove('selected'));
