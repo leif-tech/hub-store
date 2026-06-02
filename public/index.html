@@ -270,19 +270,21 @@
     .fade-in{opacity:0;transform:translateY(20px);transition:opacity .55s ease,transform .55s ease;will-change:opacity,transform}
     .fade-in.visible{opacity:1;transform:translateY(0)}
 
-    /* ===== BRAND TICKER ===== */
-    .brand-ticker{background:var(--bg-soft);border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;padding:14px 0;position:relative}
-    .brand-ticker::before,.brand-ticker::after{content:'';position:absolute;top:0;bottom:0;width:140px;z-index:2;pointer-events:none}
+    /* ===== BRAND TICKER (dual-row split) ===== */
+    .brand-ticker{background:var(--bg-soft);overflow:hidden;padding:20px 0;position:relative;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    .brand-ticker::before,.brand-ticker::after{content:'';position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none}
     .brand-ticker::before{left:0;background:linear-gradient(to right,var(--bg-soft) 0%,transparent 100%)}
     .brand-ticker::after{right:0;background:linear-gradient(to left,var(--bg-soft) 0%,transparent 100%)}
-    .brand-track{display:flex;gap:0;white-space:nowrap;animation:ticker 35s linear infinite}
-    .brand-ticker:hover .brand-track{animation-play-state:paused}
-    .brand-item{transition:opacity .2s,color .2s}
-    .brand-ticker:hover .brand-item{opacity:0.4}
-    .brand-ticker:hover .brand-item:hover{opacity:1;color:var(--blue)}
-    @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-    .brand-item{display:inline-flex;align-items:center;gap:8px;padding:0 28px;font-size:0.75rem;font-weight:700;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase}
-    .brand-item .dot{width:4px;height:4px;background:var(--blue);border-radius:50%}
+    .brand-row{display:flex;gap:12px;white-space:nowrap;width:max-content}
+    .brand-row.top{animation:tickerLeft 40s linear infinite;margin-bottom:10px}
+    .brand-row.bottom{animation:tickerRight 45s linear infinite}
+    .brand-ticker:hover .brand-row{animation-play-state:paused}
+    @keyframes tickerLeft{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+    @keyframes tickerRight{0%{transform:translateX(-50%)}100%{transform:translateX(0)}}
+    .brand-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 18px;border-radius:20px;font-size:0.72rem;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;border:1px solid var(--border);color:var(--heading);background:#fff;box-shadow:var(--shadow-xs);transition:all .25s;cursor:default}
+    .brand-chip:hover{color:var(--blue);border-color:var(--blue);background:var(--blue-light);box-shadow:var(--shadow-blue)}
+    .brand-chip .chip-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);opacity:0.4;transition:all .25s}
+    .brand-chip:hover .chip-dot{opacity:1;box-shadow:0 0 6px var(--blue)}
 
     /* ===== CATEGORY TILES ===== */
     .cat-tiles-section{
@@ -996,10 +998,13 @@
   </section>
 
 
-  <!-- BRAND TICKER -->
+  <!-- BRAND TICKER (dual-row split) -->
   <div class="brand-ticker">
-    <div class="brand-track">
-      <span class="brand-item"><span class="dot"></span>AMD</span><span class="brand-item"><span class="dot"></span>Intel</span><span class="brand-item"><span class="dot"></span>NVIDIA</span><span class="brand-item"><span class="dot"></span>ASUS</span><span class="brand-item"><span class="dot"></span>Gigabyte</span><span class="brand-item"><span class="dot"></span>MSI</span><span class="brand-item"><span class="dot"></span>Kingston</span><span class="brand-item"><span class="dot"></span>Corsair</span><span class="brand-item"><span class="dot"></span>Seasonic</span><span class="brand-item"><span class="dot"></span>DeepCool</span><span class="brand-item"><span class="dot"></span>Biostar</span><span class="brand-item"><span class="dot"></span>Logitech</span><span class="brand-item"><span class="dot"></span>Acer</span><span class="brand-item"><span class="dot"></span>UGREEN</span><span class="brand-item"><span class="dot"></span>Seagate</span><span class="brand-item"><span class="dot"></span>Western Digital</span><span class="brand-item"><span class="dot"></span>Samsung</span><span class="brand-item"><span class="dot"></span>TEAMGROUP</span><span class="brand-item"><span class="dot"></span>G.Skill</span><span class="brand-item"><span class="dot"></span>Crucial</span><span class="brand-item"><span class="dot"></span>Thermaltake</span><span class="brand-item"><span class="dot"></span>NZXT</span><span class="brand-item"><span class="dot"></span>Cooler Master</span><span class="brand-item"><span class="dot"></span>SteelSeries</span><span class="brand-item"><span class="dot"></span>Razer</span><span class="brand-item"><span class="dot"></span>HyperX</span><span class="brand-item"><span class="dot"></span>Zotac</span><span class="brand-item"><span class="dot"></span>Sapphire</span><span class="brand-item"><span class="dot"></span>PowerColor</span><span class="brand-item"><span class="dot"></span>ASRock</span><span class="brand-item"><span class="dot"></span>Lian Li</span><span class="brand-item"><span class="dot"></span>AMD</span><span class="brand-item"><span class="dot"></span>Intel</span><span class="brand-item"><span class="dot"></span>NVIDIA</span><span class="brand-item"><span class="dot"></span>ASUS</span><span class="brand-item"><span class="dot"></span>Gigabyte</span><span class="brand-item"><span class="dot"></span>MSI</span><span class="brand-item"><span class="dot"></span>Kingston</span><span class="brand-item"><span class="dot"></span>Corsair</span><span class="brand-item"><span class="dot"></span>Seasonic</span><span class="brand-item"><span class="dot"></span>DeepCool</span><span class="brand-item"><span class="dot"></span>Biostar</span><span class="brand-item"><span class="dot"></span>Logitech</span><span class="brand-item"><span class="dot"></span>Acer</span><span class="brand-item"><span class="dot"></span>UGREEN</span><span class="brand-item"><span class="dot"></span>Seagate</span><span class="brand-item"><span class="dot"></span>Western Digital</span><span class="brand-item"><span class="dot"></span>Samsung</span><span class="brand-item"><span class="dot"></span>TEAMGROUP</span><span class="brand-item"><span class="dot"></span>G.Skill</span><span class="brand-item"><span class="dot"></span>Crucial</span><span class="brand-item"><span class="dot"></span>Thermaltake</span><span class="brand-item"><span class="dot"></span>NZXT</span><span class="brand-item"><span class="dot"></span>Cooler Master</span><span class="brand-item"><span class="dot"></span>SteelSeries</span><span class="brand-item"><span class="dot"></span>Razer</span><span class="brand-item"><span class="dot"></span>HyperX</span><span class="brand-item"><span class="dot"></span>Zotac</span><span class="brand-item"><span class="dot"></span>Sapphire</span><span class="brand-item"><span class="dot"></span>PowerColor</span><span class="brand-item"><span class="dot"></span>ASRock</span><span class="brand-item"><span class="dot"></span>Lian Li</span>
+    <div class="brand-row top">
+      <span class="brand-chip"><span class="chip-dot"></span>AMD</span><span class="brand-chip"><span class="chip-dot"></span>Intel</span><span class="brand-chip"><span class="chip-dot"></span>NVIDIA</span><span class="brand-chip"><span class="chip-dot"></span>ASUS</span><span class="brand-chip"><span class="chip-dot"></span>Gigabyte</span><span class="brand-chip"><span class="chip-dot"></span>MSI</span><span class="brand-chip"><span class="chip-dot"></span>Kingston</span><span class="brand-chip"><span class="chip-dot"></span>Corsair</span><span class="brand-chip"><span class="chip-dot"></span>Seasonic</span><span class="brand-chip"><span class="chip-dot"></span>DeepCool</span><span class="brand-chip"><span class="chip-dot"></span>Logitech</span><span class="brand-chip"><span class="chip-dot"></span>Acer</span><span class="brand-chip"><span class="chip-dot"></span>UGREEN</span><span class="brand-chip"><span class="chip-dot"></span>Samsung</span><span class="brand-chip"><span class="chip-dot"></span>TEAMGROUP</span><span class="brand-chip"><span class="chip-dot"></span>AMD</span><span class="brand-chip"><span class="chip-dot"></span>Intel</span><span class="brand-chip"><span class="chip-dot"></span>NVIDIA</span><span class="brand-chip"><span class="chip-dot"></span>ASUS</span><span class="brand-chip"><span class="chip-dot"></span>Gigabyte</span><span class="brand-chip"><span class="chip-dot"></span>MSI</span><span class="brand-chip"><span class="chip-dot"></span>Kingston</span><span class="brand-chip"><span class="chip-dot"></span>Corsair</span><span class="brand-chip"><span class="chip-dot"></span>Seasonic</span><span class="brand-chip"><span class="chip-dot"></span>DeepCool</span><span class="brand-chip"><span class="chip-dot"></span>Logitech</span><span class="brand-chip"><span class="chip-dot"></span>Acer</span><span class="brand-chip"><span class="chip-dot"></span>UGREEN</span><span class="brand-chip"><span class="chip-dot"></span>Samsung</span><span class="brand-chip"><span class="chip-dot"></span>TEAMGROUP</span>
+    </div>
+    <div class="brand-row bottom">
+      <span class="brand-chip"><span class="chip-dot"></span>Seagate</span><span class="brand-chip"><span class="chip-dot"></span>Western Digital</span><span class="brand-chip"><span class="chip-dot"></span>G.Skill</span><span class="brand-chip"><span class="chip-dot"></span>Crucial</span><span class="brand-chip"><span class="chip-dot"></span>Thermaltake</span><span class="brand-chip"><span class="chip-dot"></span>NZXT</span><span class="brand-chip"><span class="chip-dot"></span>Cooler Master</span><span class="brand-chip"><span class="chip-dot"></span>SteelSeries</span><span class="brand-chip"><span class="chip-dot"></span>Razer</span><span class="brand-chip"><span class="chip-dot"></span>HyperX</span><span class="brand-chip"><span class="chip-dot"></span>Zotac</span><span class="brand-chip"><span class="chip-dot"></span>Sapphire</span><span class="brand-chip"><span class="chip-dot"></span>PowerColor</span><span class="brand-chip"><span class="chip-dot"></span>ASRock</span><span class="brand-chip"><span class="chip-dot"></span>Lian Li</span><span class="brand-chip"><span class="chip-dot"></span>Biostar</span><span class="brand-chip"><span class="chip-dot"></span>Seagate</span><span class="brand-chip"><span class="chip-dot"></span>Western Digital</span><span class="brand-chip"><span class="chip-dot"></span>G.Skill</span><span class="brand-chip"><span class="chip-dot"></span>Crucial</span><span class="brand-chip"><span class="chip-dot"></span>Thermaltake</span><span class="brand-chip"><span class="chip-dot"></span>NZXT</span><span class="brand-chip"><span class="chip-dot"></span>Cooler Master</span><span class="brand-chip"><span class="chip-dot"></span>SteelSeries</span><span class="brand-chip"><span class="chip-dot"></span>Razer</span><span class="brand-chip"><span class="chip-dot"></span>HyperX</span><span class="brand-chip"><span class="chip-dot"></span>Zotac</span><span class="brand-chip"><span class="chip-dot"></span>Sapphire</span><span class="brand-chip"><span class="chip-dot"></span>PowerColor</span><span class="brand-chip"><span class="chip-dot"></span>ASRock</span><span class="brand-chip"><span class="chip-dot"></span>Lian Li</span><span class="brand-chip"><span class="chip-dot"></span>Biostar</span>
     </div>
   </div>
 
@@ -2438,13 +2443,13 @@
     // ===== TICKER ANIMATION (pause off-screen) =====
     const tickerObs=new IntersectionObserver((entries)=>{
       entries.forEach(e=>{
-        const track=e.target.querySelector('.brand-track');
-        if(track)track.style.animationPlayState=e.isIntersecting?'running':'paused';
+        e.target.querySelectorAll('.brand-row').forEach(row=>{
+          row.style.animationPlayState=e.isIntersecting?'running':'paused';
+        });
       });
     },{rootMargin:'100px'});
     document.querySelectorAll('.brand-ticker').forEach(el=>{
-      const track=el.querySelector('.brand-track');
-      if(track)track.style.animationPlayState='paused';
+      el.querySelectorAll('.brand-row').forEach(row=>row.style.animationPlayState='paused');
       tickerObs.observe(el);
     });
 

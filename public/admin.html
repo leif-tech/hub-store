@@ -877,6 +877,38 @@
 
         <!-- Settings -->
         <div class="tab-content" id="tab-settings">
+          <!-- My Account -->
+          <div id="accountSettingsCard" style="background:var(--card);border-radius:14px;border:1px solid var(--border);padding:28px;box-shadow:var(--shadow);margin-bottom:20px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <h4 style="font-family:'Exo 2',sans-serif;font-size:0.88rem;color:var(--navy);margin:0;font-weight:700">My Account</h4>
+            </div>
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:20px">Update your username or password.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:500px">
+              <div class="form-group" style="grid-column:1/-1">
+                <label style="font-size:0.72rem;font-weight:600;color:var(--text-dim);display:block;margin-bottom:4px">New Username</label>
+                <input type="text" id="acctNewUsername" placeholder="Leave blank to keep current" autocomplete="off">
+              </div>
+              <div class="form-group">
+                <label style="font-size:0.72rem;font-weight:600;color:var(--text-dim);display:block;margin-bottom:4px">New Password</label>
+                <input type="password" id="acctNewPassword" placeholder="Leave blank to keep current" autocomplete="new-password">
+              </div>
+              <div class="form-group">
+                <label style="font-size:0.72rem;font-weight:600;color:var(--text-dim);display:block;margin-bottom:4px">Confirm Password</label>
+                <input type="password" id="acctConfirmPassword" placeholder="Re-enter new password" autocomplete="new-password">
+              </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label style="font-size:0.72rem;font-weight:600;color:var(--text-dim);display:block;margin-bottom:4px">Current Password <span style="color:var(--danger)">*</span></label>
+                <input type="password" id="acctCurrentPassword" placeholder="Required to save changes" autocomplete="current-password">
+              </div>
+              <div style="grid-column:1/-1">
+                <button class="btn" style="background:var(--grad);color:#fff;box-shadow:0 4px 12px rgba(26,110,232,0.2)" onclick="saveAccountSettings()">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div style="background:var(--card);border-radius:14px;border:1px solid var(--border);padding:28px;box-shadow:var(--shadow)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
               <h4 style="font-family:'Exo 2',sans-serif;font-size:0.88rem;color:var(--navy);margin:0;font-weight:700">Product Display</h4>
@@ -3185,6 +3217,50 @@
       showAdminToast(value ? 'Enabled' : 'Disabled', 'success');
     } catch(e) {
       showAdminToast('Failed to save setting', 'error');
+    }
+  }
+
+  async function saveAccountSettings() {
+    const currentPassword = document.getElementById('acctCurrentPassword').value.trim();
+    const newUsername = document.getElementById('acctNewUsername').value.trim();
+    const newPassword = document.getElementById('acctNewPassword').value;
+    const confirmPassword = document.getElementById('acctConfirmPassword').value;
+
+    if (!currentPassword) return showAdminToast('Current password is required', 'error');
+    if (!newUsername && !newPassword) return showAdminToast('Enter a new username or password', 'error');
+    if (newPassword && newPassword.length < 6) return showAdminToast('Password must be at least 6 characters', 'error');
+    if (newPassword && newPassword !== confirmPassword) return showAdminToast('Passwords do not match', 'error');
+
+    const body = { currentPassword };
+    if (newUsername) body.newUsername = newUsername;
+    if (newPassword) body.newPassword = newPassword;
+
+    try {
+      const res = await fetch(API + '/api/admin/account', {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) return showAdminToast(data.error || 'Failed to update account', 'error');
+
+      token = data.token;
+      sessionStorage.setItem('hub_admin_token', token);
+      sessionStorage.setItem('hub_admin_user', data.username);
+      sessionStorage.setItem('hub_admin_role', data.role);
+
+      document.getElementById('sidebarUsername').textContent = data.username;
+      document.getElementById('sidebarAvatar').textContent = data.username.charAt(0).toUpperCase();
+
+      document.getElementById('acctNewUsername').value = '';
+      document.getElementById('acctNewPassword').value = '';
+      document.getElementById('acctConfirmPassword').value = '';
+      document.getElementById('acctCurrentPassword').value = '';
+
+      showAdminToast('Account updated successfully', 'success');
+      loadAdmins();
+    } catch(e) {
+      showAdminToast('Failed to update account', 'error');
     }
   }
 

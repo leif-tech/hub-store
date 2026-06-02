@@ -1018,6 +1018,52 @@ app.put('/api/admin/admins/activate', authMiddleware, ownerOnly, (req, res) => {
   res.json({ success: true });
 });
 
+// ── Admin: Account Settings ──────────────────────────────────────
+
+app.put('/api/admin/account', authMiddleware, adminMutationLimiter, (req, res) => {
+  const { currentPassword, newUsername, newPassword } = req.body;
+  if (!currentPassword) return res.status(400).json({ error: 'Current password is required' });
+
+  const admins = readJSON('admins.json');
+  const admin = admins.find(a => a.username === req.admin.username);
+  if (!admin) return res.status(404).json({ error: 'Account not found' });
+
+  if (!bcrypt.compareSync(currentPassword, admin.password)) {
+    return res.status(401).json({ error: 'Current password is incorrect' });
+  }
+
+  const changes = [];
+
+  if (newUsername && newUsername !== admin.username) {
+    if (!/^[a-zA-Z0-9_]{3,30}$/.test(newUsername)) {
+      return res.status(400).json({ error: 'Username must be 3-30 alphanumeric characters' });
+    }
+    if (admins.find(a => a.username === newUsername)) {
+      return res.status(409).json({ error: 'Username already taken' });
+    }
+    changes.push(`username ${admin.username}→${newUsername}`);
+    admin.username = newUsername;
+  }
+
+  if (newPassword) {
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    admin.password = bcrypt.hashSync(newPassword, 10);
+    changes.push('password changed');
+  }
+
+  if (changes.length === 0) {
+    return res.status(400).json({ error: 'No changes provided' });
+  }
+
+  writeJSON('admins.json', admins);
+  logAudit('account_update', admin.username, changes.join(', '), admin.username);
+
+  const token = jwt.sign({ username: admin.username, role: admin.role || 'admin' }, JWT_SECRET, { expiresIn: '24h' });
+  res.json({ success: true, token, username: admin.username, role: admin.role || 'admin' });
+});
+
 // ── Admin: Dashboard Stats ───────────────────────────────────────
 
 app.get('/api/admin/stats', authMiddleware, (req, res) => {
