@@ -114,32 +114,23 @@
 
     .field-error{border-color:#ef4444 !important;box-shadow:0 0 0 3px rgba(239,68,68,0.1) !important}
     .error-msg{font-size:0.72rem;color:#ef4444;margin-top:3px;font-weight:600}
+
+    /* Force visibility — hardcoded colors, no CSS variables */
+    .checkout-grid{display:grid !important;visibility:visible !important;opacity:1 !important}
+    .checkout-grid>div{display:block !important;visibility:visible !important;opacity:1 !important}
+    .card{background:#ffffff !important;border:2px solid #cbd5e1 !important;color:#1e293b !important;opacity:1 !important;visibility:visible !important}
+    .card-title{color:#0f172a !important}
+    .form-group label{color:#374151 !important}
+    .form-group input,.form-group select,.form-group textarea{background:#f1f5f9 !important;border:1px solid #cbd5e1 !important;color:#0f172a !important}
+    .ship-option{border:1.5px solid #cbd5e1 !important;color:#1e293b !important;opacity:1 !important;visibility:visible !important}
+    .ship-label{color:#0f172a !important}
+    .ship-desc,.ship-price{color:#374151 !important}
+    .order-row,.order-item{color:#374151 !important;opacity:1 !important;visibility:visible !important}
+    .payment-tabs,.pay-tab{opacity:1 !important;visibility:visible !important}
+    .btn{opacity:1 !important;visibility:visible !important}
   </style>
 </head>
 <body>
-  <!-- Debug banner — remove after fixing blank page issue -->
-  <div id="dbg" style="background:#ef4444;color:#fff;padding:12px 20px;font-family:monospace;font-size:14px;text-align:center;position:relative;z-index:99999">
-    PAGE RENDERED at <script>document.write(new Date().toLocaleTimeString())</script> — Checking grid...
-  </div>
-  <script>
-    window.addEventListener('load', function() {
-      var g = document.querySelector('.checkout-grid');
-      var d = document.getElementById('dbg');
-      if (!g) { d.textContent = 'ERROR: .checkout-grid NOT FOUND in DOM'; return; }
-      var cs = getComputedStyle(g);
-      var info = 'Grid: display=' + cs.display + ', height=' + g.offsetHeight + 'px, children=' + g.children.length + ', visibility=' + cs.visibility;
-      if (g.children[0]) {
-        var c1 = getComputedStyle(g.children[0]);
-        info += ' | Child1: display=' + c1.display + ', height=' + g.children[0].offsetHeight + 'px';
-      }
-      d.textContent = info;
-      if (g.offsetHeight > 50) d.style.background = '#22c55e'; // green = working
-    });
-    window.onerror = function(msg, src, line) {
-      var d = document.getElementById('dbg');
-      if (d) d.textContent = 'JS ERROR: ' + msg + ' at line ' + line;
-    };
-  </script>
   <div class="topbar">
     <div class="inner">
       <a href="/">&#10094; Back to Store</a>
@@ -152,6 +143,10 @@
 
   <div class="container">
     <h1>Checkout</h1>
+    <!-- TEST: Can you see this red box? -->
+    <div style="background:#ef4444;color:#fff;padding:20px;margin-bottom:16px;border-radius:8px;font-size:18px;font-weight:bold;font-family:Arial,sans-serif">
+      TEST BOX — If you can see this red box, the issue is inside the grid cards below.
+    </div>
     <div class="checkout-grid">
       <!-- LEFT: Billing & Shipping -->
       <div>
