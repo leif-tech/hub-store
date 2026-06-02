@@ -133,13 +133,13 @@ const helmetMiddleware = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.gstatic.com", "https://cdn.jsdelivr.net", "https://apis.google.com", "https://accounts.google.com", "https://connect.facebook.net"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.gstatic.com", "https://cdn.jsdelivr.net", "https://apis.google.com", "https://accounts.google.com", "https://connect.facebook.net", "https://challenges.cloudflare.com"],
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "blob:", "https:"],
-      connectSrc: ["'self'", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com", "https://www.googleapis.com", "https://firebase.googleapis.com", "https://firebaseinstallations.googleapis.com", "https://accounts.google.com", "https://oauth2.googleapis.com", "https://whitelabel-ai-production.up.railway.app"],
-      frameSrc: ["'self'", "https://accounts.google.com", "https://apis.google.com", "https://www.facebook.com", "https://web.facebook.com", "https://maps.google.com", "https://www.google.com"],
+      connectSrc: ["'self'", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com", "https://www.googleapis.com", "https://firebase.googleapis.com", "https://firebaseinstallations.googleapis.com", "https://accounts.google.com", "https://oauth2.googleapis.com", "https://whitelabel-ai-production.up.railway.app", "https://challenges.cloudflare.com"],
+      frameSrc: ["'self'", "https://accounts.google.com", "https://apis.google.com", "https://www.facebook.com", "https://web.facebook.com", "https://maps.google.com", "https://www.google.com", "https://challenges.cloudflare.com"],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
       formAction: ["'self'"],
