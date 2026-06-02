@@ -485,7 +485,7 @@ async function customerAuthOptional(req, res, next) {
 // H3: Email notifications — Resend (primary) + SMTP (fallback)
 let resendClient = null;
 let emailTransporter = null;
-const RESEND_FROM = process.env.RESEND_FROM || 'H.U.B Store <onboarding@resend.dev>';
+const RESEND_FROM = process.env.RESEND_FROM || 'H.U.B Store <noreply@hanapusapbuild.store>';
 
 if (process.env.RESEND_API_KEY) {
   resendClient = new Resend(process.env.RESEND_API_KEY);
