@@ -117,6 +117,29 @@
   </style>
 </head>
 <body>
+  <!-- Debug banner — remove after fixing blank page issue -->
+  <div id="dbg" style="background:#ef4444;color:#fff;padding:12px 20px;font-family:monospace;font-size:14px;text-align:center;position:relative;z-index:99999">
+    PAGE RENDERED at <script>document.write(new Date().toLocaleTimeString())</script> — Checking grid...
+  </div>
+  <script>
+    window.addEventListener('load', function() {
+      var g = document.querySelector('.checkout-grid');
+      var d = document.getElementById('dbg');
+      if (!g) { d.textContent = 'ERROR: .checkout-grid NOT FOUND in DOM'; return; }
+      var cs = getComputedStyle(g);
+      var info = 'Grid: display=' + cs.display + ', height=' + g.offsetHeight + 'px, children=' + g.children.length + ', visibility=' + cs.visibility;
+      if (g.children[0]) {
+        var c1 = getComputedStyle(g.children[0]);
+        info += ' | Child1: display=' + c1.display + ', height=' + g.children[0].offsetHeight + 'px';
+      }
+      d.textContent = info;
+      if (g.offsetHeight > 50) d.style.background = '#22c55e'; // green = working
+    });
+    window.onerror = function(msg, src, line) {
+      var d = document.getElementById('dbg');
+      if (d) d.textContent = 'JS ERROR: ' + msg + ' at line ' + line;
+    };
+  </script>
   <div class="topbar">
     <div class="inner">
       <a href="/">&#10094; Back to Store</a>
