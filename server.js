@@ -540,7 +540,11 @@ async function sendOrderEmails(order) {
   }[order.shipping] || order.shipping;
 
   const itemsHtml = order.items.map(i =>
-    `<tr><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0">${i.name} × ${i.qty}</td><td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600">₱${(i.price * i.qty).toLocaleString('en-PH')}</td></tr>`
+    `<tr><td style="padding:14px 16px;border-bottom:1px solid #f1f5f9;color:#1e293b;font-size:14px">${i.name} <span style="color:#94a3b8">× ${i.qty}</span></td><td style="padding:14px 16px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;color:#1e293b;font-size:14px">₱${(i.price * i.qty).toLocaleString('en-PH')}</td></tr>`
+  ).join('');
+
+  const adminItemsHtml = order.items.map(i =>
+    `<tr><td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;color:#1e293b;font-size:13px">${i.name} <span style="color:#94a3b8;font-size:12px">× ${i.qty}</span></td><td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;color:#1e293b;font-size:13px;white-space:nowrap">₱${(i.price * i.qty).toLocaleString('en-PH')}</td></tr>`
   ).join('');
 
   const itemsText = order.items.map(i =>
@@ -548,6 +552,7 @@ async function sendOrderEmails(order) {
   ).join('\n');
 
   const totalFormatted = `₱${Number(order.total).toLocaleString('en-PH')}`;
+  const orderDate = new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   // Customer confirmation email
   if (order.customer.email) {
@@ -555,45 +560,97 @@ async function sendOrderEmails(order) {
       await sendEmail({
         from: `"H.U.B Store" <${STORE_EMAIL}>`,
         to: order.customer.email,
-        subject: `Order Received — ${order.id} | H.U.B Store`,
+        subject: `Order Confirmed — ${order.id} | H.U.B Store`,
         html: `
-<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif">
-<div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
-  <div style="background:linear-gradient(135deg,#1255c0,#1a6ee8);padding:28px 32px;text-align:center">
-    <h1 style="margin:0;color:#fff;font-size:22px;letter-spacing:0.5px">H.U.B Store</h1>
-    <p style="margin:6px 0 0;color:rgba(255,255,255,0.85);font-size:13px">Hanap.Usap.Build — Valenzuela City</p>
-  </div>
-  <div style="padding:28px 32px">
-    <h2 style="margin:0 0 6px;color:#1e293b;font-size:18px">Your order has been received!</h2>
-    <p style="color:#64748b;margin:0 0 20px;font-size:14px">Hi ${order.customer.firstName}, we've received your order and will process it once payment is verified.</p>
-    <div style="background:#f8fafc;border-radius:8px;padding:14px 16px;margin-bottom:20px">
-      <p style="margin:0 0 4px;font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Order ID</p>
-      <p style="margin:0;font-size:16px;font-weight:700;color:#1a6ee8">${order.id}</p>
-    </div>
-    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:16px">
-      <thead><tr style="background:#f1f5f9"><th style="padding:8px;text-align:left;color:#64748b;font-weight:600">Item</th><th style="padding:8px;text-align:right;color:#64748b;font-weight:600">Subtotal</th></tr></thead>
-      <tbody>${itemsHtml}</tbody>
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f0f4ff;font-family:'Segoe UI',Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;padding:32px 16px">
+<tr><td align="center">
+<table role="presentation" width="580" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(18,85,192,0.08)">
+
+  <!-- Header -->
+  <tr><td style="background:linear-gradient(135deg,#0f3d91 0%,#1a6ee8 50%,#2d8cf0 100%);padding:36px 40px;text-align:center">
+    <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:800;letter-spacing:0.5px">H.U.B Store</h1>
+    <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:13px;font-weight:400;letter-spacing:0.3px">Hanap &bull; Usap &bull; Build</p>
+  </td></tr>
+
+  <!-- Success Banner -->
+  <tr><td style="background:#f0fdf4;padding:16px 40px;border-bottom:1px solid #dcfce7">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td style="width:28px;vertical-align:middle"><div style="width:24px;height:24px;background:#22c55e;border-radius:50%;text-align:center;line-height:24px;font-size:14px;color:#fff">✓</div></td>
+      <td style="padding-left:12px;vertical-align:middle"><span style="color:#15803d;font-size:14px;font-weight:600">Order received — we're on it!</span></td>
+    </tr></table>
+  </td></tr>
+
+  <!-- Body -->
+  <tr><td style="padding:32px 40px">
+
+    <p style="color:#475569;margin:0 0 24px;font-size:15px;line-height:1.6">Hi <strong style="color:#1e293b">${order.customer.firstName}</strong>, thank you for your order! We'll process it as soon as your payment is verified.</p>
+
+    <!-- Order ID Card -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
+    <tr><td style="background:linear-gradient(135deg,#eff6ff,#f0f4ff);border:1px solid #dbeafe;border-radius:12px;padding:18px 20px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td><p style="margin:0 0 2px;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:600">Order ID</p><p style="margin:0;font-size:17px;font-weight:800;color:#1a6ee8;letter-spacing:0.3px">${order.id}</p></td>
+        <td style="text-align:right;vertical-align:bottom"><p style="margin:0;font-size:12px;color:#94a3b8">${orderDate}</p></td>
+      </tr></table>
+    </td></tr>
     </table>
-    <div style="display:flex;justify-content:space-between;padding:12px 8px;border-top:2px solid #1a6ee8;margin-bottom:20px">
-      <span style="font-weight:700;color:#1e293b">Total</span>
-      <span style="font-weight:800;color:#1a6ee8;font-size:16px">${totalFormatted}</span>
-    </div>
-    <table style="width:100%;font-size:13px;color:#64748b;margin-bottom:20px">
-      <tr><td style="padding:3px 0;font-weight:600;color:#475569;width:110px">Shipping</td><td>${shippingLabel}</td></tr>
-      <tr><td style="padding:3px 0;font-weight:600;color:#475569">Payment</td><td>${order.payment}</td></tr>
-      ${order.paymentRef ? `<tr><td style="padding:3px 0;font-weight:600;color:#475569">Ref No.</td><td>${order.paymentRef}</td></tr>` : ''}
+
+    <!-- Items Table -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:24px">
+      <tr style="background:#f8fafc"><th style="padding:12px 16px;text-align:left;color:#64748b;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e2e8f0">Item</th><th style="padding:12px 16px;text-align:right;color:#64748b;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e2e8f0">Subtotal</th></tr>
+      ${itemsHtml}
     </table>
-    <div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:12px 14px;font-size:13px;color:#854d0e;margin-bottom:20px">
-      ⚠️ Please <strong>send your payment screenshot</strong> to our <a href="https://www.facebook.com/messages/t/HUBValenzuela" style="color:#1a6ee8">Facebook Messenger</a> to complete your order.
-    </div>
-    <p style="font-size:12px;color:#94a3b8;margin:0">Questions? Message us on <a href="https://www.facebook.com/HUBValenzuela" style="color:#1a6ee8">Facebook</a> or email <a href="mailto:${STORE_EMAIL}" style="color:#1a6ee8">${STORE_EMAIL}</a></p>
-  </div>
-  <div style="background:#f8fafc;padding:14px 32px;text-align:center;font-size:11px;color:#94a3b8">
-    H.U.B | 3/F Unit 306 Arbortowne Plaza II, Karuhatan Road, Valenzuela, Philippines 1442
-  </div>
-</div>
+
+    <!-- Total -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
+    <tr><td style="background:#0f3d91;border-radius:10px;padding:16px 20px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td style="color:rgba(255,255,255,0.85);font-size:14px;font-weight:600">Total Amount</td>
+        <td style="text-align:right;color:#ffffff;font-size:22px;font-weight:800">${totalFormatted}</td>
+      </tr></table>
+    </td></tr>
+    </table>
+
+    <!-- Order Details -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;font-size:14px">
+      <tr><td style="padding:8px 0;color:#94a3b8;font-weight:600;width:120px;vertical-align:top">Shipping</td><td style="padding:8px 0;color:#1e293b">${shippingLabel}</td></tr>
+      <tr><td style="padding:8px 0;color:#94a3b8;font-weight:600;vertical-align:top">Payment</td><td style="padding:8px 0;color:#1e293b">${order.payment}</td></tr>
+      ${order.paymentRef ? `<tr><td style="padding:8px 0;color:#94a3b8;font-weight:600;vertical-align:top">Ref No.</td><td style="padding:8px 0;color:#1e293b;font-weight:600">${order.paymentRef}</td></tr>` : ''}
+    </table>
+
+    <!-- CTA: Send Screenshot -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
+    <tr><td style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:20px">
+      <p style="margin:0 0 12px;font-size:14px;color:#92400e;font-weight:700">📸 Next Step: Send Payment Proof</p>
+      <p style="margin:0 0 16px;font-size:13px;color:#a16207;line-height:1.5">Send a screenshot of your payment to our Facebook Messenger so we can verify and process your order.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#1877f2;border-radius:8px">
+        <a href="https://m.me/Hanap.Usap.Build" style="display:inline-block;padding:12px 24px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700">💬 Send via Messenger</a>
+      </td></tr></table>
+    </td></tr>
+    </table>
+
+    <!-- Help -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr><td style="border-top:1px solid #f1f5f9;padding-top:20px">
+      <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6">Questions? Message us on <a href="https://m.me/Hanap.Usap.Build" style="color:#1a6ee8;font-weight:600;text-decoration:none">Messenger</a> or email <a href="mailto:${STORE_EMAIL}" style="color:#1a6ee8;font-weight:600;text-decoration:none">${STORE_EMAIL}</a></p>
+    </td></tr>
+    </table>
+
+  </td></tr>
+
+  <!-- Footer -->
+  <tr><td style="background:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #f1f5f9">
+    <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#64748b">H.U.B Store</p>
+    <p style="margin:0;font-size:11px;color:#94a3b8;line-height:1.5">3/F Unit 306 Arbortowne Plaza II, Karuhatan Road<br>Valenzuela City, Philippines 1442</p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
 </body></html>`,
-        text: `Hi ${order.customer.firstName},\n\nYour order has been received!\n\nOrder ID: ${order.id}\n\nItems:\n${itemsText}\n\nTotal: ${totalFormatted}\nShipping: ${shippingLabel}\nPayment: ${order.payment}${order.paymentRef ? '\nRef No.: ' + order.paymentRef : ''}\n\nIMPORTANT: Please send your payment screenshot to our Facebook Messenger to complete your order.\nhttps://www.facebook.com/messages/t/HUBValenzuela\n\n— H.U.B Store`
+        text: `Hi ${order.customer.firstName},\n\nYour order has been received!\n\nOrder ID: ${order.id}\n\nItems:\n${itemsText}\n\nTotal: ${totalFormatted}\nShipping: ${shippingLabel}\nPayment: ${order.payment}${order.paymentRef ? '\nRef No.: ' + order.paymentRef : ''}\n\nNEXT STEP: Please send your payment screenshot to our Facebook Messenger to complete your order.\nhttps://m.me/Hanap.Usap.Build\n\nQuestions? Message us on Messenger or email ${STORE_EMAIL}\n\n— H.U.B Store\n3/F Unit 306 Arbortowne Plaza II, Karuhatan Road, Valenzuela City 1442`
       });
       console.log(`[EMAIL] Confirmation sent to ${order.customer.email}`);
     } catch (err) {
@@ -605,41 +662,92 @@ async function sendOrderEmails(order) {
   if (OWNER_EMAIL) {
     try {
       await sendEmail({
-        from: `"H.U.B Store" <${STORE_EMAIL}>`,
+        from: `"H.U.B Store Orders" <${STORE_EMAIL}>`,
         to: OWNER_EMAIL,
-        subject: `🛒 New Order: ${order.id} — ${order.customer.firstName} ${order.customer.lastName}`,
+        subject: `🛒 New Order: ${order.id} — ₱${Number(order.total).toLocaleString('en-PH')}`,
         html: `
-<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif">
-<div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
-  <div style="background:linear-gradient(135deg,#1255c0,#1a6ee8);padding:20px 28px">
-    <h2 style="margin:0;color:#fff;font-size:17px">New Order Received</h2>
-    <p style="margin:4px 0 0;color:rgba(255,255,255,0.8);font-size:13px">${order.id}</p>
-  </div>
-  <div style="padding:24px 28px">
-    <h3 style="margin:0 0 12px;color:#1e293b;font-size:15px">Customer</h3>
-    <table style="font-size:13px;color:#475569;margin-bottom:20px">
-      <tr><td style="padding:2px 12px 2px 0;font-weight:600">Name</td><td>${order.customer.firstName} ${order.customer.lastName}</td></tr>
-      <tr><td style="padding:2px 12px 2px 0;font-weight:600">Email</td><td><a href="mailto:${order.customer.email}" style="color:#1a6ee8">${order.customer.email}</a></td></tr>
-      <tr><td style="padding:2px 12px 2px 0;font-weight:600">Phone</td><td>${order.customer.phone}</td></tr>
-      <tr><td style="padding:2px 12px 2px 0;font-weight:600">Address</td><td>${order.customer.street}${order.customer.street2 ? ', ' + order.customer.street2 : ''}, ${order.customer.city}${order.customer.province ? ', ' + order.customer.province : ''}</td></tr>
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f0f4ff;font-family:'Segoe UI',Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;padding:32px 16px">
+<tr><td align="center">
+<table role="presentation" width="580" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(18,85,192,0.08)">
+
+  <!-- Header -->
+  <tr><td style="background:linear-gradient(135deg,#0f3d91 0%,#1a6ee8 50%,#2d8cf0 100%);padding:24px 32px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td><p style="margin:0;color:rgba(255,255,255,0.7);font-size:12px;text-transform:uppercase;letter-spacing:1px;font-weight:600">New Order</p><p style="margin:4px 0 0;color:#ffffff;font-size:20px;font-weight:800">${order.id}</p></td>
+      <td style="text-align:right;vertical-align:bottom"><p style="margin:0;color:rgba(255,255,255,0.6);font-size:11px">${orderDate}</p></td>
+    </tr></table>
+  </td></tr>
+
+  <!-- Amount Banner -->
+  <tr><td style="background:#f0fdf4;padding:16px 32px;border-bottom:1px solid #dcfce7">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td style="color:#15803d;font-size:13px;font-weight:600">Order Total</td>
+      <td style="text-align:right;color:#15803d;font-size:20px;font-weight:800">${totalFormatted}</td>
+    </tr></table>
+  </td></tr>
+
+  <!-- Body -->
+  <tr><td style="padding:28px 32px">
+
+    <!-- Customer Card -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
+    <tr><td style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px">
+      <p style="margin:0 0 12px;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:700">👤 Customer</p>
+      <p style="margin:0 0 4px;font-size:16px;font-weight:700;color:#1e293b">${order.customer.firstName} ${order.customer.lastName}</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:10px;font-size:13px;color:#475569">
+        <tr><td style="padding:3px 16px 3px 0;color:#94a3b8;font-weight:600">Email</td><td><a href="mailto:${order.customer.email}" style="color:#1a6ee8;text-decoration:none">${order.customer.email}</a></td></tr>
+        <tr><td style="padding:3px 16px 3px 0;color:#94a3b8;font-weight:600">Phone</td><td style="color:#1e293b">${order.customer.phone}</td></tr>
+        <tr><td style="padding:3px 16px 3px 0;color:#94a3b8;font-weight:600;vertical-align:top">Address</td><td style="color:#1e293b">${order.customer.street}${order.customer.street2 ? ', ' + order.customer.street2 : ''}, ${order.customer.city}${order.customer.province ? ', ' + order.customer.province : ''}</td></tr>
+      </table>
+    </td></tr>
     </table>
-    <h3 style="margin:0 0 8px;color:#1e293b;font-size:15px">Items</h3>
-    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">
-      <thead><tr style="background:#f1f5f9"><th style="padding:6px 8px;text-align:left;color:#64748b">Item</th><th style="padding:6px 8px;text-align:right;color:#64748b">Subtotal</th></tr></thead>
-      <tbody>${itemsHtml}</tbody>
+
+    <!-- Items -->
+    <p style="margin:0 0 10px;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:700">📦 Items</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:24px">
+      <tr style="background:#f8fafc"><th style="padding:10px 16px;text-align:left;color:#64748b;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e2e8f0">Item</th><th style="padding:10px 16px;text-align:right;color:#64748b;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e2e8f0">Subtotal</th></tr>
+      ${adminItemsHtml}
     </table>
-    <table style="font-size:13px;color:#475569;margin-bottom:20px">
-      <tr><td style="padding:2px 12px 2px 0;font-weight:600">Total</td><td style="color:#1a6ee8;font-weight:700;font-size:15px">${totalFormatted}</td></tr>
-      <tr><td style="padding:2px 12px 2px 0;font-weight:600">Shipping</td><td>${shippingLabel}</td></tr>
-      <tr><td style="padding:2px 12px 2px 0;font-weight:600">Payment</td><td>${order.payment}</td></tr>
-      ${order.paymentRef ? `<tr><td style="padding:2px 12px 2px 0;font-weight:600">Ref No.</td><td><strong>${order.paymentRef}</strong></td></tr>` : '<tr><td style="padding:2px 12px 2px 0;font-weight:600">Ref No.</td><td style="color:#ef4444">Not provided — ask for screenshot</td></tr>'}
-      ${order.customer.notes ? `<tr><td style="padding:2px 12px 2px 0;font-weight:600">Notes</td><td>${order.customer.notes}</td></tr>` : ''}
+
+    <!-- Payment Details -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
+    <tr><td style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px">
+      <p style="margin:0 0 12px;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:700">💳 Payment & Shipping</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:13px;width:100%">
+        <tr><td style="padding:4px 0;color:#94a3b8;font-weight:600;width:100px">Shipping</td><td style="padding:4px 0;color:#1e293b">${shippingLabel}</td></tr>
+        <tr><td style="padding:4px 0;color:#94a3b8;font-weight:600">Payment</td><td style="padding:4px 0;color:#1e293b;font-weight:600">${order.payment}</td></tr>
+        ${order.paymentRef ? `<tr><td style="padding:4px 0;color:#94a3b8;font-weight:600">Ref No.</td><td style="padding:4px 0;color:#22c55e;font-weight:700">${order.paymentRef}</td></tr>` : `<tr><td style="padding:4px 0;color:#94a3b8;font-weight:600">Ref No.</td><td style="padding:4px 0;color:#ef4444;font-weight:600">⚠ Not provided — ask for screenshot</td></tr>`}
+        ${order.customer.notes ? `<tr><td style="padding:4px 0;color:#94a3b8;font-weight:600;vertical-align:top">Notes</td><td style="padding:4px 0;color:#1e293b">${order.customer.notes}</td></tr>` : ''}
+      </table>
+    </td></tr>
     </table>
-    <a href="https://hubstore.ph/admin" style="display:inline-block;background:linear-gradient(135deg,#1255c0,#1a6ee8);color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600">View in Admin Panel →</a>
-  </div>
-</div>
+
+    <!-- Action Buttons -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td style="padding-right:8px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="background:linear-gradient(135deg,#0f3d91,#1a6ee8);border-radius:10px;text-align:center">
+        <a href="https://hanapusapbuild.store/admin" style="display:inline-block;padding:14px 24px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;width:100%;box-sizing:border-box;text-align:center">View in Admin Panel →</a>
+      </td></tr></table></td>
+      <td style="padding-left:8px;width:140px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="background:#1877f2;border-radius:10px;text-align:center">
+        <a href="https://m.me/Hanap.Usap.Build" style="display:inline-block;padding:14px 16px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;text-align:center">💬 Message</a>
+      </td></tr></table></td>
+    </tr>
+    </table>
+
+  </td></tr>
+
+  <!-- Footer -->
+  <tr><td style="background:#f8fafc;padding:16px 32px;text-align:center;border-top:1px solid #f1f5f9">
+    <p style="margin:0;font-size:11px;color:#94a3b8">H.U.B Store — Order Notification</p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
 </body></html>`,
-        text: `New Order: ${order.id}\n\nCustomer: ${order.customer.firstName} ${order.customer.lastName}\nEmail: ${order.customer.email}\nPhone: ${order.customer.phone}\nAddress: ${order.customer.street}, ${order.customer.city}\n\nItems:\n${itemsText}\n\nTotal: ${totalFormatted}\nShipping: ${shippingLabel}\nPayment: ${order.payment}${order.paymentRef ? '\nRef No.: ' + order.paymentRef : '\nRef No.: NOT PROVIDED'}\n\nView in admin: https://hubstore.ph/admin`
+        text: `New Order: ${order.id}\n\nCustomer: ${order.customer.firstName} ${order.customer.lastName}\nEmail: ${order.customer.email}\nPhone: ${order.customer.phone}\nAddress: ${order.customer.street}, ${order.customer.city}\n\nItems:\n${itemsText}\n\nTotal: ${totalFormatted}\nShipping: ${shippingLabel}\nPayment: ${order.payment}${order.paymentRef ? '\nRef No.: ' + order.paymentRef : '\nRef No.: NOT PROVIDED'}\n\nView in admin: https://hanapusapbuild.store/admin`
       });
       console.log(`[EMAIL] Owner notification sent to ${OWNER_EMAIL}`);
     } catch (err) {
