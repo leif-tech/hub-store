@@ -142,7 +142,7 @@
               <div class="form-group"><label>Town / City <span class="req">*</span></label><input type="text" id="city" required></div>
               <div class="form-group"><label>Province / Region</label>
                 <select id="province" onchange="if(this.value==='__other__'){document.getElementById('provinceOther').style.display='';document.getElementById('provinceOther').focus();}else{document.getElementById('provinceOther').style.display='none';document.getElementById('provinceOther').value='';}">
-                  <optgroup label="NCR & Nearby">
+                  <optgroup label="NCR &amp; Nearby">
                     <option value="Metro Manila (NCR)" selected>Metro Manila (NCR)</option>
                     <option>Bulacan</option><option>Cavite</option><option>Laguna</option><option>Rizal</option><option>Pampanga</option><option>Batangas</option>
                   </optgroup>
@@ -177,8 +177,6 @@
               <label for="website">Website</label>
               <input type="text" id="website" name="website" autocomplete="off" tabindex="-1">
             </div>
-            <!-- Turnstile widget (renders only if site key is set) -->
-            <div id="turnstileBox" style="margin:12px 0 0;display:none"><div id="turnstileWidget"></div></div>
           </form>
         </div>
 
@@ -434,30 +432,6 @@
       }
     }
 
-    // Turnstile — loads only if site key is configured
-    let turnstileToken = null;
-    (async function initTurnstile() {
-      try {
-        const r = await fetch('/api/turnstile-key');
-        if (!r.ok) return;
-        const { siteKey } = await r.json();
-        if (!siteKey) return;
-        document.getElementById('turnstileBox').style.display = '';
-        const script = document.createElement('script');
-        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad';
-        script.async = true;
-        window.onTurnstileLoad = function() {
-          turnstile.render('#turnstileWidget', {
-            sitekey: siteKey,
-            theme: 'light',
-            callback: function(token) { turnstileToken = token; },
-            'expired-callback': function() { turnstileToken = null; }
-          });
-        };
-        document.head.appendChild(script);
-      } catch(e) {}
-    })();
-
     let isSubmitting = false;
 
     function placeOrder(e) {
@@ -499,12 +473,6 @@
         return;
       }
 
-      // Turnstile check (only if widget was loaded)
-      if (document.getElementById('turnstileBox').style.display !== 'none' && !turnstileToken) {
-        alert('Please complete the security check before placing your order.');
-        return;
-      }
-
       isSubmitting = true;
       btn.textContent = 'Placing Order...';
       btn.disabled = true;
@@ -527,7 +495,6 @@
         paymentRef: document.getElementById('paymentRef').value.trim(),
         total: orderTotal,
         customerUid: customerUid || null,
-        turnstileToken: turnstileToken || undefined,
         honeypot: document.getElementById('website').value || undefined
       };
 
