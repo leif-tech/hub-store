@@ -141,75 +141,16 @@
             <div class="form-row">
               <div class="form-group"><label>Town / City <span class="req">*</span></label><input type="text" id="city" required></div>
               <div class="form-group"><label>Province / Region</label>
-                <select id="province">
-                  <option value="">Select...</option>
-                  <optgroup label="NCR &amp; Nearby">
-                    <option value="Metro Manila (NCR)" selected>Metro Manila (NCR)</option>
-                    <option value="Bulacan">Bulacan</option>
-                    <option value="Cavite">Cavite</option>
-                    <option value="Laguna">Laguna</option>
-                    <option value="Rizal">Rizal</option>
-                    <option value="Pampanga">Pampanga</option>
-                    <option value="Batangas">Batangas</option>
-                  </optgroup>
-                  <optgroup label="Central Luzon">
-                    <option value="Tarlac">Tarlac</option>
-                    <option value="Zambales">Zambales</option>
-                    <option value="Nueva Ecija">Nueva Ecija</option>
-                    <option value="Bataan">Bataan</option>
-                    <option value="Aurora">Aurora</option>
-                  </optgroup>
-                  <optgroup label="Northern Luzon">
-                    <option value="Pangasinan">Pangasinan</option>
-                    <option value="La Union">La Union</option>
-                    <option value="Benguet">Benguet</option>
-                    <option value="Ilocos Norte">Ilocos Norte</option>
-                    <option value="Ilocos Sur">Ilocos Sur</option>
-                    <option value="Cagayan">Cagayan</option>
-                    <option value="Isabela">Isabela</option>
-                    <option value="Nueva Vizcaya">Nueva Vizcaya</option>
-                  </optgroup>
-                  <optgroup label="Southern Luzon">
-                    <option value="Quezon">Quezon</option>
-                    <option value="Camarines Sur">Camarines Sur</option>
-                    <option value="Camarines Norte">Camarines Norte</option>
-                    <option value="Albay">Albay</option>
-                    <option value="Sorsogon">Sorsogon</option>
-                    <option value="Mindoro">Mindoro</option>
-                    <option value="Palawan">Palawan</option>
-                    <option value="Marinduque">Marinduque</option>
-                  </optgroup>
-                  <optgroup label="Visayas">
-                    <option value="Cebu">Cebu</option>
-                    <option value="Iloilo">Iloilo</option>
-                    <option value="Negros Occidental">Negros Occidental</option>
-                    <option value="Negros Oriental">Negros Oriental</option>
-                    <option value="Bohol">Bohol</option>
-                    <option value="Leyte">Leyte</option>
-                    <option value="Samar">Samar</option>
-                    <option value="Aklan">Aklan</option>
-                    <option value="Capiz">Capiz</option>
-                    <option value="Antique">Antique</option>
-                  </optgroup>
-                  <optgroup label="Mindanao">
-                    <option value="Davao del Sur">Davao del Sur</option>
-                    <option value="Davao del Norte">Davao del Norte</option>
-                    <option value="Zamboanga del Sur">Zamboanga del Sur</option>
-                    <option value="Zamboanga del Norte">Zamboanga del Norte</option>
-                    <option value="Bukidnon">Bukidnon</option>
-                    <option value="Misamis Oriental">Misamis Oriental</option>
-                    <option value="Misamis Occidental">Misamis Occidental</option>
-                    <option value="South Cotabato">South Cotabato</option>
-                    <option value="North Cotabato">North Cotabato</option>
-                    <option value="Agusan del Norte">Agusan del Norte</option>
-                    <option value="Agusan del Sur">Agusan del Sur</option>
-                    <option value="Surigao del Norte">Surigao del Norte</option>
-                    <option value="Surigao del Sur">Surigao del Sur</option>
-                    <option value="Lanao del Norte">Lanao del Norte</option>
-                    <option value="Lanao del Sur">Lanao del Sur</option>
-                  </optgroup>
-                  <option value="Other">Other Province</option>
-                </select>
+                <input type="text" id="province" list="provinceList" placeholder="e.g. Metro Manila (NCR)" value="Metro Manila (NCR)">
+                <datalist id="provinceList">
+                  <option value="Metro Manila (NCR)">
+                  <option value="Bulacan"><option value="Cavite"><option value="Laguna"><option value="Rizal"><option value="Pampanga"><option value="Batangas">
+                  <option value="Tarlac"><option value="Zambales"><option value="Nueva Ecija"><option value="Bataan"><option value="Aurora">
+                  <option value="Pangasinan"><option value="La Union"><option value="Benguet"><option value="Ilocos Norte"><option value="Ilocos Sur"><option value="Cagayan"><option value="Isabela"><option value="Nueva Vizcaya">
+                  <option value="Quezon"><option value="Camarines Sur"><option value="Camarines Norte"><option value="Albay"><option value="Sorsogon"><option value="Mindoro"><option value="Palawan"><option value="Marinduque">
+                  <option value="Cebu"><option value="Iloilo"><option value="Negros Occidental"><option value="Negros Oriental"><option value="Bohol"><option value="Leyte"><option value="Samar"><option value="Aklan"><option value="Capiz"><option value="Antique">
+                  <option value="Davao del Sur"><option value="Davao del Norte"><option value="Zamboanga del Sur"><option value="Zamboanga del Norte"><option value="Bukidnon"><option value="Misamis Oriental"><option value="Misamis Occidental"><option value="South Cotabato"><option value="North Cotabato"><option value="Agusan del Norte"><option value="Agusan del Sur"><option value="Surigao del Norte"><option value="Surigao del Sur"><option value="Lanao del Norte"><option value="Lanao del Sur">
+                </datalist>
               </div>
             </div>
             <div class="form-row">
