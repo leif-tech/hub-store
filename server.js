@@ -482,7 +482,7 @@ async function customerAuthOptional(req, res, next) {
 
 // ── Email ─────────────────────────────────────────────────────────
 
-// H3: Email notifications — Resend (primary) or SMTP (fallback)
+// H3: Email notifications — Resend (primary) + SMTP (fallback)
 let resendClient = null;
 let emailTransporter = null;
 const RESEND_FROM = process.env.RESEND_FROM || 'H.U.B Store <onboarding@resend.dev>';
@@ -490,15 +490,17 @@ const RESEND_FROM = process.env.RESEND_FROM || 'H.U.B Store <onboarding@resend.d
 if (process.env.RESEND_API_KEY) {
   resendClient = new Resend(process.env.RESEND_API_KEY);
   console.log('[EMAIL] Resend configured (from:', RESEND_FROM + ')');
-} else if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+}
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   emailTransporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT) || 587,
     secure: parseInt(process.env.SMTP_PORT) === 465,
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
   });
-  console.log('[EMAIL] SMTP configured:', process.env.SMTP_HOST);
-} else {
+  console.log('[EMAIL] SMTP configured:', process.env.SMTP_HOST, resendClient ? '(fallback)' : '(primary)');
+}
+if (!resendClient && !emailTransporter) {
   console.log('[EMAIL] Not configured — set RESEND_API_KEY (recommended) or SMTP_HOST/USER/PASS to enable.');
 }
 
@@ -506,13 +508,22 @@ const STORE_EMAIL = process.env.STORE_EMAIL || process.env.SMTP_USER || 'hub@ema
 const OWNER_EMAIL = process.env.OWNER_EMAIL;
 
 async function sendEmail({ from, to, subject, html, text }) {
+  // Try Resend first
   if (resendClient) {
-    const { error } = await resendClient.emails.send({ from: RESEND_FROM, to, subject, html, text });
-    if (error) throw new Error(error.message);
-    return;
+    try {
+      const { error } = await resendClient.emails.send({ from: RESEND_FROM, to, subject, html, text });
+      if (error) throw new Error(error.message);
+      console.log('[EMAIL] Sent via Resend to', to);
+      return;
+    } catch (err) {
+      console.error('[EMAIL] Resend failed:', err.message);
+      // Fall through to SMTP
+    }
   }
+  // Fallback to SMTP
   if (emailTransporter) {
     await emailTransporter.sendMail({ from, to, subject, html, text });
+    console.log('[EMAIL] Sent via SMTP to', to);
     return;
   }
   throw new Error('No email provider configured');
