@@ -497,6 +497,38 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
 const STORE_EMAIL = process.env.STORE_EMAIL || process.env.SMTP_USER || 'hub@email.com';
 const OWNER_EMAIL = process.env.OWNER_EMAIL;
 
+// ── Anti-spam: Cloudflare Turnstile ──────────────────────────────
+const TURNSTILE_SITE_KEY = process.env.TURNSTILE_SITE_KEY || '';
+const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET || '';
+if (TURNSTILE_SECRET) {
+  console.log('[SECURITY] Cloudflare Turnstile enabled');
+} else {
+  console.log('[SECURITY] Turnstile not configured — set TURNSTILE_SITE_KEY & TURNSTILE_SECRET to enable.');
+}
+
+// Public endpoint — returns site key so checkout can render the widget
+app.get('/api/turnstile-key', (req, res) => {
+  res.json({ siteKey: TURNSTILE_SITE_KEY || null });
+});
+
+async function verifyTurnstile(token, ip) {
+  if (!TURNSTILE_SECRET) return true; // skip if not configured
+  if (!token) return false;
+  try {
+    const body = JSON.stringify({ secret: TURNSTILE_SECRET, response: token, remoteip: ip });
+    const resp = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body
+    });
+    const data = await resp.json();
+    return data.success === true;
+  } catch (err) {
+    console.error('[TURNSTILE] Verification error:', err.message);
+    return true; // fail-open so real customers aren't blocked if Cloudflare is down
+  }
+}
+
 async function sendOrderEmails(order) {
   if (!emailTransporter) return;
 
@@ -731,7 +763,22 @@ setInterval(() => {
 
 // B1+H4+B5: Order submission with server-side price verification and stock management
 app.post('/api/order', orderLimiter, csrfCheck, customerAuthOptional, async (req, res) => {
-  const { customer, items, shipping, payment, paymentRef, total } = req.body;
+  const { customer, items, shipping, payment, paymentRef, total, turnstileToken, honeypot } = req.body;
+
+  // Anti-spam: honeypot check (bots fill hidden fields)
+  if (honeypot) {
+    console.warn('[SPAM] Honeypot triggered from', req.ip);
+    return res.status(400).json({ error: 'Order could not be placed. Please try again.' });
+  }
+
+  // Anti-spam: Turnstile verification
+  if (TURNSTILE_SECRET) {
+    const turnstileOk = await verifyTurnstile(turnstileToken, req.ip);
+    if (!turnstileOk) {
+      console.warn('[SPAM] Turnstile failed from', req.ip);
+      return res.status(403).json({ error: 'Security check failed. Please refresh the page and try again.' });
+    }
+  }
 
   // Validate customer fields
   if (!customer || typeof customer !== 'object') {

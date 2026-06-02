@@ -159,6 +159,13 @@
             </div>
             <div class="form-group"><label>Email address <span class="req">*</span></label><input type="email" id="email" placeholder="you@email.com" required></div>
             <div class="form-group"><label>Order notes (optional)</label><textarea id="notes" placeholder="Notes about your order, e.g. special delivery instructions."></textarea></div>
+            <!-- Honeypot — hidden from real users, bots fill it -->
+            <div style="position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0;overflow:hidden" aria-hidden="true" tabindex="-1">
+              <label for="website">Website</label>
+              <input type="text" id="website" name="website" autocomplete="off" tabindex="-1">
+            </div>
+            <!-- Turnstile widget (renders only if site key is set) -->
+            <div id="turnstileBox" style="margin:12px 0 0;display:none"><div id="turnstileWidget"></div></div>
           </form>
         </div>
 
@@ -410,6 +417,30 @@
       }
     }
 
+    // Turnstile — loads only if site key is configured
+    let turnstileToken = null;
+    (async function initTurnstile() {
+      try {
+        const r = await fetch('/api/turnstile-key');
+        if (!r.ok) return;
+        const { siteKey } = await r.json();
+        if (!siteKey) return;
+        document.getElementById('turnstileBox').style.display = '';
+        const script = document.createElement('script');
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad';
+        script.async = true;
+        window.onTurnstileLoad = function() {
+          turnstile.render('#turnstileWidget', {
+            sitekey: siteKey,
+            theme: 'light',
+            callback: function(token) { turnstileToken = token; },
+            'expired-callback': function() { turnstileToken = null; }
+          });
+        };
+        document.head.appendChild(script);
+      } catch(e) {}
+    })();
+
     let isSubmitting = false;
 
     function placeOrder(e) {
@@ -445,6 +476,18 @@
         return;
       }
 
+      // Honeypot check — bots fill hidden fields
+      if (document.getElementById('website').value) {
+        alert('Order could not be placed. Please try again.');
+        return;
+      }
+
+      // Turnstile check (only if widget was loaded)
+      if (document.getElementById('turnstileBox').style.display !== 'none' && !turnstileToken) {
+        alert('Please complete the security check before placing your order.');
+        return;
+      }
+
       isSubmitting = true;
       btn.textContent = 'Placing Order...';
       btn.disabled = true;
@@ -466,7 +509,9 @@
         payment: activePayTab ? (activePayTab.dataset.pay || activePayTab.textContent.trim()) : 'GCash',
         paymentRef: document.getElementById('paymentRef').value.trim(),
         total: orderTotal,
-        customerUid: customerUid || null
+        customerUid: customerUid || null,
+        turnstileToken: turnstileToken || undefined,
+        honeypot: document.getElementById('website').value || undefined
       };
 
       const orderHeaders = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
