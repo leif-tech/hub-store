@@ -3326,7 +3326,7 @@
     try {
       const res = await fetch(API + '/api/admin/payment-qr', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + adminToken },
+        headers: { 'Authorization': 'Bearer ' + token },
         body: form
       });
       if (!res.ok) throw new Error();

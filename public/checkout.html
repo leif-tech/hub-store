@@ -284,7 +284,7 @@
         <div class="card">
           <div class="card-title">Payment Method</div>
           <div class="payment-tabs" id="paymentTabs"></div>
-          <div id="paymentContents"></div>
+          <div id="paymentContents"><p style="font-size:0.78rem;color:var(--text-dim);text-align:center;padding:12px 0">Loading payment methods...</p></div>
 
           <p class="warning">&#9888; Please confirm stock availability before paying. Message us on Facebook Messenger first.</p>
 
@@ -382,8 +382,14 @@
     updateTotal();
     document.title = 'Checkout - H.U.B';
 
+    let shippingType = 'local';
     function updateTotal() {
-      document.getElementById('totalPrice').textContent = fmt(subtotalPrice + shippingCost);
+      const total = subtotalPrice + shippingCost;
+      if (shippingType === 'local' || shippingType === 'pickup') {
+        document.getElementById('totalPrice').textContent = fmt(total);
+      } else {
+        document.getElementById('totalPrice').innerHTML = fmt(subtotalPrice) + ' <span style="font-size:0.7rem;font-weight:600;color:var(--text-dim)">+ shipping</span>';
+      }
     }
 
     function selectShip(el, type) {
@@ -398,6 +404,7 @@
       };
       const costs = { local: 79, metro: 0, provincial: 0, pickup: 0 };
       shippingCost = costs[type];
+      shippingType = type;
       document.getElementById('shippingLabel').textContent = labels[type];
       updateTotal();
     }
@@ -506,7 +513,9 @@
       const activePayTab = document.querySelector('.pay-tab.active');
       const order = {
         customer: {
-          firstName: fname, lastName: lname, street, city,
+          firstName: fname, lastName: lname,
+          street: street + (document.getElementById('street2').value.trim() ? ', ' + document.getElementById('street2').value.trim() : ''),
+          city,
           province: document.getElementById('province').value,
           zip: document.getElementById('zip').value,
           phone, email, notes: document.getElementById('notes').value
@@ -528,13 +537,17 @@
           if (!ok || !data.success) throw new Error(data.error || 'Order could not be placed');
           try { localStorage.removeItem('hub_cart'); } catch(e) {}
           isSubmitting = false;
+          // Hide checkout form, show success prominently
+          document.querySelector('.checkout-grid').style.display = 'none';
           btn.style.display = 'none';
+          document.querySelector('.container > a:last-of-type') && (document.querySelector('button.btn-primary + a') || {}).style && (document.querySelector('button.btn-primary + a').style.display = 'none');
           const confirmedTotal = data.total != null ? fmt(data.total) : fmt(orderTotal);
           document.getElementById('orderConfirmDetails').innerHTML =
             '<strong>Order ID:</strong> ' + esc(data.orderId) + '<br>' +
-            '<strong>Total:</strong> ' + confirmedTotal;
+            '<strong>Total:</strong> ' + confirmedTotal + '<br>' +
+            '<strong>Payment:</strong> ' + esc(order.payment);
           document.getElementById('successMsg').classList.add('show');
-          document.getElementById('successMsg').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         })
         .catch((err) => {
           btn.textContent = 'Place Order';
