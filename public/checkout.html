@@ -126,7 +126,7 @@
 
   <div class="container">
     <h1>Checkout</h1>
-    <div class="checkout-grid">
+    <div class="checkout-grid" style="display:grid !important;visibility:visible !important;opacity:1 !important">
       <!-- LEFT: Billing & Shipping -->
       <div>
         <div class="card">
@@ -530,6 +530,22 @@
     document.querySelectorAll('#orderForm input, #orderForm select, #orderForm textarea').forEach(el => {
       el.addEventListener('input', () => clearFieldError(el));
     });
+  </script>
+  <script>
+    // Safety: ensure checkout content is always visible (guards against external script interference)
+    document.addEventListener('DOMContentLoaded', function() {
+      var g = document.querySelector('.checkout-grid');
+      if (g) { g.style.display = 'grid'; g.style.visibility = 'visible'; g.style.opacity = '1'; }
+      // Force all cards visible
+      document.querySelectorAll('.checkout-grid > div, .checkout-grid .card').forEach(function(el) {
+        el.style.display = ''; el.style.visibility = 'visible'; el.style.opacity = '1';
+      });
+    });
+    // Also run after 1 second as a fallback
+    setTimeout(function() {
+      var g = document.querySelector('.checkout-grid');
+      if (g) { g.style.display = 'grid'; g.style.visibility = 'visible'; g.style.opacity = '1'; }
+    }, 1000);
   </script>
 </body>
 </html>
