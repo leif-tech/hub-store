@@ -934,11 +934,11 @@
           <div id="paymentMethodsSection" style="background:var(--card);border-radius:14px;border:1px solid var(--border);padding:28px;box-shadow:var(--shadow);margin-top:20px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
               <h4 style="font-family:'Exo 2',sans-serif;font-size:0.88rem;color:var(--navy);margin:0;font-weight:700">Payment Methods</h4>
-              <button onclick="addPaymentMethod()" class="btn btn-sm" style="font-size:0.7rem;padding:4px 12px;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer">+ Add Method</button>
+              <button onclick="addPaymentMethod()" style="font-size:0.7rem;padding:6px 14px;background:var(--purple);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Exo 2',sans-serif;font-weight:600">+ Add Method</button>
             </div>
             <p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:20px">Manage payment options shown at checkout (max 5).</p>
             <div id="paymentMethodsList"></div>
-            <button onclick="savePaymentMethods()" class="btn" style="margin-top:16px;width:100%;padding:10px;font-size:0.78rem;font-weight:700;background:var(--blue);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:'Exo 2',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px">
+            <button onclick="savePaymentMethods()" style="margin-top:16px;width:100%;padding:10px;font-size:0.78rem;font-weight:700;background:var(--purple);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:'Exo 2',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px">
               <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
               Save Payment Methods
             </button>
@@ -3250,8 +3250,8 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <div style="display:flex;align-items:center;gap:10px">
             <label style="position:relative;width:36px;min-width:36px;height:20px;cursor:pointer">
-              <input type="checkbox" ${m.enabled ? 'checked' : ''} onchange="paymentMethodsData[${i}].enabled=this.checked" style="opacity:0;width:0;height:0;position:absolute">
-              <span style="position:absolute;inset:0;background:${m.enabled ? 'var(--blue)' : '#d1d5db'};border-radius:20px;transition:background .2s"></span>
+              <input type="checkbox" ${m.enabled ? 'checked' : ''} onchange="paymentMethodsData[${i}].enabled=this.checked;renderPaymentMethods()" style="opacity:0;width:0;height:0;position:absolute">
+              <span style="position:absolute;inset:0;background:${m.enabled ? 'var(--purple)' : '#d1d5db'};border-radius:20px;transition:background .2s"></span>
               <span style="position:absolute;top:2px;left:${m.enabled ? '18' : '2'}px;width:16px;height:16px;background:#fff;border-radius:50%;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)"></span>
             </label>
             <span style="font-size:0.78rem;font-weight:600;color:var(--navy);font-family:'Exo 2',sans-serif">${escapeHTML(m.name || 'Untitled')}</span>
@@ -3275,7 +3275,7 @@
         <div style="display:flex;align-items:center;gap:12px">
           <label style="font-size:0.65rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px">QR Code</label>
           ${m.qrImage ? `<img src="${escapeHTML(m.qrImage)}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" onerror="this.style.display='none'">` : '<span style="font-size:0.7rem;color:var(--text-dim)">None</span>'}
-          <label style="font-size:0.7rem;font-weight:600;color:var(--blue);cursor:pointer;padding:4px 10px;border:1px solid var(--blue);border-radius:6px">
+          <label style="font-size:0.7rem;font-weight:600;color:var(--purple);cursor:pointer;padding:4px 10px;border:1px solid var(--purple);border-radius:6px">
             Upload
             <input type="file" accept="image/*" onchange="uploadPaymentQR(${i},this)" style="display:none">
           </label>
