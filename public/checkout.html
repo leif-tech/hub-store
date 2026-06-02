@@ -141,16 +141,29 @@
             <div class="form-row">
               <div class="form-group"><label>Town / City <span class="req">*</span></label><input type="text" id="city" required></div>
               <div class="form-group"><label>Province / Region</label>
-                <input type="text" id="province" list="provinceList" placeholder="e.g. Metro Manila (NCR)" value="Metro Manila (NCR)">
-                <datalist id="provinceList">
-                  <option value="Metro Manila (NCR)">
-                  <option value="Bulacan"><option value="Cavite"><option value="Laguna"><option value="Rizal"><option value="Pampanga"><option value="Batangas">
-                  <option value="Tarlac"><option value="Zambales"><option value="Nueva Ecija"><option value="Bataan"><option value="Aurora">
-                  <option value="Pangasinan"><option value="La Union"><option value="Benguet"><option value="Ilocos Norte"><option value="Ilocos Sur"><option value="Cagayan"><option value="Isabela"><option value="Nueva Vizcaya">
-                  <option value="Quezon"><option value="Camarines Sur"><option value="Camarines Norte"><option value="Albay"><option value="Sorsogon"><option value="Mindoro"><option value="Palawan"><option value="Marinduque">
-                  <option value="Cebu"><option value="Iloilo"><option value="Negros Occidental"><option value="Negros Oriental"><option value="Bohol"><option value="Leyte"><option value="Samar"><option value="Aklan"><option value="Capiz"><option value="Antique">
-                  <option value="Davao del Sur"><option value="Davao del Norte"><option value="Zamboanga del Sur"><option value="Zamboanga del Norte"><option value="Bukidnon"><option value="Misamis Oriental"><option value="Misamis Occidental"><option value="South Cotabato"><option value="North Cotabato"><option value="Agusan del Norte"><option value="Agusan del Sur"><option value="Surigao del Norte"><option value="Surigao del Sur"><option value="Lanao del Norte"><option value="Lanao del Sur">
-                </datalist>
+                <select id="province" onchange="if(this.value==='__other__'){document.getElementById('provinceOther').style.display='';document.getElementById('provinceOther').focus();}else{document.getElementById('provinceOther').style.display='none';document.getElementById('provinceOther').value='';}">
+                  <optgroup label="NCR & Nearby">
+                    <option value="Metro Manila (NCR)" selected>Metro Manila (NCR)</option>
+                    <option>Bulacan</option><option>Cavite</option><option>Laguna</option><option>Rizal</option><option>Pampanga</option><option>Batangas</option>
+                  </optgroup>
+                  <optgroup label="Central Luzon">
+                    <option>Tarlac</option><option>Zambales</option><option>Nueva Ecija</option><option>Bataan</option><option>Aurora</option>
+                  </optgroup>
+                  <optgroup label="Northern Luzon">
+                    <option>Pangasinan</option><option>La Union</option><option>Benguet</option><option>Ilocos Norte</option><option>Ilocos Sur</option><option>Cagayan</option><option>Isabela</option><option>Nueva Vizcaya</option>
+                  </optgroup>
+                  <optgroup label="Southern Luzon">
+                    <option>Quezon</option><option>Camarines Sur</option><option>Camarines Norte</option><option>Albay</option><option>Sorsogon</option><option>Mindoro</option><option>Palawan</option><option>Marinduque</option>
+                  </optgroup>
+                  <optgroup label="Visayas">
+                    <option>Cebu</option><option>Iloilo</option><option>Negros Occidental</option><option>Negros Oriental</option><option>Bohol</option><option>Leyte</option><option>Samar</option><option>Aklan</option><option>Capiz</option><option>Antique</option>
+                  </optgroup>
+                  <optgroup label="Mindanao">
+                    <option>Davao del Sur</option><option>Davao del Norte</option><option>Zamboanga del Sur</option><option>Zamboanga del Norte</option><option>Bukidnon</option><option>Misamis Oriental</option><option>Misamis Occidental</option><option>South Cotabato</option><option>North Cotabato</option><option>Agusan del Norte</option><option>Agusan del Sur</option><option>Surigao del Norte</option><option>Surigao del Sur</option><option>Lanao del Norte</option><option>Lanao del Sur</option>
+                  </optgroup>
+                  <option value="__other__">Other (type below)</option>
+                </select>
+                <input type="text" id="provinceOther" placeholder="Type your province..." style="display:none;margin-top:6px">
               </div>
             </div>
             <div class="form-row">
@@ -384,11 +397,15 @@
 
     (async function loadPaymentMethods() {
       try {
-        const res = await fetch('/api/settings');
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch('/api/settings', { signal: controller.signal });
+        clearTimeout(timeout);
         if (!res.ok) throw new Error();
         const data = await res.json();
         renderPaymentMethods(data.paymentMethods || defaultPaymentMethods);
       } catch(e) {
+        console.warn('[Checkout] Payment methods fetch failed, using defaults:', e.message);
         renderPaymentMethods(defaultPaymentMethods);
       }
     })();
@@ -500,7 +517,7 @@
           firstName: fname, lastName: lname,
           street: street + (document.getElementById('street2').value.trim() ? ', ' + document.getElementById('street2').value.trim() : ''),
           city,
-          province: document.getElementById('province').value,
+          province: document.getElementById('province').value === '__other__' ? document.getElementById('provinceOther').value.trim() : document.getElementById('province').value,
           zip: document.getElementById('zip').value,
           phone, email, notes: document.getElementById('notes').value
         },
