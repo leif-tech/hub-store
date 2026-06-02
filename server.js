@@ -148,9 +148,9 @@ const helmetMiddleware = helmet({
   crossOriginEmbedderPolicy: false,
   crossOriginOpenerPolicy: false
 });
-// Skip Helmet for Firebase auth proxy paths — proxied pages need clean headers
+// Skip Helmet for Firebase auth proxy paths and checkout (no CSP interference)
 app.use((req, res, next) => {
-  if (req.originalUrl.startsWith('/__/')) return next();
+  if (req.originalUrl.startsWith('/__/') || req.originalUrl.startsWith('/checkout')) return next();
   helmetMiddleware(req, res, next);
 });
 
