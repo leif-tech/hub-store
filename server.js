@@ -132,7 +132,7 @@ const helmetMiddleware = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.gstatic.com", "https://cdn.jsdelivr.net", "https://apis.google.com", "https://accounts.google.com", "https://connect.facebook.net"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.gstatic.com", "https://cdn.jsdelivr.net", "https://apis.google.com", "https://accounts.google.com", "https://connect.facebook.net", "https://whitelabel-ai-production.up.railway.app"],
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
