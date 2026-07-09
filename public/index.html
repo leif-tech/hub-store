@@ -225,8 +225,9 @@
     .trust-item.visible{opacity:1;transform:translateY(0)}
     .trust-item+.trust-item::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);height:45%;width:1px;background:rgba(255,255,255,0.18)}
     .trust-item:hover{transform:translateY(-3px) !important}
-    .trust-icon{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.13);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;transition:background .25s,transform .25s}
-    .trust-item:hover .trust-icon{background:rgba(255,255,255,0.22);transform:scale(1.1)}
+    @keyframes trustIconPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.15)}50%{box-shadow:0 0 12px 4px rgba(255,255,255,0.1)}}
+    .trust-icon{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.13);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;transition:background .25s,transform .25s;animation:trustIconPulse 3s ease-in-out infinite}
+    .trust-item:hover .trust-icon{background:rgba(255,255,255,0.22);transform:scale(1.15);animation:none;box-shadow:0 0 20px rgba(255,255,255,0.2)}
     .trust-num{font-family:'Rajdhani',sans-serif;font-size:clamp(1.5rem,2.2vw,2.4rem);font-weight:700;color:#fff;line-height:1;letter-spacing:0.5px;white-space:nowrap}
     .trust-label{font-family:'Rajdhani',sans-serif;font-size:0.62rem;font-weight:600;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1.8px;margin-top:5px;white-space:nowrap}
     @media(max-width:1100px){.trust-grid{grid-template-columns:repeat(5,1fr);gap:32px 0}.trust-item:nth-child(n+6){display:none}}
@@ -260,7 +261,9 @@
     .section-header.center{text-align:center}
     .section-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:12px}
     .section-eyebrow.center{justify-content:center}
+    @keyframes lineExpand{from{width:0;opacity:0}to{width:32px;opacity:1}}
     .section-line{width:32px;height:3px;background:var(--grad);border-radius:3px}
+    .fade-in.visible .section-line,.visible .section-line{animation:lineExpand .6s ease-out forwards}
     .section-tag{font-size:0.72rem;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--blue)}
     .section-title{font-family:'Exo 2',sans-serif;font-size:clamp(1.75rem,3vw,2.4rem);font-weight:800;color:var(--heading);letter-spacing:0.2px;line-height:1.18;margin-bottom:14px}
     .section-desc{font-size:0.96rem;color:var(--text-dim);line-height:1.72;max-width:580px}
@@ -271,20 +274,22 @@
     .fade-in.visible{opacity:1;transform:translateY(0)}
 
     /* ===== BRAND TICKER (dual-row split) ===== */
-    .brand-ticker{background:var(--bg-soft);overflow:hidden;padding:20px 0;position:relative;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-    .brand-ticker::before,.brand-ticker::after{content:'';position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none}
-    .brand-ticker::before{left:0;background:linear-gradient(to right,var(--bg-soft) 0%,transparent 100%)}
-    .brand-ticker::after{right:0;background:linear-gradient(to left,var(--bg-soft) 0%,transparent 100%)}
-    .brand-row{display:flex;gap:12px;white-space:nowrap;width:max-content}
-    .brand-row.top{animation:tickerLeft 40s linear infinite;margin-bottom:10px}
+    .brand-ticker{background:#0a0e1a;overflow:hidden;padding:32px 0;position:relative;border-top:1px solid rgba(26,110,232,0.15);border-bottom:1px solid rgba(26,110,232,0.15)}
+    .brand-ticker::before,.brand-ticker::after{content:'';position:absolute;top:0;bottom:0;width:150px;z-index:2;pointer-events:none}
+    .brand-ticker::before{left:0;background:linear-gradient(to right,#0a0e1a 0%,transparent 100%)}
+    .brand-ticker::after{right:0;background:linear-gradient(to left,#0a0e1a 0%,transparent 100%)}
+    .brand-ticker-label{text-align:center;margin-bottom:18px;font-family:'Rajdhani',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.3)}
+    .brand-row{display:flex;gap:14px;white-space:nowrap;width:max-content}
+    .brand-row.top{animation:tickerLeft 40s linear infinite;margin-bottom:12px}
     .brand-row.bottom{animation:tickerRight 45s linear infinite}
     .brand-ticker:hover .brand-row{animation-play-state:paused}
     @keyframes tickerLeft{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
     @keyframes tickerRight{0%{transform:translateX(-50%)}100%{transform:translateX(0)}}
-    .brand-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 18px;border-radius:20px;font-size:0.72rem;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;border:1px solid var(--border);color:var(--heading);background:#fff;box-shadow:var(--shadow-xs);transition:all .25s;cursor:default}
-    .brand-chip:hover{color:var(--blue);border-color:var(--blue);background:var(--blue-light);box-shadow:var(--shadow-blue)}
-    .brand-chip .chip-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);opacity:0.4;transition:all .25s}
-    .brand-chip:hover .chip-dot{opacity:1;box-shadow:0 0 6px var(--blue)}
+    @keyframes chipGlow{0%,100%{border-color:rgba(26,110,232,0.12)}50%{border-color:rgba(26,110,232,0.3)}}
+    .brand-chip{display:inline-flex;align-items:center;gap:7px;padding:8px 20px;border-radius:10px;font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.03);backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,0.2);transition:all .3s ease;cursor:default;animation:chipGlow 4s ease-in-out infinite;animation-delay:calc(var(--i,0) * 0.3s)}
+    .brand-chip:hover{color:#fff;border-color:rgba(26,110,232,0.5);background:rgba(26,110,232,0.1);box-shadow:0 0 20px rgba(26,110,232,0.15),0 2px 8px rgba(0,0,0,0.3);transform:translateY(-2px)}
+    .brand-chip .chip-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);opacity:0.5;transition:all .3s;box-shadow:0 0 4px rgba(26,110,232,0.3)}
+    .brand-chip:hover .chip-dot{opacity:1;box-shadow:0 0 8px var(--blue),0 0 16px rgba(26,110,232,0.4)}
 
     /* ===== CATEGORY TILES ===== */
     .cat-tiles-section{
@@ -341,7 +346,8 @@
     .product-compare-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
     .featured-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:20px}
     .feat-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:all .28s;box-shadow:var(--shadow-xs);display:flex;flex-direction:column;position:relative}
-    .feat-card:hover{transform:translateY(-5px);box-shadow:0 16px 40px rgba(26,110,232,0.13);border-color:var(--border-blue)}
+    .feat-card:hover{transform:translateY(-6px);box-shadow:0 16px 40px rgba(26,110,232,0.15),0 0 0 1px rgba(26,110,232,0.1);border-color:var(--border-blue)}
+    .feat-card:hover .feat-card-img::after{background:linear-gradient(to bottom,transparent 60%,rgba(26,110,232,0.08) 100%)}
     .feat-card-img{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;position:relative;font-size:3.8rem;overflow:hidden}
     .feat-card-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,0.18) 100%)}
     .feat-card-body{padding:14px 16px 16px;display:flex;flex-direction:column;flex:1;gap:3px}
@@ -545,11 +551,17 @@
 
     /* ===== WHY US / FEATURES ===== */
     .why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
-    .why-card{padding:32px 28px;border-radius:var(--r-xl);border:1.5px solid var(--border);background:#fff;transition:all .25s;position:relative;overflow:hidden}
-    .why-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--grad)}
-    .why-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg);border-color:var(--border-blue)}
-    .why-num{font-family:'Exo 2',sans-serif;font-size:3.5rem;font-weight:900;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:12px;opacity:0.18;position:absolute;top:20px;right:24px}
-    .why-icon{font-size:2rem;margin-bottom:16px}
+    @keyframes shimmerSweep{0%{left:-100%}100%{left:200%}}
+    .why-card{padding:32px 28px;border-radius:var(--r-xl);border:1.5px solid var(--border);background:#fff;transition:all .35s cubic-bezier(0.16,1,0.3,1);position:relative;overflow:hidden}
+    .why-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--grad);transition:height .3s}
+    .why-card::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(26,110,232,0.04),transparent);pointer-events:none}
+    .why-card:hover::after{animation:shimmerSweep .8s ease forwards}
+    .why-card:hover{transform:translateY(-6px);box-shadow:0 20px 50px rgba(26,110,232,0.12);border-color:var(--border-blue)}
+    .why-card:hover::before{height:4px}
+    .why-num{font-family:'Exo 2',sans-serif;font-size:3.5rem;font-weight:900;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:12px;opacity:0.18;position:absolute;top:20px;right:24px;transition:opacity .3s}
+    .why-card:hover .why-num{opacity:0.3}
+    .why-icon{font-size:2rem;margin-bottom:16px;transition:transform .3s}
+    .why-card:hover .why-icon{transform:scale(1.15)}
     .why-card h3{font-family:'Exo 2',sans-serif;font-size:1.1rem;font-weight:800;color:var(--heading);margin-bottom:8px}
     .why-card p{font-size:0.85rem;color:var(--text);line-height:1.7}
 
@@ -587,7 +599,8 @@
     .about-img-main img{width:100%;height:460px;object-fit:cover;display:block}
     .about-img-accent{position:absolute;bottom:-24px;right:-24px;width:180px;height:130px;border-radius:14px;overflow:hidden;border:4px solid #fff;box-shadow:var(--shadow-lg)}
     .about-img-accent img{width:100%;height:100%;object-fit:cover}
-    .about-stat-chip{position:absolute;top:24px;left:-24px;background:#fff;border-radius:14px;padding:16px 20px;box-shadow:var(--shadow-lg);border:1px solid var(--border);text-align:center}
+    @keyframes statFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+    .about-stat-chip{position:absolute;top:24px;left:-24px;background:#fff;border-radius:14px;padding:16px 20px;box-shadow:var(--shadow-lg);border:1px solid var(--border);text-align:center;animation:statFloat 4s ease-in-out infinite}
     .about-stat-chip .chip-num{font-family:'Exo 2',sans-serif;font-size:1.6rem;font-weight:900;color:var(--blue);line-height:1}
     .about-stat-chip .chip-lbl{font-size:0.7rem;color:var(--text-dim);font-weight:600;margin-top:3px}
     .about-text-col .section-title{margin-bottom:16px}
@@ -603,9 +616,10 @@
     .rev-stars{font-size:1.2rem;color:var(--gold);letter-spacing:2px;margin-bottom:4px}
     .rev-count{font-size:0.84rem;color:var(--text-dim);font-weight:500}
     .reviews-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
-    .review-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-lg);padding:24px;transition:all .22s;border-left:4px solid var(--blue)}
-    .review-card:hover{box-shadow:var(--shadow);border-color:var(--border-blue)}
-    .review-stars{color:var(--gold);font-size:0.9rem;margin-bottom:12px;letter-spacing:1px}
+    .review-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r-lg);padding:24px;transition:all .35s cubic-bezier(0.16,1,0.3,1);border-left:4px solid var(--blue);position:relative}
+    .review-card:hover{box-shadow:0 12px 40px rgba(26,110,232,0.1);border-color:var(--border-blue);transform:translateY(-4px)}
+    .review-card:hover .review-stars{letter-spacing:3px}
+    .review-stars{color:var(--gold);font-size:0.9rem;margin-bottom:12px;letter-spacing:1px;transition:letter-spacing .3s ease}
     .review-text{font-size:0.87rem;color:var(--text);line-height:1.75;margin-bottom:18px}
     .review-author{display:flex;align-items:center;gap:12px}
     .review-avatar{width:38px;height:38px;border-radius:50%;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0}
@@ -613,9 +627,13 @@
     .review-source{font-size:0.74rem;color:var(--text-dim)}
 
     /* ===== CTA BANNER ===== */
+    @keyframes ctaOrb1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-30px,20px) scale(1.1)}}
+    @keyframes ctaOrb2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(20px,-25px) scale(0.9)}}
+    @keyframes ctaShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
     .cta-banner{background:var(--grad);border-radius:var(--r-xl);padding:64px 48px;display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center;position:relative;overflow:hidden;box-shadow:0 16px 56px rgba(26,110,232,0.3)}
-    .cta-banner::after{content:'';position:absolute;right:-80px;top:-80px;width:320px;height:320px;border-radius:50%;background:rgba(255,255,255,0.06)}
-    .cta-banner::before{content:'';position:absolute;right:120px;bottom:-60px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.04)}
+    .cta-banner::after{content:'';position:absolute;right:-80px;top:-80px;width:320px;height:320px;border-radius:50%;background:rgba(255,255,255,0.06);animation:ctaOrb1 8s ease-in-out infinite}
+    .cta-banner::before{content:'';position:absolute;right:120px;bottom:-60px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.04);animation:ctaOrb2 10s ease-in-out infinite}
+    .cta-banner:hover{box-shadow:0 20px 70px rgba(26,110,232,0.4)}
     .cta-text h2{font-family:'Exo 2',sans-serif;font-size:2.2rem;font-weight:900;color:#fff;margin-bottom:10px;position:relative;z-index:1;letter-spacing:0.3px}
     .cta-text p{color:rgba(255,255,255,0.75);font-size:0.98rem;position:relative;z-index:1}
     .cta-actions{display:flex;gap:12px;flex-shrink:0;position:relative;z-index:1}
@@ -625,13 +643,13 @@
     .cta-actions .btn-ghost:hover{background:rgba(255,255,255,0.2)}
 
     /* ===== CONTACT ===== */
-    .contact-wrap{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+    .contact-wrap{display:grid;grid-template-columns:1fr;gap:48px;align-items:start;max-width:700px;margin:0 auto}
     .contact-info-col{}
     .contact-info-block{margin-bottom:32px}
     .contact-info-block h3{font-family:'Exo 2',sans-serif;font-size:1rem;font-weight:800;color:var(--heading);margin-bottom:16px;letter-spacing:0.2px}
     .contact-chips{display:flex;flex-direction:column;gap:10px}
-    .contact-chip{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;background:#fff;border:1.5px solid var(--border);font-size:0.86rem;transition:all .2s}
-    .contact-chip:hover{border-color:var(--border-blue);background:var(--blue-light)}
+    .contact-chip{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;background:#fff;border:1.5px solid var(--border);font-size:0.86rem;transition:all .3s cubic-bezier(0.16,1,0.3,1)}
+    .contact-chip:hover{border-color:var(--border-blue);background:var(--blue-light);transform:translateX(6px);box-shadow:0 4px 16px rgba(26,110,232,0.08)}
     .contact-chip .chip-icon{width:36px;height:36px;border-radius:10px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
     .contact-chip .chip-body{}
     .contact-chip .chip-label{font-size:0.68rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
@@ -766,7 +784,7 @@
     @keyframes toastProgress{0%{width:100%}100%{width:0}}
 
     /* ===== SCROLL TOP ===== */
-    .scroll-top-btn{position:fixed;bottom:96px;right:28px;width:40px;height:40px;border-radius:50%;background:var(--grad);color:#fff;z-index:800;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:var(--shadow-blue);opacity:0;visibility:hidden;transform:translateY(10px);transition:all .3s}
+    .scroll-top-btn{position:fixed;bottom:28px;right:28px;width:40px;height:40px;border-radius:50%;background:var(--grad);color:#fff;z-index:800;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:var(--shadow-blue);opacity:0;visibility:hidden;transform:translateY(10px);transition:all .3s}
     .scroll-top-btn.show{opacity:1;visibility:visible;transform:translateY(0)}
     .scroll-top-btn:hover{transform:translateY(-3px);box-shadow:0 10px 32px rgba(26,110,232,0.4)}
 
@@ -843,7 +861,7 @@
 
   <!-- ANNOUNCEMENT BAR -->
   <div class="topbar-announce">
-    &#128205; Now Open at Arbortowne Plaza II, Valenzuela &nbsp;&bull;&nbsp; Mon–Sat 10AM–7PM
+    <a href="https://maps.app.goo.gl/Ev11Ci6JCuGp2gwV7" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">&#128205; Now Open at Arbortowne Plaza II, Valenzuela</a> &nbsp;&bull;&nbsp; Mon–Sat 10AM–6PM
     <span class="sep">|</span> 0976 002 1202 &nbsp;&bull;&nbsp;
     <a href="https://www.facebook.com/Hanap.Usap.Build" target="_blank" rel="noopener">Facebook</a> &nbsp;&bull;&nbsp;
     <a href="https://www.instagram.com/hanap.usap.build" target="_blank" rel="noopener">Instagram</a> &nbsp;&bull;&nbsp;
@@ -986,8 +1004,8 @@
     <img class="hero-bg" src="/hero-bg.webp" alt="" loading="eager">
     <div class="hero-inner">
       <div class="hero-text-block">
-        <div class="hero-badge">⭐ 5.0 &nbsp;·&nbsp; 413+ Facebook Reviews</div>
-        <p class="hero-sub">Valenzuela's #1 PC Hub</p>
+        <div class="hero-badge">⭐ 5.0 &nbsp;·&nbsp; 400+ Facebook Reviews</div>
+        <p class="hero-sub">Your Trusted PC Hub in Valenzuela</p>
         <h1 class="hero-title">Hanap. Usap. <span class="grad">Build.</span></h1>
         <div class="hero-btns">
           <a href="/shop" class="hero-btn-outline" onclick="event.preventDefault();navigateTo('/shop')">Browse the Store</a>
@@ -1000,6 +1018,7 @@
 
   <!-- BRAND TICKER (dual-row split) -->
   <div class="brand-ticker">
+    <div class="brand-ticker-label">Trusted Brands We Carry</div>
     <div class="brand-row top">
       <span class="brand-chip"><span class="chip-dot"></span>AMD</span><span class="brand-chip"><span class="chip-dot"></span>Intel</span><span class="brand-chip"><span class="chip-dot"></span>NVIDIA</span><span class="brand-chip"><span class="chip-dot"></span>ASUS</span><span class="brand-chip"><span class="chip-dot"></span>Gigabyte</span><span class="brand-chip"><span class="chip-dot"></span>MSI</span><span class="brand-chip"><span class="chip-dot"></span>Kingston</span><span class="brand-chip"><span class="chip-dot"></span>Corsair</span><span class="brand-chip"><span class="chip-dot"></span>Seasonic</span><span class="brand-chip"><span class="chip-dot"></span>DeepCool</span><span class="brand-chip"><span class="chip-dot"></span>Logitech</span><span class="brand-chip"><span class="chip-dot"></span>Acer</span><span class="brand-chip"><span class="chip-dot"></span>UGREEN</span><span class="brand-chip"><span class="chip-dot"></span>Samsung</span><span class="brand-chip"><span class="chip-dot"></span>TEAMGROUP</span><span class="brand-chip"><span class="chip-dot"></span>AMD</span><span class="brand-chip"><span class="chip-dot"></span>Intel</span><span class="brand-chip"><span class="chip-dot"></span>NVIDIA</span><span class="brand-chip"><span class="chip-dot"></span>ASUS</span><span class="brand-chip"><span class="chip-dot"></span>Gigabyte</span><span class="brand-chip"><span class="chip-dot"></span>MSI</span><span class="brand-chip"><span class="chip-dot"></span>Kingston</span><span class="brand-chip"><span class="chip-dot"></span>Corsair</span><span class="brand-chip"><span class="chip-dot"></span>Seasonic</span><span class="brand-chip"><span class="chip-dot"></span>DeepCool</span><span class="brand-chip"><span class="chip-dot"></span>Logitech</span><span class="brand-chip"><span class="chip-dot"></span>Acer</span><span class="brand-chip"><span class="chip-dot"></span>UGREEN</span><span class="brand-chip"><span class="chip-dot"></span>Samsung</span><span class="brand-chip"><span class="chip-dot"></span>TEAMGROUP</span>
     </div>
@@ -1014,7 +1033,7 @@
       <div class="section-header center">
         <div class="section-eyebrow center"><div class="section-line"></div><span class="section-tag">Build Your Setup</span><div class="section-line"></div></div>
         <h2 class="section-title">Find What You Need</h2>
-        <p class="section-desc">From GPUs to complete PC builds. Pick a category and find your next upgrade.</p>
+        <p class="section-desc">From Parts to Complete PC Builds.</p>
       </div>
       <div class="cat-btn-grid" id="catTilesGrid">
         <p style="text-align:center;color:var(--text-dim);padding:40px">Loading categories...</p>
@@ -1037,14 +1056,14 @@
           <div class="trust-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </div>
-          <div class="trust-num">413+</div>
+          <div class="trust-num">400+</div>
           <div class="trust-label">Facebook Reviews</div>
         </div>
         <div class="trust-item">
           <div class="trust-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
-          <div class="trust-num">24K+</div>
+          <div class="trust-num">26K+</div>
           <div class="trust-label">FB Followers</div>
         </div>
         <div class="trust-item">
@@ -1058,7 +1077,7 @@
           <div class="trust-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
           </div>
-          <div class="trust-num">#1</div>
+          <div class="trust-num">Trusted</div>
           <div class="trust-label">PC Hub in Valenzuela</div>
         </div>
         <div class="trust-item">
@@ -1171,7 +1190,7 @@
             <img src="/hub-team.png" alt="H.U.B Team" loading="lazy">
           </div>
           <div class="about-stat-chip">
-            <div class="chip-num">24K+</div>
+            <div class="chip-num">26K+</div>
             <div class="chip-lbl">Facebook Followers</div>
           </div>
         </div>
@@ -1241,15 +1260,15 @@
                 <span class="stb-title">hub_build_config.exe</span>
               </div>
               <div class="spec-terminal-body">
-                <div class="spec-row"><span class="sk">CPU</span><span class="sv">Intel Core i5-14400F</span></div>
-                <div class="spec-row"><span class="sk">GPU</span><span class="sv">RTX 4060 8GB GDDR6</span></div>
-                <div class="spec-row"><span class="sk">RAM</span><span class="sv">16GB DDR5 5600MHz</span></div>
+                <div class="spec-row"><span class="sk">CPU</span><span class="sv">AMD Ryzen 5 7500F</span></div>
+                <div class="spec-row"><span class="sk">GPU</span><span class="sv">RTX 5050 8GB</span></div>
+                <div class="spec-row"><span class="sk">RAM</span><span class="sv">16GB DDR5 6000MHz</span></div>
                 <div class="spec-row"><span class="sk">SSD</span><span class="sv">1TB NVMe Gen4 PCIe</span></div>
-                <div class="spec-row"><span class="sk">MOBO</span><span class="sv">B760M DDR5 mATX</span></div>
+                <div class="spec-row"><span class="sk">MOBO</span><span class="sv">Gigabyte B650M WiFi</span></div>
                 <div class="spec-row"><span class="sk">PSU</span><span class="sv">650W 80+ Bronze</span></div>
                 <div class="spec-divider"></div>
                 <div class="spec-row"><span class="sk">Status</span><span class="sv sv-green">● Ready to Build</span></div>
-                <div class="spec-row"><span class="sk">Price</span><span class="sv sv-blue">₱35,999</span></div>
+                <div class="spec-row"><span class="sk">Price</span><span class="sv sv-blue">₱60,950</span></div>
               </div>
               <div class="spec-terminal-footer">
                 <span class="spec-footer-note">Sample mid-range gaming build</span>
@@ -1295,7 +1314,7 @@
         <div>
           <div class="rev-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
           <div style="font-weight:700;font-size:0.95rem;color:var(--heading);margin-bottom:4px">Rated 5.0 out of 5</div>
-          <div class="rev-count">Based on 413+ Facebook reviews &bull; 100% Recommend Rate</div>
+          <div class="rev-count">Based on 400+ Facebook reviews &bull; 100% Recommend Rate</div>
         </div>
         <a href="https://www.facebook.com/Hanap.Usap.Build/reviews/?id=100057671040397&sk=reviews" target="_blank" rel="noopener" class="btn btn-primary" style="margin-left:auto">See All Reviews</a>
       </div>
@@ -1345,7 +1364,8 @@
                 <div class="chip-icon">&#128205;</div>
                 <div class="chip-body">
                   <div class="chip-label">Address</div>
-                  <a href="https://maps.google.com/?q=Arbortowne+Plaza+II+Karuhatan+Road+Valenzuela" target="_blank" rel="noopener">3/F Unit 306 Arbortowne Plaza II, Karuhatan Rd, Valenzuela 1442</a>
+                  <a href="https://maps.app.goo.gl/Ev11Ci6JCuGp2gwV7" target="_blank" rel="noopener">3/F Unit 306 Arbortowne Plaza II, Karuhatan Rd, Valenzuela 1442</a>
+                  <small style="display:block;margin-top:4px;color:#94a3b8;font-size:0.78rem">Elevator available at the center staircase &bull; Free parking</small>
                 </div>
               </div>
               <div class="contact-chip">
@@ -1366,7 +1386,7 @@
                 <div class="chip-icon">&#128336;</div>
                 <div class="chip-body">
                   <div class="chip-label">Store Hours</div>
-                  <span>Mon – Sat &nbsp; 10:00 AM – 7:00 PM</span>
+                  <span>Mon – Sat &nbsp; 10:00 AM – 6:00 PM</span>
                 </div>
               </div>
             </div>
@@ -1387,33 +1407,6 @@
           </a>
           <div class="contact-map" style="margin-top:24px">
             <iframe id="contactMap" data-src="https://maps.google.com/maps?q=Arbortowne+Plaza+II,+Karuhatan+Road,+Valenzuela+City,+Metro+Manila,+Philippines&output=embed" allowfullscreen="" loading="lazy"></iframe>
-          </div>
-        </div>
-        <div class="contact-form-col">
-          <div class="contact-card">
-            <h3>Send Us a Message</h3>
-            <form onsubmit="handleSubmit(event)">
-              <div class="form-group">
-                <label>Your Name</label>
-                <input type="text" name="name" placeholder="Juan dela Cruz" required>
-              </div>
-              <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" name="email" placeholder="juan@example.com" required>
-              </div>
-              <div class="form-group">
-                <label>Phone (Optional)</label>
-                <input type="text" name="phone" placeholder="09XX XXX XXXX">
-              </div>
-              <div class="form-group">
-                <label>Message</label>
-                <textarea name="message" rows="5" placeholder="Tell us what you need budget, specs, or a question about parts..." required></textarea>
-              </div>
-              <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:13px">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                Send Message
-              </button>
-            </form>
           </div>
         </div>
       </div>
@@ -2396,18 +2389,6 @@
     updateCompareBar();
 
     // ===== CONTACT FORM =====
-    function handleSubmit(e){
-      e.preventDefault();
-      const f=e.target,b=f.querySelector('button[type="submit"]'),o=b.innerHTML;
-      b.innerHTML='Sending...';b.disabled=true;
-      const data={name:f.name.value,email:f.email.value,phone:f.phone?.value||'',message:f.message.value};
-      fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify(data)})
-        .then(r=>r.json()).then(d=>{
-          b.innerHTML='&#10003; Sent!';b.style.background='linear-gradient(135deg,#22c55e,#16a34a)';f.reset();
-          setTimeout(()=>{b.innerHTML=o;b.style.background='';b.disabled=false},3000);
-        }).catch(()=>{b.innerHTML='Error, Try Again';b.style.background='#ef4444';b.disabled=false;setTimeout(()=>{b.innerHTML=o;b.style.background=''},3000)});
-    }
-
     // ===== UPDATE PRODUCT DETAIL (wishlist/compare state) =====
     const _origOpenPD=openProductDetail;
     openProductDetail=function(idx,skipPush){
@@ -2471,6 +2452,5 @@
     loadProducts();
   </script>
 
-<script src="https://whitelabel-ai-production.up.railway.app/widget.js" data-bot-id="8a1f0519-bd02-4c76-81e0-77c74cb38c70" data-api-url="https://whitelabel-ai-production.up.railway.app"></script>
 </body>
 </html>

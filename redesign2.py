@@ -547,7 +547,7 @@ html = re.sub(r'<style>.*?</style>', f'<style>{NEW_CSS}  </style>', html, flags=
 old_nav = '  <!-- NAVBAR -->\n  <nav class="navbar">'
 new_nav = '''  <!-- ANNOUNCEMENT BAR -->
   <div class="topbar-announce">
-    &#128205; Now Open at Arbortowne Plaza II, Valenzuela &nbsp;&bull;&nbsp; Mon–Sat 10AM–7PM
+    &#128205; Now Open at Arbortowne Plaza II, Valenzuela &nbsp;&bull;&nbsp; Mon–Sat 10AM–6PM
     <span class="sep">|</span> 0976 002 1202 &nbsp;&bull;&nbsp;
     <a href="https://www.facebook.com/profile.php?id=61556399064773" target="_blank" rel="noopener">Facebook</a>
   </div>
@@ -601,7 +601,7 @@ new_hero_section = '''<section class="hero" id="hero">
                 <a href="/contact" class="btn btn-outline" onclick="event.preventDefault();navigateTo('/contact')">Get a Free Quote</a>
               </div>
               <div class="hero-trust">
-                <div class="hero-trust-item"><span class="hero-trust-icon">&#9733;</span> 5.0 — 413 Reviews</div>
+                <div class="hero-trust-item"><span class="hero-trust-icon">&#9733;</span> 5.0 — 400+ Reviews</div>
                 <div class="hero-trust-item"><span class="hero-trust-icon">&#10003;</span> Brand New Parts</div>
                 <div class="hero-trust-item"><span class="hero-trust-icon">&#128222;</span> Free Consult</div>
               </div>
@@ -612,7 +612,7 @@ new_hero_section = '''<section class="hero" id="hero">
               </div>
               <div class="hero-float-badge">
                 <svg width="24" height="24" fill="#1a6ee8" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                <div><div class="fb-num">24K+</div><div class="fb-lbl">Facebook<br>Followers</div></div>
+                <div><div class="fb-num">26K+</div><div class="fb-lbl">Facebook<br>Followers</div></div>
               </div>
               <div class="hero-float-badge2">
                 <div class="fb2-label">Reviews</div>
@@ -631,8 +631,8 @@ old_stats = '''  <!-- STATS BAR -->
     <div class="container">
       <div class="stats-grid">
         <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label">Recommend</div></div>
-        <div class="stat-item"><div class="stat-num">413+</div><div class="stat-label">Reviews</div></div>
-        <div class="stat-item"><div class="stat-num">24K+</div><div class="stat-label">Followers</div></div>
+        <div class="stat-item"><div class="stat-num">400+</div><div class="stat-label">Reviews</div></div>
+        <div class="stat-item"><div class="stat-num">26K+</div><div class="stat-label">Followers</div></div>
         <div class="stat-item"><div class="stat-num">50+</div><div class="stat-label">Products</div></div>
         <div class="stat-item"><div class="stat-num">Valenzuela</div><div class="stat-label">Philippines</div></div>
       </div>
@@ -644,8 +644,8 @@ new_stats = '''  <!-- STATS BAR -->
     <div class="container">
       <div class="stats-inner">
         <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label">Recommend</div></div>
-        <div class="stat-item"><div class="stat-num">413+</div><div class="stat-label">5-Star Reviews</div></div>
-        <div class="stat-item"><div class="stat-num">24K+</div><div class="stat-label">FB Followers</div></div>
+        <div class="stat-item"><div class="stat-num">400+</div><div class="stat-label">5-Star Reviews</div></div>
+        <div class="stat-item"><div class="stat-num">26K+</div><div class="stat-label">FB Followers</div></div>
         <div class="stat-item"><div class="stat-num">50+</div><div class="stat-label">Products</div></div>
         <div class="stat-item"><div class="stat-num">#1</div><div class="stat-label">PC Hub Valenzuela</div></div>
       </div>
@@ -792,8 +792,8 @@ old_about = '''  <!-- ABOUT -->
           </div>
           <div class="about-stats">
             <div class="about-stat glass"><div class="num">100%</div><div class="lbl">Recommend Rate</div></div>
-            <div class="about-stat glass"><div class="num">413+</div><div class="lbl">5-Star Reviews</div></div>
-            <div class="about-stat glass"><div class="num">24K+</div><div class="lbl">FB Followers</div></div>
+            <div class="about-stat glass"><div class="num">400+</div><div class="lbl">5-Star Reviews</div></div>
+            <div class="about-stat glass"><div class="num">26K+</div><div class="lbl">FB Followers</div></div>
             <div class="about-stat glass"><div class="num">#1</div><div class="lbl">PC Hub Valenzuela</div></div>
           </div>
         </div>
@@ -813,7 +813,7 @@ new_about = '''  <!-- ABOUT -->
             <img src="/about-circuit.jpg" alt="Circuit Board" loading="lazy">
           </div>
           <div class="about-stat-chip">
-            <div class="chip-num">24K+</div>
+            <div class="chip-num">26K+</div>
             <div class="chip-lbl">Facebook Followers</div>
           </div>
         </div>
@@ -845,7 +845,7 @@ html = html.replace(old_about, new_about, 1)
 old_reviews_header = '''      <div class="section-header fade-in">
         <p class="section-label">Facebook Reviews</p>
         <h2 class="section-title">What Our Customers Say</h2>
-        <div class="reviews-big"><span class="num">5.0</span><div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p style="font-size:0.78rem;color:var(--text-dim)">Based on 413+ reviews &bull; 100% Recommend</p></div></div>
+        <div class="reviews-big"><span class="num">5.0</span><div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div><p style="font-size:0.78rem;color:var(--text-dim)">Based on 400+ reviews &bull; 100% Recommend</p></div></div>
       </div>'''
 new_reviews_header = '''      <div class="section-header center fade-in">
         <div class="section-eyebrow center"><div class="section-line"></div><span class="section-tag">Facebook Reviews</span><div class="section-line"></div></div>
@@ -856,7 +856,7 @@ new_reviews_header = '''      <div class="section-header center fade-in">
         <div>
           <div class="rev-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
           <div style="font-weight:700;font-size:0.95rem;color:var(--heading);margin-bottom:4px">Rated 5.0 out of 5</div>
-          <div class="rev-count">Based on 413+ Facebook reviews &bull; 100% Recommend Rate</div>
+          <div class="rev-count">Based on 400+ Facebook reviews &bull; 100% Recommend Rate</div>
         </div>
         <a href="https://www.facebook.com/profile.php?id=61556399064773" target="_blank" rel="noopener" class="btn btn-primary" style="margin-left:auto">See All Reviews</a>
       </div>'''
@@ -904,7 +904,7 @@ old_contact = '''  <!-- CONTACT & LOCATION -->
           <div class="loc-card glass">
             <h3>&#128205; H.U.B Store — Valenzuela</h3>
             <p class="addr">3/F Unit 306 Arbortowne Plaza II, Karuhatan Road, Gen. T. de Leon, Valenzuela, Philippines 1442</p>
-            <a href="https://maps.google.com/?q=Arbortowne+Plaza+II+Karuhatan+Road+Valenzuela" target="_blank" rel="noopener" class="loc-link">&#10132; Open in Google Maps</a>
+            <a href="https://maps.app.goo.gl/Ev11Ci6JCuGp2gwV7" target="_blank" rel="noopener" class="loc-link">&#10132; Open in Google Maps</a>
           </div>
           <div class="loc-tags">
             <div class="loc-tags-label">Areas Served</div>
@@ -976,7 +976,8 @@ new_contact = '''  <!-- CONTACT & LOCATION -->
                 <div class="chip-icon">&#128205;</div>
                 <div class="chip-body">
                   <div class="chip-label">Address</div>
-                  <a href="https://maps.google.com/?q=Arbortowne+Plaza+II+Karuhatan+Road+Valenzuela" target="_blank" rel="noopener">3/F Unit 306 Arbortowne Plaza II, Karuhatan Rd, Valenzuela 1442</a>
+                  <a href="https://maps.app.goo.gl/Ev11Ci6JCuGp2gwV7" target="_blank" rel="noopener">3/F Unit 306 Arbortowne Plaza II, Karuhatan Rd, Valenzuela 1442</a>
+                  <small style="display:block;margin-top:4px;color:#94a3b8;font-size:0.78rem">Elevator available at the center staircase &bull; Free parking</small>
                 </div>
               </div>
               <div class="contact-chip">
@@ -997,7 +998,7 @@ new_contact = '''  <!-- CONTACT & LOCATION -->
                 <div class="chip-icon">&#128336;</div>
                 <div class="chip-body">
                   <div class="chip-label">Store Hours</div>
-                  <span>Mon – Sat &nbsp; 10:00 AM – 7:00 PM</span>
+                  <span>Mon – Sat &nbsp; 10:00 AM – 6:00 PM</span>
                 </div>
               </div>
             </div>
